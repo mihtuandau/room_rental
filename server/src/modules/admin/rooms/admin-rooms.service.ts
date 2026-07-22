@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 import {
   ModerationAction,
   Prisma,
@@ -12,7 +13,10 @@ import {
 
 @Injectable()
 export class AdminRoomsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async listPending(page: number, pageSize: number) {
     const where = { status: RoomStatus.pending, deletedAt: null };
@@ -36,7 +40,7 @@ export class AdminRoomsService {
     if (room.status !== RoomStatus.pending) {
       throw new BadRequestException('Only a pending listing can be approved.');
     }
-    return this.transitionAndLog(
+    const approved = await this.transitionAndLog(
       adminId,
       roomId,
       {
@@ -45,6 +49,9 @@ export class AdminRoomsService {
       },
       ModerationAction.approved,
     );
+    // fire-and-forget: enqueueing is best-effort, never blocks/breaks approval
+    await this.notificationsService.onRoomApproved(approved.id);
+    return approved;
   }
 
   async reject(adminId: string, roomId: number, note?: string) {

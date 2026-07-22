@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { AdminRoomsController } from './rooms/admin-rooms.controller';
 import { AdminRoomsService } from './rooms/admin-rooms.service';
 import { AdminReportsController } from './reports/admin-reports.controller';
@@ -11,6 +12,7 @@ import { AdminDashboardService } from './dashboard/admin-dashboard.service';
 // Single "admin" module per CLAUDE.md §4 — split into per-resource
 // controller/service files internally rather than separate NestJS modules.
 @Module({
+  imports: [NotificationsModule],
   controllers: [
     AdminRoomsController,
     AdminReportsController,
