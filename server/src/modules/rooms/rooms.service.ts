@@ -49,9 +49,29 @@ export class RoomsService {
     const page = dto.page ?? 1;
     const pageSize = dto.pageSize ?? 20;
 
+    // Prisma can't do accent-insensitive matching — narrow to matching ids via
+    // a parameterized raw query first, then apply the rest as normal Prisma filters.
+    let keywordMatchedIds: number[] | undefined;
+    if (dto.keyword?.trim()) {
+      const pattern = `%${dto.keyword.trim()}%`;
+      const rows = await this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT id FROM rooms
+        WHERE status = 'active' AND deleted_at IS NULL
+          AND (
+            unaccent(title) ILIKE unaccent(${pattern})
+            OR unaccent(coalesce(description, '')) ILIKE unaccent(${pattern})
+          )
+      `;
+      keywordMatchedIds = rows.map((r) => r.id);
+      if (keywordMatchedIds.length === 0) {
+        return { rooms: [], total: 0, page, pageSize };
+      }
+    }
+
     const where = {
       status: 'active' as const,
       deletedAt: null,
+      ...(keywordMatchedIds && { id: { in: keywordMatchedIds } }),
       ...(dto.city && { city: dto.city }),
       ...(dto.district && { district: dto.district }),
       ...(dto.roomType && { roomType: dto.roomType }),
