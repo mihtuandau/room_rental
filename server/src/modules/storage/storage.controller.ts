@@ -17,4 +17,12 @@ export class StorageController {
   presignRoomImage() {
     return this.cloudinaryService.createUploadSignature('rooms');
   }
+
+  @Post('presign/avatar')
+  @ApiOperation({
+    summary: 'Get signed params to upload an avatar directly to Cloudinary',
+  })
+  presignAvatar() {
+    return this.cloudinaryService.createUploadSignature('avatars');
+  }
 }

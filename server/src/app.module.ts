@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { StorageModule } from './modules/storage/storage.module';
     RoomsModule,
     AdminModule,
     StorageModule,
-    // ...other domain modules (users, favorites, saved-searches, ...) get registered here
+    UsersModule,
+    // ...other domain modules (favorites, saved-searches, ...) get registered here
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

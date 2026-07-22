@@ -20,8 +20,6 @@ export class CloudinaryService {
     });
   }
 
-  // Client uploads straight to Cloudinary using these signed params — the raw
-  // file bytes never pass through our server (same principle as a presigned S3 URL).
   createUploadSignature(folder: string) {
     const timestamp = Math.round(Date.now() / 1000);
     const paramsToSign = { timestamp, folder };
