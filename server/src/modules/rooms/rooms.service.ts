@@ -1,13 +1,16 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { uniqueSlug } from '@/common/utils/slugify';
+import { CloudinaryService } from '../storage/cloudinary.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
+import { ConfirmImageDto } from './dto/confirm-image.dto';
 
 // Never select passwordHash/tokenVersion — only fields safe to show a tenant.
 const OWNER_PUBLIC_SELECT = {
@@ -22,9 +25,14 @@ const COVER_IMAGE_INCLUDE = {
   images: { where: { isCover: true }, take: 1 },
 } as const;
 
+const MAX_IMAGES_PER_ROOM = 10;
+
 @Injectable()
 export class RoomsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   async create(userId: string, dto: CreateRoomDto) {
     return this.prisma.room.create({
@@ -112,6 +120,47 @@ export class RoomsService {
       where: { id: room.id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  // Client uploads to Cloudinary directly (see storage module) — this only
+  // persists the resulting key/URL after the fact, and enforces "at most one cover image".
+  async addImage(userId: string, roomId: number, dto: ConfirmImageDto) {
+    const room = await this.findOwned(userId, roomId);
+    const isCover = dto.isCover ?? false;
+
+    const imageCount = await this.prisma.roomImage.count({
+      where: { roomId: room.id },
+    });
+    if (imageCount >= MAX_IMAGES_PER_ROOM) {
+      throw new BadRequestException(
+        `A listing can have at most ${MAX_IMAGES_PER_ROOM} images.`,
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      if (isCover) {
+        await tx.roomImage.updateMany({
+          where: { roomId: room.id, isCover: true },
+          data: { isCover: false },
+        });
+      }
+      return tx.roomImage.create({
+        data: { roomId: room.id, key: dto.key, url: dto.url, isCover },
+      });
+    });
+  }
+
+  async removeImage(userId: string, roomId: number, imageId: string) {
+    const room = await this.findOwned(userId, roomId);
+    const image = await this.prisma.roomImage.findUnique({
+      where: { id: imageId },
+    });
+    if (!image || image.roomId !== room.id)
+      throw new NotFoundException('Image not found.');
+
+    await this.prisma.roomImage.delete({ where: { id: imageId } });
+    await this.cloudinaryService.destroyAsset(image.key); // key stores the Cloudinary public_id
+    return { success: true };
   }
 
   private async findOwned(userId: string, roomId: number) {

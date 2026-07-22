@@ -25,7 +25,7 @@ MVP **does NOT include**: online payments, online deposits, realtime chat, e-con
 - **API docs**: `@nestjs/swagger` — every endpoint must have descriptive decorators
 - **Rate limiting**: `@nestjs/throttler`
 - **Jobs/queues** (as needed): BullMQ + Redis (used for scanning `saved_searches` to send notifications)
-- **File upload**: multer + presigned URL to S3-compatible storage (R2/Spaces) — Nest does not hold files long-term
+- **File upload**: Cloudinary signed upload — the client uploads directly to Cloudinary, Nest does not hold files long-term
 - **Testing**: Jest (unit tests for services, e2e for key controllers: auth, room CRUD, search)
 
 Don't add new libraries without a clear reason.
@@ -76,7 +76,7 @@ src/
 │   ├── contact-logs/
 │   ├── room-views/             # optional view analytics, rate-limited/deduped
 │   ├── reports/
-│   ├── storage/                # S3 presigned upload
+│   ├── storage/                # Cloudinary signed upload
 │   ├── notifications/          # BullMQ job: saved-search match notifications
 │   └── admin/                  # approve listings, ban users, handle reports, RoomModeration audit log (RolesGuard admin)
 prisma/

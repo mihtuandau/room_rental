@@ -212,8 +212,8 @@ model RoomImage {
   roomId Int    @map("room_id")
   room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  key      String // S3 object key
-  url      String
+  key      String // Cloudinary public_id
+  url      String // Cloudinary secure_url
   isCover  Boolean @default(false) @map("is_cover")
   position Int     @default(0)
 

@@ -18,6 +18,7 @@ import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
+import { ConfirmImageDto } from './dto/confirm-image.dto';
 
 @ApiTags('rooms')
 @Controller('rooms')
@@ -76,5 +77,34 @@ export class RoomsController {
   @ApiOperation({ summary: 'Landlord soft-deletes their own listing' })
   remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.roomsService.softDelete(userId, Number(id));
+  }
+
+  @Post(':id/images/confirm')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Persist an image after it has been uploaded directly to Cloudinary',
+  })
+  confirmImage(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: ConfirmImageDto,
+  ) {
+    return this.roomsService.addImage(userId, Number(id), dto);
+  }
+
+  @Delete(':id/images/:imageId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete a room image (DB record + underlying Cloudinary asset)',
+  })
+  removeImage(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.roomsService.removeImage(userId, Number(id), imageId);
   }
 }
