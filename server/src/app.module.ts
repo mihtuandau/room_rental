@@ -13,6 +13,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ContactLogsModule } from './modules/contact-logs/contact-logs.module';
+import { SavedSearchesModule } from './modules/saved-searches/saved-searches.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { ContactLogsModule } from './modules/contact-logs/contact-logs.module';
     UsersModule,
     FavoritesModule,
     ContactLogsModule,
-    // ...other domain modules (saved-searches, reports, notifications, ...) get registered here
+    SavedSearchesModule,
+    // ...other domain modules (reports, notifications, ...) get registered here
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
