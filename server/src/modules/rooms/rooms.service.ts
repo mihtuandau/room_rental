@@ -1,0 +1,128 @@
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '@/prisma/prisma.service';
+import { uniqueSlug } from '@/common/utils/slugify';
+import { CreateRoomDto } from './dto/create-room.dto';
+import { UpdateRoomDto } from './dto/update-room.dto';
+import { SearchRoomsDto } from './dto/search-rooms.dto';
+
+// Never select passwordHash/tokenVersion — only fields safe to show a tenant.
+const OWNER_PUBLIC_SELECT = {
+  id: true,
+  fullName: true,
+  avatarUrl: true,
+  contactPhone: true,
+  zaloUrl: true,
+} as const;
+
+const COVER_IMAGE_INCLUDE = {
+  images: { where: { isCover: true }, take: 1 },
+} as const;
+
+@Injectable()
+export class RoomsService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(userId: string, dto: CreateRoomDto) {
+    return this.prisma.room.create({
+      data: {
+        ...dto,
+        ownerId: userId,
+        slug: uniqueSlug(dto.title),
+        status: 'pending',
+      },
+    });
+  }
+
+  async search(dto: SearchRoomsDto) {
+    const page = dto.page ?? 1;
+    const pageSize = dto.pageSize ?? 20;
+
+    const where = {
+      status: 'active' as const,
+      deletedAt: null,
+      ...(dto.city && { city: dto.city }),
+      ...(dto.district && { district: dto.district }),
+      ...(dto.roomType && { roomType: dto.roomType }),
+      ...((dto.priceMin ?? dto.priceMax) && {
+        price: {
+          ...(dto.priceMin && { gte: dto.priceMin }),
+          ...(dto.priceMax && { lte: dto.priceMax }),
+        },
+      }),
+      ...(dto.areaMin && { area: { gte: dto.areaMin } }),
+    };
+
+    const orderBy = [
+      { isVerified: 'desc' as const },
+      ...(dto.sort === 'price_asc' ? [{ price: 'asc' as const }] : []),
+      ...(dto.sort === 'price_desc' ? [{ price: 'desc' as const }] : []),
+      ...(!dto.sort || dto.sort === 'newest'
+        ? [{ createdAt: 'desc' as const }]
+        : []),
+    ];
+
+    const [rooms, total] = await this.prisma.$transaction([
+      this.prisma.room.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: COVER_IMAGE_INCLUDE,
+      }),
+      this.prisma.room.count({ where }),
+    ]);
+
+    return { rooms, total, page, pageSize };
+  }
+
+  async findActiveBySlug(slug: string) {
+    const room = await this.prisma.room.findFirst({
+      where: { slug, status: 'active', deletedAt: null },
+      include: { images: true, owner: { select: OWNER_PUBLIC_SELECT } },
+    });
+    if (!room) throw new NotFoundException('Listing not found.');
+
+    await this.prisma.room.update({
+      where: { id: room.id },
+      data: { viewCount: { increment: 1 } },
+    });
+    return { ...room, viewCount: room.viewCount + 1 };
+  }
+
+  async findMine(userId: string) {
+    return this.prisma.room.findMany({
+      where: { ownerId: userId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      include: COVER_IMAGE_INCLUDE,
+    });
+  }
+
+  async update(userId: string, roomId: number, dto: UpdateRoomDto) {
+    const room = await this.findOwned(userId, roomId);
+    return this.prisma.room.update({ where: { id: room.id }, data: dto });
+  }
+
+  async softDelete(userId: string, roomId: number) {
+    const room = await this.findOwned(userId, roomId);
+    return this.prisma.room.update({
+      where: { id: room.id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  private async findOwned(userId: string, roomId: number) {
+    const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room || room.deletedAt)
+      throw new NotFoundException('Listing not found.');
+    if (room.ownerId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this listing.',
+      );
+    }
+    return room;
+  }
+}

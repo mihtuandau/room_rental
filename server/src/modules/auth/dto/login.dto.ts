@@ -6,9 +6,9 @@ export class LoginDto {
   @ApiProperty({ example: '0912345678' })
   @IsString()
   @Matches(VN_PHONE_REGEX, { message: 'Invalid Vietnamese phone number.' })
-  phone: string;
+  phone!: string;
 
   @ApiProperty()
   @IsString()
-  password: string;
+  password!: string;
 }

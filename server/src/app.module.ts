@@ -7,6 +7,8 @@ import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RoomsModule } from './modules/rooms/rooms.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { AuthModule } from './modules/auth/auth.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PrismaModule,
     AuthModule,
-    // ...other domain modules (users, rooms, ...) get registered here
+    RoomsModule,
+    AdminModule,
+    // ...other domain modules (users, favorites, saved-searches, ...) get registered here
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

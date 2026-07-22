@@ -7,9 +7,9 @@ export class SendOtpDto {
   @ApiProperty({ example: '0912345678' })
   @IsString()
   @Matches(VN_PHONE_REGEX, { message: 'Invalid Vietnamese phone number.' })
-  phone: string;
+  phone!: string;
 
   @ApiProperty({ enum: OtpPurpose })
   @IsEnum(OtpPurpose)
-  purpose: OtpPurpose;
+  purpose!: OtpPurpose;
 }

@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 export interface RefreshTokenPayload {
-  sub: string; // userId
+  sub: string;
   tokenVersion: number;
 }
 

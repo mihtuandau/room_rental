@@ -14,13 +14,13 @@ export class RegisterDto {
   @ApiProperty({ example: '0912345678' })
   @IsString()
   @Matches(VN_PHONE_REGEX, { message: 'Invalid Vietnamese phone number.' })
-  phone: string;
+  phone!: string;
 
   @ApiProperty({ minLength: 8 })
   @IsString()
   @MinLength(8)
   @MaxLength(72)
-  password: string;
+  password!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

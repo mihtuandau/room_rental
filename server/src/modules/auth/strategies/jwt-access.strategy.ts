@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
 export interface AccessTokenPayload {
-  sub: string; // userId
+  sub: string;
   role: string;
 }
 
