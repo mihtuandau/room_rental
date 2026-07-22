@@ -19,6 +19,7 @@ import { SavedSearchesModule } from './modules/saved-searches/saved-searches.mod
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AmenitiesModule } from './modules/amenities/amenities.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AmenitiesModule } from './modules/amenities/amenities.module';
     NotificationsModule,
     ReportsModule,
     AmenitiesModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
