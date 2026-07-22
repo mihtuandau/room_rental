@@ -62,6 +62,12 @@ export class RoomsService {
         },
       }),
       ...(dto.areaMin && { area: { gte: dto.areaMin } }),
+      // listing must have EVERY selected amenity, not just any one of them
+      ...(dto.amenityIds?.length && {
+        AND: dto.amenityIds.map((amenityId) => ({
+          amenities: { some: { amenityId } },
+        })),
+      }),
     };
 
     const orderBy = [
@@ -90,7 +96,11 @@ export class RoomsService {
   async findActiveBySlug(slug: string) {
     const room = await this.prisma.room.findFirst({
       where: { slug, status: 'active', deletedAt: null },
-      include: { images: true, owner: { select: OWNER_PUBLIC_SELECT } },
+      include: {
+        images: true,
+        owner: { select: OWNER_PUBLIC_SELECT },
+        amenities: { include: { amenity: true } },
+      },
     });
     if (!room) throw new NotFoundException('Listing not found.');
 
@@ -98,7 +108,12 @@ export class RoomsService {
       where: { id: room.id },
       data: { viewCount: { increment: 1 } },
     });
-    return { ...room, viewCount: room.viewCount + 1 };
+    return {
+      ...room,
+      viewCount: room.viewCount + 1,
+      // flatten the join rows — the client only cares about the amenities themselves
+      amenities: room.amenities.map((ra) => ra.amenity),
+    };
   }
 
   async findMine(userId: string) {
