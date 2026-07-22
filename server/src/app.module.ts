@@ -11,6 +11,8 @@ import { RoomsModule } from './modules/rooms/rooms.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
+import { ContactLogsModule } from './modules/contact-logs/contact-logs.module';
 
 @Module({
   imports: [
@@ -22,7 +24,9 @@ import { UsersModule } from './modules/users/users.module';
     AdminModule,
     StorageModule,
     UsersModule,
-    // ...other domain modules (favorites, saved-searches, ...) get registered here
+    FavoritesModule,
+    ContactLogsModule,
+    // ...other domain modules (saved-searches, reports, notifications, ...) get registered here
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
