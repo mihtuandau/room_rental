@@ -17,6 +17,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ContactLogsModule } from './modules/contact-logs/contact-logs.module';
 import { SavedSearchesModule } from './modules/saved-searches/saved-searches.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     ContactLogsModule,
     SavedSearchesModule,
     NotificationsModule,
-    // ...other domain modules (reports, ...) get registered here
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
