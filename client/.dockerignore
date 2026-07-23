@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+coverage
+.git
+.env
+.env.*
+!.env.example
+*.log
+.vscode
+.idea
+
+# AI/editor tooling — irrelevant to the image, and some entries are symlinks
+# that the build context tar can't checksum
+.claude
+.agents
+.windsurf
+CLAUDE.md
