@@ -14,10 +14,10 @@ generator client {
 }
 
 datasource db {
-  provider   = "postgresql"
-  // `postgis` is added back once the target Postgres instance has the extension
-  // installed (not present on this local dev install yet) — see add-prisma-model skill.
-  extensions = [unaccent]
+  provider = "postgresql"
+  // Both extensions ship with the postgis/postgis image used by
+  // docker-compose.yml — a plain postgres install won't have postgis.
+  extensions = [postgis, unaccent]
 }
 
 // -----------------------------------------------------------------------------

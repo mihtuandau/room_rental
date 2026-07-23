@@ -1,0 +1,50 @@
+# Local development services only — the apps themselves still run with
+# `pnpm run start:dev` on the host. Production images are a separate concern.
+#
+#   docker compose up -d          start
+#   docker compose down           stop (data is kept in the named volumes)
+#   docker compose down -v        stop and wipe the data
+
+services:
+  postgres:
+    # postgis/postgis, not plain postgres: the schema needs the postgis and
+    # unaccent extensions, and installing PostGIS on Windows by hand is painful.
+    image: postgis/postgis:17-3.5
+    container_name: roomrent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rental_room
+    ports:
+      # 5433 on the host so this never collides with a Postgres already
+      # installed on Windows using the default 5432
+      - '5433:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d rental_room']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: roomrent-redis
+    restart: unless-stopped
+    # noeviction is what BullMQ requires — with the default policy Redis may
+    # drop queued jobs under memory pressure instead of refusing writes.
+    command: redis-server --maxmemory-policy noeviction
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

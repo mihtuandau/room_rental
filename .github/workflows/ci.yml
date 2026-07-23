@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch makes the previous run pointless — cancel it
+# instead of queueing behind it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # The build imports generated/prisma/client, which isn't committed —
+      # generate it before typechecking or the build fails on a clean checkout.
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+        env:
+          # generate only reads the schema, but the config still expects the var
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/placeholder
+
+      - run: pnpm run lint
+
+      - run: pnpm run build
+
+      - run: pnpm test
+
+  client:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run lint
+
+      - run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run build
+        env:
+          # The home page prerenders and calls the API; it already falls back to
+          # an empty state when unreachable, so a placeholder is enough here.
+          API_URL: http://localhost:3000
+          NEXT_PUBLIC_SITE_URL: http://localhost:5000
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-placeholder.apps.googleusercontent.com
