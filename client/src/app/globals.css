@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand — primary actions and the "verified" trust signal.
+     Competitors lean on orange/red urgency; RoomRent stays calm and credible. */
+  --color-brand-50: oklch(0.97 0.02 165);
+  --color-brand-100: oklch(0.94 0.04 165);
+  --color-brand-500: oklch(0.7 0.13 165);
+  --color-brand-600: oklch(0.6 0.13 165);
+  --color-brand-700: oklch(0.51 0.12 165);
+  --color-brand-900: oklch(0.33 0.08 165);
+
+  /* Status — meaning, never decoration */
+  --color-success-50: oklch(0.97 0.03 150);
+  --color-success-600: oklch(0.6 0.14 150);
+  --color-warning-50: oklch(0.97 0.04 85);
+  --color-warning-600: oklch(0.68 0.15 85);
+  --color-danger-50: oklch(0.97 0.03 25);
+  --color-danger-600: oklch(0.58 0.2 25);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Three radius steps only */
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Flat by default — a shadow means "floating above the page" */
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-popover: 0 10px 25px -5px rgb(0 0 0 / 0.12);
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body {
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+}
+
+/* Non-essential motion is opt-out for users who ask for less of it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
