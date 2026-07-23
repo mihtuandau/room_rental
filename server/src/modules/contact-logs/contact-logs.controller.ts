@@ -27,7 +27,7 @@ export class ContactLogsController {
   }
 
   @Get(':id/contact-logs/stats')
-  @ApiOperation({ summary: "Landlord's contact stats for their own listing" })
+  @ApiOperation({ summary: 'Contact stats for your own listing (owner only)' })
   getStats(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.contactLogsService.getStatsForOwner(userId, Number(id));
   }

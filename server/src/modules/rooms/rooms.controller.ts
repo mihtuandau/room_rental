@@ -11,8 +11,6 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -38,7 +36,7 @@ export class RoomsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "List the current landlord's own listings (any status)",
+    summary: "List the current user's own listings (any status)",
   })
   findMine(@CurrentUser('id') userId: string) {
     return this.roomsService.findMine(userId);
@@ -50,11 +48,14 @@ export class RoomsController {
     return this.roomsService.findActiveBySlug(slug);
   }
 
+  // Deliberately not role-restricted: in practice the same person both rents
+  // and lets out rooms, so any signed-in user may post. `role` only drives UI
+  // (and still strictly gates admin endpoints); ownership is what protects a
+  // listing, and every new listing still waits for admin approval.
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('landlord')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Landlord creates a new listing (status: pending)' })
+  @ApiOperation({ summary: 'Create a new listing (status: pending)' })
   create(@CurrentUser('id') userId: string, @Body() dto: CreateRoomDto) {
     return this.roomsService.create(userId, dto);
   }
@@ -62,7 +63,7 @@ export class RoomsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Landlord edits their own listing' })
+  @ApiOperation({ summary: 'Edit your own listing' })
   update(
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
@@ -74,7 +75,7 @@ export class RoomsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Landlord soft-deletes their own listing' })
+  @ApiOperation({ summary: 'Soft-delete your own listing' })
   remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.roomsService.softDelete(userId, Number(id));
   }

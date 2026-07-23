@@ -23,7 +23,7 @@ export class AmenitiesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Replace a listing's amenity set (landlord, ownership-checked)",
+    summary: "Replace a listing's amenity set (ownership-checked)",
   })
   setForRoom(
     @CurrentUser('id') userId: string,
