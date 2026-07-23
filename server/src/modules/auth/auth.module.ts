@@ -6,12 +6,19 @@ import { AuthService } from './auth.service';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { SmsService } from './sms/sms.service';
+import { GoogleTokenService } from './google/google-token.service';
 
 @Module({
   // JwtModule.register({}) with no default secret/options: AuthService signs
   // access and refresh tokens explicitly with their own secret per call.
   imports: [PassportModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, JwtAccessStrategy, JwtRefreshStrategy, SmsService],
+  providers: [
+    AuthService,
+    JwtAccessStrategy,
+    JwtRefreshStrategy,
+    SmsService,
+    GoogleTokenService,
+  ],
 })
 export class AuthModule {}

@@ -11,6 +11,10 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { SmsService } from './sms/sms.service';
+import {
+  GoogleProfile,
+  GoogleTokenService,
+} from './google/google-token.service';
 import { RegisterDto } from './dto/register.dto';
 
 const PASSWORD_HASH_COST = 12;
@@ -25,6 +29,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private sms: SmsService,
+    private googleToken: GoogleTokenService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -51,11 +56,59 @@ export class AuthService {
     if (
       !user ||
       user.deletedAt ||
+      // Google-only accounts have no password — reject with the same generic
+      // message so this endpoint never reveals how an account was created.
+      !user.passwordHash ||
       !(await bcrypt.compare(password, user.passwordHash))
     ) {
       throw new UnauthorizedException('Invalid phone number or password.');
     }
     return this.issueTokens(user.id, user.role, user.tokenVersion);
+  }
+
+  async loginWithGoogle(idToken: string) {
+    const profile = await this.googleToken.verify(idToken);
+    const user = await this.findOrCreateGoogleUser(profile);
+    if (user.deletedAt) {
+      throw new ForbiddenException('This account has been suspended.');
+    }
+    return this.issueTokens(user.id, user.role, user.tokenVersion);
+  }
+
+  // Resolution order matters: googleId is the stable identifier (a Google
+  // account can change its email), and matching on email second lets an
+  // existing password account adopt Google sign-in instead of ending up with
+  // two separate accounts for the same person.
+  async findOrCreateGoogleUser(profile: GoogleProfile) {
+    const byGoogleId = await this.prisma.user.findUnique({
+      where: { googleId: profile.googleId },
+    });
+    if (byGoogleId) return byGoogleId;
+
+    const byEmail = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+    });
+    if (byEmail) {
+      return this.prisma.user.update({
+        where: { id: byEmail.id },
+        data: {
+          googleId: profile.googleId,
+          // only fill blanks — never overwrite what the user set themselves
+          fullName: byEmail.fullName ?? profile.fullName,
+          avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl,
+        },
+      });
+    }
+
+    return this.prisma.user.create({
+      data: {
+        googleId: profile.googleId,
+        email: profile.email,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
+        role: Role.tenant,
+      },
+    });
   }
 
   async issueTokens(userId: string, role: string, tokenVersion: number) {

@@ -95,11 +95,18 @@ enum AmenityType {
 // -----------------------------------------------------------------------------
 
 model User {
-  id           String  @id @default(cuid())
-  phone        String  @unique
-  passwordHash String  @map("password_hash")
-  fullName     String? @map("full_name")
-  avatarUrl    String? @map("avatar_url")
+  id String @id @default(cuid())
+
+  // An account is identified by phone (password signup) or by Google (OAuth) —
+  // both are optional so either signup path can create a valid user. Postgres
+  // allows many NULLs under a unique index, so blanks never collide.
+  phone        String? @unique
+  passwordHash String? @map("password_hash")
+  email        String? @unique
+  googleId     String? @unique @map("google_id")
+
+  fullName  String? @map("full_name")
+  avatarUrl String? @map("avatar_url")
 
   // Contact info shown to tenants on a listing — may differ from the login phone.
   contactPhone String? @map("contact_phone")

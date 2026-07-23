@@ -16,6 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtRefreshGuard } from '@/common/guards/jwt-refresh.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
@@ -56,6 +57,23 @@ export class AuthController {
       dto.phone,
       dto.password,
     );
+    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions);
+    return { accessToken };
+  }
+
+  // Signs in (and signs up on first use) from a Google ID token the frontend
+  // obtained via Google Sign-In. Returns the same shape as /auth/login, so the
+  // client treats both paths identically from here on.
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Log in or sign up with a Google ID token' })
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } =
+      await this.authService.loginWithGoogle(dto.idToken);
     res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions);
     return { accessToken };
   }

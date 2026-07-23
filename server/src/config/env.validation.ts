@@ -15,6 +15,9 @@ export const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
+  // Only the client id is needed: we verify Google ID tokens sent by the
+  // frontend, we never run the redirect flow that would require the secret.
+  GOOGLE_CLIENT_ID: z.string().min(1),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

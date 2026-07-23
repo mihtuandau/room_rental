@@ -35,6 +35,19 @@ export class RoomsService {
   ) {}
 
   async create(userId: string, dto: CreateRoomDto) {
+    // A listing is useless without a way to reach the owner, and Google signups
+    // start with neither a login phone nor a contact phone — make the client
+    // collect one before the listing can exist.
+    const owner = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { phone: true, contactPhone: true },
+    });
+    if (!owner.contactPhone && !owner.phone) {
+      throw new BadRequestException(
+        'Add a contact phone number to your profile before posting a listing.',
+      );
+    }
+
     return this.prisma.room.create({
       data: {
         ...dto,

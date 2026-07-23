@@ -43,6 +43,11 @@ export class NotificationsProcessor extends WorkerHost {
     });
 
     for (const search of matches) {
+      // Google-only accounts have no phone yet, and the only channel we have is
+      // SMS. Skip before writing the log row so they still get notified about
+      // this room if a later re-scan runs after they add a phone number.
+      if (!search.user.phone) continue;
+
       // idempotent: unique constraint on [savedSearchId, roomId] blocks duplicate
       // sends across retries/cron re-scans — skip silently if already notified.
       try {
@@ -54,7 +59,7 @@ export class NotificationsProcessor extends WorkerHost {
       }
 
       try {
-        await this.sendNotification(search.user, room);
+        await this.sendNotification({ phone: search.user.phone }, room);
         await this.prisma.savedSearch.update({
           where: { id: search.id },
           data: { lastNotifiedAt: new Date() },
