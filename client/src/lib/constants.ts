@@ -53,6 +53,24 @@ export const AMENITY_TYPE_LABELS = {
   nearby: 'Xung quanh',
 } as const;
 
+export type AmenityType = keyof typeof AMENITY_TYPE_LABELS;
+
+/**
+ * Fallback used only if the live provinces API (features/locations/api.ts) is
+ * unreachable. The city value is matched exactly against `city` on the
+ * backend, so these strings must equal what listings are stored with (e.g.
+ * the seed uses "Hồ Chí Minh"). Bare names, no "Thành phố"/"Tỉnh" prefix.
+ */
+export const VN_CITY_OPTIONS = [
+  { value: 'Hồ Chí Minh', label: 'Hồ Chí Minh' },
+  { value: 'Hà Nội', label: 'Hà Nội' },
+  { value: 'Đà Nẵng', label: 'Đà Nẵng' },
+  { value: 'Bình Dương', label: 'Bình Dương' },
+  { value: 'Đồng Nai', label: 'Đồng Nai' },
+  { value: 'Cần Thơ', label: 'Cần Thơ' },
+  { value: 'Hải Phòng', label: 'Hải Phòng' },
+] as const;
+
 export const SORT_OPTIONS = [
   { value: 'newest', label: 'Mới nhất' },
   { value: 'price_asc', label: 'Giá thấp đến cao' },
@@ -60,6 +78,16 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export type SortOption = (typeof SORT_OPTIONS)[number]['value'];
+
+/** Quick price brackets for the hero search bar — maps to priceMin/priceMax. */
+export const PRICE_RANGE_OPTIONS = [
+  { value: 'under-3', label: 'Dưới 3 triệu', priceMin: null, priceMax: 3_000_000 },
+  { value: '3-6', label: '3 - 6 triệu', priceMin: 3_000_000, priceMax: 6_000_000 },
+  { value: '6-10', label: '6 - 10 triệu', priceMin: 6_000_000, priceMax: 10_000_000 },
+  { value: 'over-10', label: 'Trên 10 triệu', priceMin: 10_000_000, priceMax: null },
+] as const;
+
+export type PriceRangeValue = (typeof PRICE_RANGE_OPTIONS)[number]['value'];
 
 /** Backend caps listings at 10 images; the UI enforces it too. */
 export const MAX_IMAGES_PER_ROOM = 10;

@@ -12,7 +12,7 @@ export function middleware(req: NextRequest) {
     req.cookies.has('rr_session') || req.cookies.has('rr_refresh');
 
   if (!signedIn) {
-    const login = new URL('/dang-nhap', req.url);
+    const login = new URL('/login', req.url);
     login.searchParams.set('next', req.nextUrl.pathname);
     return NextResponse.redirect(login);
   }
@@ -21,5 +21,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/quan-ly/:path*', '/admin/:path*'],
+  matcher: ['/manage/:path*', '/admin/:path*'],
 };

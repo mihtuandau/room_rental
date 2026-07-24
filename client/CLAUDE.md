@@ -16,8 +16,8 @@ USP: **verified listings**. SEO is the primary traffic channel → most public p
 
 | Mode | Routes | Who |
 |---|---|---|
-| Public (find a room) | `/`, `/tim-kiem`, `/phong/[slug]` | everyone, including guests |
-| My listings | `/quan-ly/*` | any signed-in user |
+| Public (find a room) | `/`, `/search`, `/room/[slug]` | everyone, including guests |
+| My listings | `/manage/*` | any signed-in user |
 | Admin | `/admin/*` | `role === "admin"` only |
 
 A header button switches between the first two ("Tin của tôi" ↔ "← Về trang tìm phòng"). No upgrade flow, no extra signup.
@@ -51,7 +51,7 @@ Don't add new libraries without a clear reason.
 4. **Never put personal data (phone, email, user id) in a URL or query string.**
 5. **Server Components** for anything that needs SEO (search, detail, area landings) — they `fetch()` the backend directly with `next: { revalidate }`. **Client Components** for interaction (filters, favorites, forms) — React Query through the proxy route.
 6. **Never store server data in Zustand** (rooms, profile, favorites-after-login). That's React Query's job — two sources of truth causes stale UI.
-7. **`middleware.ts` only does a coarse check** for the presence of the session cookie (redirect to login for `/quan-ly`, `/admin`). It must not verify JWT signatures at the edge — real authorisation is the backend returning 401/403.
+7. **`middleware.ts` only does a coarse check** for the presence of the session cookie (redirect to login for `/manage`, `/admin`). It must not verify JWT signatures at the edge — real authorisation is the backend returning 401/403.
 
 ---
 
@@ -63,10 +63,10 @@ client/
 │   ├── app/
 │   │   ├── (public)/          # SSR, SEO-critical
 │   │   │   ├── page.tsx                  # home
-│   │   │   ├── tim-kiem/page.tsx         # search results
-│   │   │   └── phong/[slug]/page.tsx     # listing detail
+│   │   │   ├── search/page.tsx           # search results
+│   │   │   └── room/[slug]/page.tsx      # listing detail
 │   │   ├── (auth)/            # login, register, forgot-password
-│   │   ├── quan-ly/           # "my listings" mode — any signed-in user
+│   │   ├── manage/            # "my listings" mode — any signed-in user
 │   │   ├── admin/             # admin only
 │   │   ├── api/               # Route Handlers ONLY (BFF proxy) — no business logic
 │   │   │   ├── auth/{login,google,logout,refresh}/route.ts
@@ -123,11 +123,16 @@ Never for: room lists, room detail, profile, or anything returned by the API.
 
 ## 8. SEO (required — primary traffic channel)
 
-- Listing URLs use the slug: `/phong/<room-slug>`, never `?id=`.
+- Listing URLs use the slug: `/room/<room-slug>`, never `?id=`.
 - Every public page has `generateMetadata` (title, description, canonical, OpenGraph).
 - Listing detail pages include JSON-LD (schema.org).
 - `sitemap.ts` is generated from active listings fetched from the backend.
-- Area landing pages (`/phong-tro/quan-7`) to capture local search terms.
+- Area landing pages (`/rooms-for-rent/quan-7`) to capture local search terms.
+
+> **Routes are English, UI text is Vietnamese.** URL paths and file/folder names use
+> English (`/login`, `/search`, `/room/[slug]`, `/manage/*`); everything a user reads on
+> screen stays Vietnamese per skill `vietnamese-ux-writing`. Area-landing slugs keep the
+> Vietnamese place name (`quan-7`) — that is the term people actually search.
 
 ---
 

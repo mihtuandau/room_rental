@@ -42,6 +42,16 @@ export class RoomsController {
     return this.roomsService.findMine(userId);
   }
 
+  // Also before ":slug". Powers the district dropdown from real data, so its
+  // options always match what listings are actually stored with.
+  @Get('districts')
+  @ApiOperation({
+    summary: 'Distinct districts of active listings in a city (for filters)',
+  })
+  listDistricts(@Query('city') city?: string) {
+    return this.roomsService.listDistricts(city);
+  }
+
   @Get(':slug')
   @ApiOperation({ summary: 'Public listing detail by slug' })
   findBySlug(@Param('slug') slug: string) {

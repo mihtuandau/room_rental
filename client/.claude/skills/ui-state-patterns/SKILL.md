@@ -121,7 +121,7 @@ export function FavoritesList() {
         icon={<Heart className="h-10 w-10" />}
         title="Chưa có phòng nào được lưu"
         description="Bấm biểu tượng trái tim trên tin đăng để lưu lại xem sau."
-        action={{ label: "Tìm phòng ngay", href: "/tim-kiem" }}
+        action={{ label: "Tìm phòng ngay", href: "/search" }}
       />
     );
   }
@@ -159,7 +159,7 @@ if (isError) {
       <EmptyState
         title="Bạn cần đăng nhập"
         description="Đăng nhập để xem nội dung này."
-        action={{ label: "Đăng nhập", href: `/dang-nhap?next=${pathname}` }}
+        action={{ label: "Đăng nhập", href: `/login?next=${pathname}` }}
       />
     );
   }

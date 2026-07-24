@@ -13,12 +13,12 @@ description: Create a new page in the RoomRent Next.js App Router with full SEO 
 - Use slugs, never `?id=`.
 - Every public page exports `generateMetadata`.
 - Listing detail pages include JSON-LD.
-- Protected areas (`/quan-ly`, `/admin`) get a coarse cookie check in `middleware.ts`;
+- Protected areas (`/manage`, `/admin`) get a coarse cookie check in `middleware.ts`;
   the backend's 401/403 is the real authorisation.
 
 ## Template: search results page
 
-`src/app/(public)/tim-kiem/page.tsx`
+`src/app/(public)/search/page.tsx`
 ```tsx
 import type { Metadata } from "next";
 import { serverFetch } from "@/lib/server-api";
@@ -36,7 +36,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title,
     description: `Tìm ${what.toLowerCase()} ${where ?? "trên toàn quốc"}. Tin đăng đã kiểm duyệt, cập nhật mỗi ngày.`,
-    alternates: { canonical: "/tim-kiem" },
+    alternates: { canonical: "/search" },
     // filtered permutations are near-duplicates — let the canonical landing pages rank
     robots: where ? undefined : { index: false },
   };
@@ -56,7 +56,7 @@ export default async function Page({ searchParams }: Props) {
 
 ## Template: listing detail + JSON-LD
 
-`src/app/(public)/phong/[slug]/page.tsx`
+`src/app/(public)/room/[slug]/page.tsx`
 ```tsx
 import { notFound } from "next/navigation";
 import { serverFetch } from "@/lib/server-api";
@@ -64,7 +64,7 @@ import { formatPrice } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
-// public route is /phong/<slug>, the API path is /rooms/<slug>
+// public route is /room/<slug>, the API path is /rooms/<slug>
 async function getRoom(slug: string) {
   return serverFetch<RoomDetail>(`/rooms/${slug}`, { revalidate: 120 }).catch(() => null);
 }
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${room.title} — ${formatPrice(room.price)}/tháng | RoomRent`,
     description: room.description?.slice(0, 155),
-    alternates: { canonical: `/phong/${room.slug}` },
+    alternates: { canonical: `/room/${room.slug}` },
     openGraph: {
       title: room.title,
       images: room.images?.[0] ? [room.images[0].url] : [],
@@ -134,9 +134,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: base, lastModified: new Date(), priority: 1 },
-    { url: `${base}/tim-kiem`, lastModified: new Date(), priority: 0.8 },
+    { url: `${base}/search`, lastModified: new Date(), priority: 0.8 },
     ...rooms.map((r) => ({
-      url: `${base}/phong/${r.slug}`,
+      url: `${base}/room/${r.slug}`,
       lastModified: new Date(r.updatedAt),
       priority: 0.6,
     })),
@@ -154,14 +154,14 @@ export function middleware(req: NextRequest) {
   // presence check only — never verify the JWT signature at the edge
   const signedIn = req.cookies.has("rr_session") || req.cookies.has("rr_refresh");
   if (!signedIn) {
-    const login = new URL("/dang-nhap", req.url);
+    const login = new URL("/login", req.url);
     login.searchParams.set("next", req.nextUrl.pathname); // return here after login
     return NextResponse.redirect(login);
   }
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/quan-ly/:path*", "/admin/:path*"] };
+export const config = { matcher: ["/manage/:path*", "/admin/:path*"] };
 ```
 
 The access cookie expires long before the refresh cookie, so check for **either** —

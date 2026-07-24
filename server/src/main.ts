@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -38,6 +38,12 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+
+  // Nest's own "successfully started" line says nothing about where it is
+  // listening, which reads like a hang. Print the URLs explicitly.
+  Logger.log(`API sẵn sàng: http://localhost:${port}`, 'Bootstrap');
+  Logger.log(`Swagger: http://localhost:${port}/docs`, 'Bootstrap');
 }
 void bootstrap();

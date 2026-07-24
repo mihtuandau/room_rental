@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -47,6 +48,20 @@ export class SearchRoomsDto {
   @IsInt()
   @Min(0)
   areaMin?: number;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  areaMax?: number;
+
+  @ApiPropertyOptional({
+    description: 'Only return verified listings (still ranked verified-first either way)',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => value === 'true')
+  @IsBoolean()
+  verifiedOnly?: boolean;
 
   @ApiPropertyOptional({
     type: String,

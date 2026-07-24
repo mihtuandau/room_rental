@@ -67,12 +67,18 @@ export class RoomsService {
     let keywordMatchedIds: number[] | undefined;
     if (dto.keyword?.trim()) {
       const pattern = `%${dto.keyword.trim()}%`;
+      // Match the keyword against the listing text AND its location fields, so
+      // "Quận 7" or a street name finds rooms there — not only titles/descriptions.
       const rows = await this.prisma.$queryRaw<{ id: number }[]>`
         SELECT id FROM rooms
         WHERE status = 'active' AND deleted_at IS NULL
           AND (
             unaccent(title) ILIKE unaccent(${pattern})
             OR unaccent(coalesce(description, '')) ILIKE unaccent(${pattern})
+            OR unaccent(coalesce(district, '')) ILIKE unaccent(${pattern})
+            OR unaccent(coalesce(ward, '')) ILIKE unaccent(${pattern})
+            OR unaccent(coalesce(address, '')) ILIKE unaccent(${pattern})
+            OR unaccent(coalesce(city, '')) ILIKE unaccent(${pattern})
           )
       `;
       keywordMatchedIds = rows.map((r) => r.id);
@@ -94,7 +100,13 @@ export class RoomsService {
           ...(dto.priceMax && { lte: dto.priceMax }),
         },
       }),
-      ...(dto.areaMin && { area: { gte: dto.areaMin } }),
+      ...((dto.areaMin ?? dto.areaMax) && {
+        area: {
+          ...(dto.areaMin && { gte: dto.areaMin }),
+          ...(dto.areaMax && { lte: dto.areaMax }),
+        },
+      }),
+      ...(dto.verifiedOnly && { isVerified: true }),
       // listing must have EVERY selected amenity, not just any one of them
       ...(dto.amenityIds?.length && {
         AND: dto.amenityIds.map((amenityId) => ({
@@ -155,6 +167,21 @@ export class RoomsService {
       orderBy: { createdAt: 'desc' },
       include: COVER_IMAGE_INCLUDE,
     });
+  }
+
+  /** Distinct districts of active listings (optionally within one city). */
+  async listDistricts(city?: string): Promise<string[]> {
+    const rows = await this.prisma.room.findMany({
+      where: {
+        status: 'active',
+        deletedAt: null,
+        ...(city && { city }),
+      },
+      distinct: ['district'],
+      select: { district: true },
+      orderBy: { district: 'asc' },
+    });
+    return rows.map((r) => r.district).filter((d): d is string => !!d);
   }
 
   async update(userId: string, roomId: number, dto: UpdateRoomDto) {

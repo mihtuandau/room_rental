@@ -76,7 +76,7 @@ async function seedAmenities(): Promise<Amenity[]> {
     { name: 'Điều hòa', type: AmenityType.basic, icon: 'ac' },
     { name: 'Nóng lạnh', type: AmenityType.basic, icon: 'water-heater' },
     { name: 'Tủ lạnh', type: AmenityType.basic, icon: 'fridge' },
-    { name: 'Ban công', type: AmenityType.basic, icon: 'balcony' },
+    { name: 'Ban công', type: AmenityType.basic, icon: 'balcony' }, 
     { name: 'Nội thất đầy đủ', type: AmenityType.basic, icon: 'furniture' },
     { name: 'Cho nuôi thú cưng', type: AmenityType.basic, icon: 'pet' },
     { name: 'Máy giặt', type: AmenityType.utility, icon: 'washing-machine' },
@@ -112,6 +112,8 @@ interface SeedRoom {
   city: string;
   district: string;
   ward?: string;
+  latitude: number;
+  longitude: number;
   description: string;
   status: RoomStatus;
   isVerified: boolean;
@@ -126,6 +128,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 20,
     city: 'Hồ Chí Minh',
     district: 'Quận 10',
+    latitude: 10.7729,
+    longitude: 106.6669,
     description: 'Phòng sạch sẽ, an ninh, giờ giấc tự do, gần trường đại học.',
     status: RoomStatus.active,
     isVerified: true,
@@ -140,6 +144,8 @@ const SEED_ROOMS: SeedRoom[] = [
     bathrooms: 2,
     city: 'Hồ Chí Minh',
     district: 'Bình Thạnh',
+    latitude: 10.8106,
+    longitude: 106.7091,
     description: 'Nhà riêng, có sân trước, phù hợp gia đình hoặc ở ghép.',
     status: RoomStatus.active,
     isVerified: true,
@@ -154,6 +160,8 @@ const SEED_ROOMS: SeedRoom[] = [
     bathrooms: 1,
     city: 'Hồ Chí Minh',
     district: 'Quận 7',
+    latitude: 10.734,
+    longitude: 106.7215,
     description: 'Toà nhà có thang máy, bảo vệ 24/7, nội thất đầy đủ.',
     status: RoomStatus.active,
     isVerified: true,
@@ -166,6 +174,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 28,
     city: 'Hồ Chí Minh',
     district: 'Tân Bình',
+    latitude: 10.8014,
+    longitude: 106.6526,
     description: 'Điện nước theo giá nhà nước, ra vào bằng vân tay.',
     status: RoomStatus.active,
     isVerified: false,
@@ -178,6 +188,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 15,
     city: 'Hồ Chí Minh',
     district: 'Thủ Đức',
+    latitude: 10.8497,
+    longitude: 106.7717,
     description: 'Phù hợp sinh viên, ở ghép 2-3 người, gần chợ.',
     status: RoomStatus.active,
     isVerified: false,
@@ -190,6 +202,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 22,
     city: 'Hồ Chí Minh',
     district: 'Gò Vấp',
+    latitude: 10.8386,
+    longitude: 106.6656,
     description: 'Phòng mới 100%, nội thất cơ bản, an ninh tốt.',
     status: RoomStatus.active,
     isVerified: true,
@@ -202,6 +216,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 25,
     city: 'Hồ Chí Minh',
     district: 'Thủ Đức',
+    latitude: 10.851,
+    longitude: 106.755,
     description: 'Thuận tiện đi lại, gần bệnh viện và trường học.',
     status: RoomStatus.pending, // demo: awaiting admin review
     isVerified: false,
@@ -214,6 +230,8 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 24,
     city: 'Hồ Chí Minh',
     district: 'Bình Tân',
+    latitude: 10.7654,
+    longitude: 106.603,
     description: 'Chủ nhà dễ tính, cho nuôi chó mèo, không chung chủ.',
     status: RoomStatus.pending, // demo: awaiting admin review
     isVerified: false,
@@ -230,7 +248,11 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
 
     const room = await prisma.room.upsert({
       where: { slug },
-      update: {},
+      // apply coordinates to rooms seeded before they had any
+      update: {
+        latitude: roomData.latitude,
+        longitude: roomData.longitude,
+      },
       create: {
         ...roomData,
         slug,
@@ -248,19 +270,20 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
       }),
     ]);
 
-    // placeholder cover image — not a real Cloudinary asset, just enough for the
-    // frontend to render a thumbnail in dev. Skip if this room already has one.
-    const hasImage = await prisma.roomImage.findFirst({ where: { roomId: room.id } });
-    if (!hasImage) {
-      await prisma.roomImage.create({
-        data: {
-          roomId: room.id,
-          key: `seed/placeholder-${room.id}`,
-          url: `https://picsum.photos/seed/room-${room.id}/800/600`,
-          isCover: true,
-        },
-      });
-    }
+    // placeholder gallery — not real Cloudinary assets, just enough for the
+    // frontend's bento gallery (needs 5+ photos) to render in dev. Idempotent:
+    // replace the full set every run, same as the amenity assignments above.
+    const IMAGES_PER_ROOM = 7;
+    await prisma.roomImage.deleteMany({ where: { roomId: room.id } });
+    await prisma.roomImage.createMany({
+      data: Array.from({ length: IMAGES_PER_ROOM }, (_, i) => ({
+        roomId: room.id,
+        key: `seed/placeholder-${room.id}-${i}`,
+        url: `https://picsum.photos/seed/room-${room.id}-${i}/800/600`,
+        isCover: i === 0,
+        position: i,
+      })),
+    });
   }
 }
 
