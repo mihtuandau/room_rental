@@ -9,14 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { useProfile } from '@/features/users/hooks';
 
-/** A short, curated subset of ROOM_TYPE_OPTIONS — enough to be useful as quick
- * links without crowding the header; the full list lives in the filters. */
-const NAV_CATEGORIES = [
-  { href: '/?roomType=boarding_house', label: 'Phòng trọ' },
-  { href: '/?roomType=whole_house', label: 'Nhà nguyên căn' },
-  { href: '/?roomType=mini_apartment', label: 'Chung cư mini' },
-];
-
 export function Header() {
   const pathname = usePathname();
   const isSignedIn = useIsSignedIn();
@@ -29,7 +21,8 @@ export function Header() {
 
   // Two modes, not two accounts: any signed-in user both searches and posts.
   const inManageMode = pathname.startsWith('/manage');
-  // Home already has the hero search bar — a header one there is redundant.
+  // Home already has the hero search bar — a header one there is redundant
+  // (its own "Tìm kiếm" button already goes to the same expanded results).
   const isHome = pathname === '/';
 
   return (
@@ -41,33 +34,6 @@ export function Header() {
         >
           <Image src="/logo.png" alt="Trọ Ơi" width={44} height={44} priority className="h-11 w-11" />
         </Link>
-
-        {!inManageMode && (
-          <nav
-            aria-label="Danh mục"
-            className="hidden items-center gap-5 text-sm text-zinc-600 lg:flex"
-          >
-            <Link
-              href="/"
-              className={
-                isHome
-                  ? 'font-medium text-zinc-900'
-                  : 'transition-colors hover:text-zinc-900'
-              }
-            >
-              Tìm phòng
-            </Link>
-            {NAV_CATEGORIES.map((c) => (
-              <Link
-                key={c.href}
-                href={c.href}
-                className="transition-colors hover:text-zinc-900"
-              >
-                {c.label}
-              </Link>
-            ))}
-          </nav>
-        )}
 
         {/* On non-home pages, a search field doubles as a link back to the
             home search — home itself already has the hero search bar. */}
