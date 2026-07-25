@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, MessageCircle, Home, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { Pencil, PlusCircle, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -53,19 +53,6 @@ export function MyListingsView() {
     );
   }
 
-  // Real, not fabricated: summed straight from each room's own counters —
-  // no trend chart or activity feed here, since the backend only tracks a
-  // single cumulative counter per room, not a day-by-day history.
-  const totalViews = rooms.reduce((sum, r) => sum + r.viewCount, 0);
-  const totalContacts = rooms.reduce((sum, r) => sum + r.contactCount, 0);
-  const activeCount = rooms.filter((r) => r.status === 'active').length;
-
-  const topViewed = [...rooms].sort((a, b) => b.viewCount - a.viewCount).slice(0, 5);
-  const maxViews = Math.max(...topViewed.map((r) => r.viewCount), 1);
-  const recentRooms = [...rooms]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 4);
-
   const filtered = rooms.filter((r) => {
     const matchesKeyword = r.title.toLowerCase().includes(keyword.trim().toLowerCase());
     const matchesStatus = statusFilter === ALL_STATUS || r.status === statusFilter;
@@ -76,185 +63,110 @@ export function MyListingsView() {
   const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={Eye} label="Tổng lượt xem" value={totalViews.toLocaleString('vi-VN')} />
-        <StatCard
-          icon={MessageCircle}
-          label="Tổng lượt liên hệ"
-          value={totalContacts.toLocaleString('vi-VN')}
-        />
-        <StatCard icon={Home} label="Tin đang hiển thị" value={`${activeCount} / ${rooms.length}`} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5 lg:col-span-2">
-          <h2 className="text-lg font-semibold">Lượt xem theo tin đăng</h2>
-          <div className="mt-4 space-y-3">
-            {topViewed.map((room) => (
-              <div key={room.id} className="space-y-1">
-                <div className="flex items-center justify-between gap-4 text-sm">
-                  <span className="truncate text-zinc-700">{room.title}</span>
-                  <span className="shrink-0 font-medium text-zinc-900">
-                    {room.viewCount.toLocaleString('vi-VN')}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-zinc-100">
-                  <div
-                    className="h-2 rounded-full bg-brand-600"
-                    style={{ width: `${(room.viewCount / maxViews) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-          <h2 className="text-lg font-semibold">Tin đăng gần đây</h2>
-          <ul className="mt-4 space-y-4">
-            {recentRooms.map((room) => (
-              <li key={room.id} className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900">{room.title}</p>
-                  <p className="text-xs text-zinc-500">
-                    {new Date(room.createdAt).toLocaleDateString('vi-VN')}
-                  </p>
-                </div>
-                <RoomStatusBadge status={room.status} className="shrink-0" />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-        <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="font-semibold">Tin đăng của tôi</h2>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
-                aria-hidden
-              />
-              <Input
-                value={keyword}
-                onChange={(e) => {
-                  setKeyword(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Tìm theo tên tin đăng…"
-                aria-label="Tìm theo tên tin đăng"
-                className="pl-9 sm:w-56"
-              />
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => {
-                setStatusFilter(v);
+    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-semibold">Tin đăng của tôi</h2>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+              aria-hidden
+            />
+            <Input
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value);
                 setPage(1);
               }}
-            >
-              <SelectTrigger aria-label="Lọc theo trạng thái" className="sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_STATUS}>Tất cả trạng thái</SelectItem>
-                {Object.entries(ROOM_STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button asChild>
-              <Link href="/manage/listings/new">
-                <PlusCircle className="h-4 w-4" aria-hidden />
-                Đăng tin mới
-              </Link>
-            </Button>
+              placeholder="Tìm theo tên tin đăng…"
+              aria-label="Tìm theo tên tin đăng"
+              className="pl-9 sm:w-56"
+            />
           </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger aria-label="Lọc theo trạng thái" className="sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_STATUS}>Tất cả trạng thái</SelectItem>
+              {Object.entries(ROOM_STATUS_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button asChild>
+            <Link href="/manage/listings/new">
+              <PlusCircle className="h-4 w-4" aria-hidden />
+              Đăng tin mới
+            </Link>
+          </Button>
         </div>
-
-        {filtered.length === 0 ? (
-          <EmptyState
-            title="Không tìm thấy tin đăng phù hợp"
-            description="Thử đổi từ khoá hoặc bộ lọc trạng thái."
-            className="py-12"
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="bg-brand-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  <tr>
-                    <th className="px-4 py-3">Tin đăng</th>
-                    <th className="px-4 py-3">Trạng thái</th>
-                    <th className="px-4 py-3">Ngày hiển thị</th>
-                    <th className="px-4 py-3">Lượt xem</th>
-                    <th className="px-4 py-3">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {paged.map((room) => (
-                    <RoomRow key={room.id} room={room} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600">
-              <p>
-                Hiển thị {(currentPage - 1) * PAGE_SIZE + 1}–
-                {Math.min(currentPage * PAGE_SIZE, filtered.length)} trong {filtered.length} tin
-                đăng
-              </p>
-              {totalPages > 1 && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage <= 1}
-                    onClick={() => setPage(currentPage - 1)}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setPage(currentPage + 1)}
-                  >
-                    Sau
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
-    </div>
-  );
-}
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Eye;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-5">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-        <Icon className="h-5 w-5" aria-hidden />
-      </span>
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
-        <p className="text-xl font-semibold text-zinc-900">{value}</p>
-      </div>
+      {filtered.length === 0 ? (
+        <EmptyState
+          title="Không tìm thấy tin đăng phù hợp"
+          description="Thử đổi từ khoá hoặc bộ lọc trạng thái."
+          className="py-12"
+        />
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="bg-brand-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Tin đăng</th>
+                  <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3">Ngày hiển thị</th>
+                  <th className="px-4 py-3">Lượt xem</th>
+                  <th className="px-4 py-3">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {paged.map((room) => (
+                  <RoomRow key={room.id} room={room} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600">
+            <p>
+              Hiển thị {(currentPage - 1) * PAGE_SIZE + 1}–
+              {Math.min(currentPage * PAGE_SIZE, filtered.length)} trong {filtered.length} tin
+              đăng
+            </p>
+            {totalPages > 1 && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  Trước
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -358,18 +270,5 @@ function RoomRow({ room }: { room: MyRoomItem }) {
 }
 
 function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {Array.from({ length: 3 }, (_, i) => (
-          <Skeleton key={i} className="h-[76px] w-full rounded-xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Skeleton className="h-48 w-full rounded-lg lg:col-span-2" />
-        <Skeleton className="h-48 w-full rounded-lg" />
-      </div>
-      <Skeleton className="h-96 w-full rounded-xl" />
-    </div>
-  );
+  return <Skeleton className="h-96 w-full rounded-xl" />;
 }

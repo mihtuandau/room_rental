@@ -150,6 +150,8 @@ export interface MyRoomItem {
   createdAt: string;
   /** Set the moment admin approval flips status to 'active'; null otherwise. */
   publishedAt: string | null;
+  /** Set only by an admin (see admin-rooms.service.ts's setVerified) — landlords can't self-verify. */
+  isVerified: boolean;
   viewCount: number;
   contactCount: number;
   images: { url: string }[];
@@ -202,6 +204,7 @@ export interface MyRoomDetail {
   ward: string | null;
   address: string | null;
   status: RoomStatus;
+  updatedAt: string;
   images: RoomImage[];
   amenities: RoomAmenity[];
 }

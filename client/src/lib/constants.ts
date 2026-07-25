@@ -28,6 +28,16 @@ export const ROOM_STATUS_LABELS = {
 
 export type RoomStatus = keyof typeof ROOM_STATUS_LABELS;
 
+/** Shown on the edit page's read-only status card — landlords can't change status themselves. */
+export const ROOM_STATUS_DESCRIPTIONS: Record<RoomStatus, string> = {
+  draft: 'Chưa đăng, chỉ mình bạn thấy.',
+  pending: 'Đang chờ admin kiểm duyệt trước khi hiển thị công khai.',
+  active: 'Đang hiển thị công khai với người thuê tiềm năng.',
+  hidden: 'Đã bị ẩn khỏi kết quả tìm kiếm.',
+  rejected: 'Admin đã từ chối tin đăng này.',
+  expired: 'Tin đăng đã hết hạn hiển thị.',
+};
+
 export const REPORT_REASON_LABELS = {
   fake_listing: 'Tin giả',
   wrong_info: 'Sai thông tin',

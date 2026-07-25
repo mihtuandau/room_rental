@@ -72,9 +72,14 @@ export function useUpdateRoom(id: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateRoomInput) => updateRoom(id, input),
-    onSuccess: (room) => {
-      qc.setQueryData(roomKeys.mineDetail(id), room);
+    // PATCH /rooms/:id returns the updated room WITHOUT images/amenities (no
+    // `include` on that Prisma call) — writing it straight into the
+    // mineDetail cache would leave `.images`/`.amenities` undefined and crash
+    // any component still reading it. Invalidate instead so both refetch the
+    // full shape from GET /rooms/mine/:id.
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: roomKeys.mine() });
+      qc.invalidateQueries({ queryKey: roomKeys.mineDetail(id) });
     },
   });
 }

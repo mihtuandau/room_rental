@@ -15,9 +15,9 @@ export default function MyListingsPage() {
           only shown here on mobile, where that button is hidden for space. */}
       <BackButton label="Về trang tìm phòng" className="mb-4 sm:hidden" />
       <div className="mb-6 space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Tổng quan tin đăng</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Tin đăng của tôi</h1>
         <p className="text-sm text-zinc-600">
-          Quản lý tin đăng và theo dõi hiệu quả tiếp cận người thuê.
+          Tìm kiếm, lọc và quản lý toàn bộ tin đăng bạn đã đăng.
         </p>
       </div>
       <MyListingsView />

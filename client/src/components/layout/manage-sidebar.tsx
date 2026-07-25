@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, LogOut, Settings, ShieldCheck, UserRound } from 'lucide-react';
+import { LayoutDashboard, LayoutGrid, LogOut, Settings, ShieldCheck, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLogout } from '@/features/auth/hooks';
 import { useProfile } from '@/features/users/hooks';
 
-// Only two real destinations exist under /manage — a nav item pointing
+// Only three real destinations exist under /manage — a nav item pointing
 // nowhere reads as an abandoned dashboard, so this list stays short rather
 // than mirroring every section a bigger property-management product might have.
 const NAV_ITEMS = [
+  { href: '/manage/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/manage/listings', label: 'Tin của tôi', icon: LayoutGrid },
   { href: '/manage/account', label: 'Tài khoản', icon: Settings },
 ];
