@@ -7,6 +7,7 @@ import { ArrowLeft, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
+import { useProfile } from '@/features/users/hooks';
 
 /** A short, curated subset of ROOM_TYPE_OPTIONS — enough to be useful as quick
  * links without crowding the header; the full list lives in the filters. */
@@ -22,6 +23,9 @@ export function Header() {
   // false until the refresh call settles — rendering "Đăng nhập" before then
   // would flash the wrong state at every signed-in user on every reload
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
+  // Only fetched once signed in — avatarUrl is the one bit of profile data
+  // worth showing globally, everything else stays on the account page itself.
+  const { data: profile } = useProfile();
 
   // Two modes, not two accounts: any signed-in user both searches and posts.
   const inManageMode = pathname.startsWith('/manage');
@@ -102,17 +106,39 @@ export function Header() {
           )}
 
           <Button className="hidden sm:inline-flex" asChild>
-            <Link href="/manage/listings/new">Đăng tin</Link>
+            {/* /manage/* is also gated at the edge by middleware.ts, but that's
+                a coarse cookie check — this client-side redirect is what
+                actually fires reliably regardless of environment quirks there. */}
+            <Link
+              href={
+                isSignedIn
+                  ? '/manage/listings/new'
+                  : `/login?next=${encodeURIComponent('/manage/listings/new')}`
+              }
+            >
+              Đăng tin
+            </Link>
           </Button>
 
           {!isBootstrapped ? (
             <Skeleton className="h-10 w-10 rounded-full" />
           ) : isSignedIn ? (
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/manage/account" aria-label="Tài khoản của bạn">
+            <Link
+              href="/manage/account"
+              aria-label="Tài khoản của bạn"
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+            >
+              {profile?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote host (Cloudinary), see upload-image-cloudinary skill
+                <img
+                  src={profile.avatarUrl}
+                  alt=""
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
                 <UserRound className="h-5 w-5" />
-              </Link>
-            </Button>
+              )}
+            </Link>
           ) : (
             <Button variant="ghost" asChild>
               <Link href="/login">Đăng nhập</Link>

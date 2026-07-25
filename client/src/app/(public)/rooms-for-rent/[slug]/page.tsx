@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { RoomGrid } from '@/components/rooms/room-card';
@@ -54,6 +55,16 @@ export default async function AreaLandingPage({ params, searchParams }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      {/* A plain Link, not the client BackButton — this page is often an entry
+          point (Google, the footer), so there may be no in-app history to
+          go back to. */}
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-1.5 rounded-md text-sm text-zinc-600 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Tất cả tin đăng
+      </Link>
       <h1 className="text-2xl font-semibold tracking-tight">Phòng trọ {area.label}</h1>
       <p className="mt-2 max-w-2xl text-sm text-zinc-600">
         Danh sách phòng trọ, nhà nguyên căn và chung cư mini tại {area.label}. Mọi tin

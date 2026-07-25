@@ -1,5 +1,5 @@
 import { apiRequest } from '@/lib/api-client';
-import type { AmenityType, RoomType } from '@/lib/constants';
+import type { AmenityType, RoomStatus, RoomType } from '@/lib/constants';
 import type { RoomCardItem } from '@/components/rooms/room-card';
 
 export interface RoomImage {
@@ -104,4 +104,73 @@ export function buildSearchQuery(params: SearchParams) {
 
 export function fetchRooms(params: SearchParams) {
   return apiRequest<RoomSearchResult>(`/rooms?${buildSearchQuery(params)}`);
+}
+
+/** Mirrors the backend's CreateRoomDto. */
+export interface CreateRoomInput {
+  title: string;
+  description?: string;
+  roomType: RoomType;
+  price: number;
+  area?: number;
+  deposit?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  maxOccupants?: number;
+  city: string;
+  district: string;
+  ward?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface CreatedRoom {
+  id: number;
+  slug: string;
+}
+
+export function createRoom(input: CreateRoomInput) {
+  return apiRequest<CreatedRoom>('/rooms', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+/** One of the current user's own listings, any status — GET /rooms/mine. */
+export interface MyRoomItem {
+  id: number;
+  title: string;
+  slug: string;
+  status: RoomStatus;
+  roomType: RoomType;
+  price: number;
+  city: string;
+  district: string;
+  createdAt: string;
+  images: { url: string }[];
+}
+
+export function fetchMyRooms() {
+  return apiRequest<MyRoomItem[]>('/rooms/mine');
+}
+
+/** Replaces the listing's full amenity set. */
+export function setRoomAmenities(roomId: number, amenityIds: number[]) {
+  return apiRequest<{ success: boolean }>(`/rooms/${roomId}/amenities`, {
+    method: 'PUT',
+    body: JSON.stringify({ amenityIds }),
+  });
+}
+
+/** Persists an image after it's been uploaded directly to Cloudinary (see upload-image-cloudinary skill). */
+export function confirmRoomImage(
+  roomId: number,
+  image: { public_id: string; secure_url: string },
+  isCover = false,
+) {
+  return apiRequest<RoomImage>(`/rooms/${roomId}/images/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ key: image.public_id, url: image.secure_url, isCover }),
+  });
 }

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
 import { ConfirmImageDto } from './dto/confirm-image.dto';
+import { SetAmenitiesDto } from './dto/set-amenities.dto';
 
 @ApiTags('rooms')
 @Controller('rooms')
@@ -93,6 +95,18 @@ export class RoomsController {
     @Body() dto: ConfirmImageDto,
   ) {
     return this.roomsService.addImage(userId, Number(id), dto);
+  }
+
+  @Put(':id/amenities')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Replace a listing's amenity set" })
+  setAmenities(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: SetAmenitiesDto,
+  ) {
+    return this.roomsService.setAmenities(userId, Number(id), dto.amenityIds);
   }
 
   @Delete(':id/images/:imageId')

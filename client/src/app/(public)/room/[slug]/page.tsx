@@ -5,6 +5,7 @@ import { serverFetch } from '@/lib/server-api';
 import { formatPrice, formatPriceShort } from '@/lib/utils';
 import { AMENITY_TYPE_LABELS, ROOM_TYPE_LABELS, type AmenityType } from '@/lib/constants';
 import type { RoomDetail } from '@/features/rooms/api';
+import { BackButton } from '@/components/ui/back-button';
 import { RoomGallery } from '@/components/rooms/room-gallery';
 import { RoomLocationMap } from '@/components/rooms/room-location-map';
 import { RoomContactCard } from '@/components/rooms/room-contact-card';
@@ -97,6 +98,8 @@ export default async function RoomDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      <BackButton label="Quay lại kết quả tìm kiếm" className="mb-4" />
 
       <RoomGallery title={room.title} images={room.images} isVerified={room.isVerified} />
 

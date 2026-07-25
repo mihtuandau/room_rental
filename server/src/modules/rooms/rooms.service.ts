@@ -218,6 +218,19 @@ export class RoomsService {
     });
   }
 
+  // Replaces the full amenity set (idempotent) rather than diffing — the form
+  // always submits the complete selected list, same pattern as the seed script.
+  async setAmenities(userId: string, roomId: number, amenityIds: number[]) {
+    const room = await this.findOwned(userId, roomId);
+    await this.prisma.$transaction([
+      this.prisma.roomAmenity.deleteMany({ where: { roomId: room.id } }),
+      this.prisma.roomAmenity.createMany({
+        data: amenityIds.map((amenityId) => ({ roomId: room.id, amenityId })),
+      }),
+    ]);
+    return { success: true };
+  }
+
   async removeImage(userId: string, roomId: number, imageId: string) {
     const room = await this.findOwned(userId, roomId);
     const image = await this.prisma.roomImage.findUnique({
