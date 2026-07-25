@@ -1,11 +1,16 @@
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createRoom,
+  deleteRoom,
+  deleteRoomImage,
+  fetchMyRoomDetail,
   fetchMyRooms,
   fetchRooms,
   revealContact,
   setRoomAmenities,
+  updateRoom,
   type SearchParams,
+  type UpdateRoomInput,
 } from './api';
 
 export const roomKeys = {
@@ -13,11 +18,20 @@ export const roomKeys = {
   search: (params: SearchParams) => [...roomKeys.all, 'search', params] as const,
   detail: (slug: string) => [...roomKeys.all, 'detail', slug] as const,
   mine: () => [...roomKeys.all, 'mine'] as const,
+  mineDetail: (id: number) => [...roomKeys.all, 'mine', id] as const,
 };
 
 /** The signed-in user's own listings, any status — powers "Tin của tôi". */
 export function useMyRooms() {
   return useQuery({ queryKey: roomKeys.mine(), queryFn: fetchMyRooms });
+}
+
+/** Full detail of one of the caller's own listings, any status — powers the edit form. */
+export function useMyRoomDetail(id: number) {
+  return useQuery({
+    queryKey: roomKeys.mineDetail(id),
+    queryFn: () => fetchMyRoomDetail(id),
+  });
 }
 
 export function useRoomsSearch(params: SearchParams) {
@@ -51,5 +65,34 @@ export function useSetRoomAmenities() {
   return useMutation({
     mutationFn: ({ roomId, amenityIds }: { roomId: number; amenityIds: number[] }) =>
       setRoomAmenities(roomId, amenityIds),
+  });
+}
+
+export function useUpdateRoom(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateRoomInput) => updateRoom(id, input),
+    onSuccess: (room) => {
+      qc.setQueryData(roomKeys.mineDetail(id), room);
+      qc.invalidateQueries({ queryKey: roomKeys.mine() });
+    },
+  });
+}
+
+export function useDeleteRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRoom,
+    onSuccess: () => qc.invalidateQueries({ queryKey: roomKeys.mine() }),
+  });
+}
+
+/** Deletes one image immediately (no staging) — the room already exists by
+ * the time this is used (the edit page), unlike the create form's flow. */
+export function useDeleteRoomImage(roomId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (imageId: string) => deleteRoomImage(roomId, imageId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: roomKeys.mineDetail(roomId) }),
   });
 }

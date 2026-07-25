@@ -1,22 +1,47 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { Eye, MessageCircle, Home, Pencil, PlusCircle, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { RoomStatusBadge } from '@/components/ui/badge';
-import { ROOM_TYPE_LABELS } from '@/lib/constants';
+import { ROOM_STATUS_LABELS, ROOM_TYPE_LABELS } from '@/lib/constants';
 import { formatPrice } from '@/lib/utils';
-import { useMyRooms } from '@/features/rooms/hooks';
+import { toast } from 'sonner';
+import { useDeleteRoom, useMyRooms } from '@/features/rooms/hooks';
 import type { MyRoomItem } from '@/features/rooms/api';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/200x150?text=Tro+Oi';
+const PAGE_SIZE = 8;
+const ALL_STATUS = '__all__';
 
 export function MyListingsView() {
   const { data: rooms, isPending, isError, refetch } = useMyRooms();
+  const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState(ALL_STATUS);
+  const [page, setPage] = useState(1);
 
-  if (isPending) return <ListSkeleton />;
+  if (isPending) return <DashboardSkeleton />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
   if (rooms.length === 0) {
     return (
@@ -28,69 +53,323 @@ export function MyListingsView() {
     );
   }
 
+  // Real, not fabricated: summed straight from each room's own counters —
+  // no trend chart or activity feed here, since the backend only tracks a
+  // single cumulative counter per room, not a day-by-day history.
+  const totalViews = rooms.reduce((sum, r) => sum + r.viewCount, 0);
+  const totalContacts = rooms.reduce((sum, r) => sum + r.contactCount, 0);
+  const activeCount = rooms.filter((r) => r.status === 'active').length;
+
+  const topViewed = [...rooms].sort((a, b) => b.viewCount - a.viewCount).slice(0, 5);
+  const maxViews = Math.max(...topViewed.map((r) => r.viewCount), 1);
+  const recentRooms = [...rooms]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 4);
+
+  const filtered = rooms.filter((r) => {
+    const matchesKeyword = r.title.toLowerCase().includes(keyword.trim().toLowerCase());
+    const matchesStatus = statusFilter === ALL_STATUS || r.status === statusFilter;
+    return matchesKeyword && matchesStatus;
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button asChild>
-          <Link href="/manage/listings/new">
-            <PlusCircle className="h-4 w-4" aria-hidden />
-            Đăng tin mới
-          </Link>
-        </Button>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon={Eye} label="Tổng lượt xem" value={totalViews.toLocaleString('vi-VN')} />
+        <StatCard
+          icon={MessageCircle}
+          label="Tổng lượt liên hệ"
+          value={totalContacts.toLocaleString('vi-VN')}
+        />
+        <StatCard icon={Home} label="Tin đang hiển thị" value={`${activeCount} / ${rooms.length}`} />
       </div>
 
-      <ul className="space-y-3">
-        {rooms.map((room) => (
-          <RoomRow key={room.id} room={room} />
-        ))}
-      </ul>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5 lg:col-span-2">
+          <h2 className="text-lg font-semibold">Lượt xem theo tin đăng</h2>
+          <div className="mt-4 space-y-3">
+            {topViewed.map((room) => (
+              <div key={room.id} className="space-y-1">
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="truncate text-zinc-700">{room.title}</span>
+                  <span className="shrink-0 font-medium text-zinc-900">
+                    {room.viewCount.toLocaleString('vi-VN')}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-zinc-100">
+                  <div
+                    className="h-2 rounded-full bg-brand-600"
+                    style={{ width: `${(room.viewCount / maxViews) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold">Tin đăng gần đây</h2>
+          <ul className="mt-4 space-y-4">
+            {recentRooms.map((room) => (
+              <li key={room.id} className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-zinc-900">{room.title}</p>
+                  <p className="text-xs text-zinc-500">
+                    {new Date(room.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+                <RoomStatusBadge status={room.status} className="shrink-0" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-semibold">Tin đăng của tôi</h2>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                aria-hidden
+              />
+              <Input
+                value={keyword}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Tìm theo tên tin đăng…"
+                aria-label="Tìm theo tên tin đăng"
+                className="pl-9 sm:w-56"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger aria-label="Lọc theo trạng thái" className="sm:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_STATUS}>Tất cả trạng thái</SelectItem>
+                {Object.entries(ROOM_STATUS_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button asChild>
+              <Link href="/manage/listings/new">
+                <PlusCircle className="h-4 w-4" aria-hidden />
+                Đăng tin mới
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <EmptyState
+            title="Không tìm thấy tin đăng phù hợp"
+            description="Thử đổi từ khoá hoặc bộ lọc trạng thái."
+            className="py-12"
+          />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-brand-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-3">Tin đăng</th>
+                    <th className="px-4 py-3">Trạng thái</th>
+                    <th className="px-4 py-3">Ngày hiển thị</th>
+                    <th className="px-4 py-3">Lượt xem</th>
+                    <th className="px-4 py-3">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {paged.map((room) => (
+                    <RoomRow key={room.id} room={room} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600">
+              <p>
+                Hiển thị {(currentPage - 1) * PAGE_SIZE + 1}–
+                {Math.min(currentPage * PAGE_SIZE, filtered.length)} trong {filtered.length} tin
+                đăng
+              </p>
+              {totalPages > 1 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Sau
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Eye;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-5">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+        <Icon className="h-5 w-5" aria-hidden />
+      </span>
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
+        <p className="text-xl font-semibold text-zinc-900">{value}</p>
+      </div>
     </div>
   );
 }
 
 function RoomRow({ room }: { room: MyRoomItem }) {
+  const deleteRoom = useDeleteRoom();
   // Only an active listing has a real public page — anything else 404s there,
   // since /room/[slug] only ever shows status: 'active' listings.
   const isViewable = room.status === 'active';
 
-  const content = (
-    <div className="flex items-center gap-4 rounded-lg border border-zinc-200 p-3 transition-colors hover:bg-zinc-50">
-      {/* eslint-disable-next-line @next/next/no-img-element -- remote/placeholder host, see room-card.tsx */}
-      <img
-        src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
-        alt=""
-        className="h-16 w-20 shrink-0 rounded-md object-cover"
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-sm font-medium">{room.title}</h3>
-          <RoomStatusBadge status={room.status} />
-        </div>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          {ROOM_TYPE_LABELS[room.roomType]} ·{' '}
-          {room.district}, {room.city}
-        </p>
-        <p className="mt-1 text-sm font-semibold text-zinc-900">
-          {formatPrice(room.price)}
-          <span className="font-normal text-zinc-500">/tháng</span>
-        </p>
-      </div>
-    </div>
-  );
+  const handleDelete = async () => {
+    try {
+      await deleteRoom.mutateAsync(room.id);
+      toast.success('Đã xoá tin đăng.');
+    } catch {
+      toast.error('Không xoá được tin đăng, thử lại nhé.');
+    }
+  };
 
   return (
-    <li>
-      {isViewable ? <Link href={`/room/${room.slug}`}>{content}</Link> : content}
-    </li>
+    <tr className="align-middle">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- remote/placeholder host, see room-card.tsx */}
+          <img
+            src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-md object-cover"
+          />
+          <div className="min-w-0">
+            {isViewable ? (
+              <Link
+                href={`/room/${room.slug}`}
+                className="block truncate font-medium text-zinc-900 hover:text-brand-700"
+              >
+                {room.title}
+              </Link>
+            ) : (
+              <p className="truncate font-medium text-zinc-900">{room.title}</p>
+            )}
+            <p className="truncate text-xs text-zinc-500">
+              {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city} ·{' '}
+              {formatPrice(room.price)}/tháng
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3">
+        <RoomStatusBadge status={room.status} />
+      </td>
+      <td className="whitespace-nowrap px-4 py-3 text-zinc-600">
+        {room.publishedAt ? new Date(room.publishedAt).toLocaleDateString('vi-VN') : '—'}
+      </td>
+      <td className="whitespace-nowrap px-4 py-3 text-zinc-600">
+        {room.viewCount.toLocaleString('vi-VN')}
+      </td>
+      <td className="whitespace-nowrap px-4 py-3">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={`/manage/listings/${room.id}/edit`} aria-label="Sửa tin đăng">
+              <Pencil className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Xoá tin đăng">
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Xoá tin đăng?</DialogTitle>
+              </DialogHeader>
+              <DialogBody>
+                <p className="text-sm text-zinc-600">
+                  Tin đăng &quot;{room.title}&quot; sẽ bị xoá và không thể khôi phục.
+                </p>
+              </DialogBody>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">
+                    Huỷ
+                  </Button>
+                </DialogClose>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={handleDelete}
+                  disabled={deleteRoom.isPending}
+                >
+                  {deleteRoom.isPending ? 'Đang xoá…' : 'Xoá tin đăng'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </td>
+    </tr>
   );
 }
 
-function ListSkeleton() {
+function DashboardSkeleton() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: 3 }, (_, i) => (
-        <Skeleton key={i} className="h-24 w-full rounded-lg" />
-      ))}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-[76px] w-full rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Skeleton className="h-48 w-full rounded-lg lg:col-span-2" />
+        <Skeleton className="h-48 w-full rounded-lg" />
+      </div>
+      <Skeleton className="h-96 w-full rounded-xl" />
     </div>
   );
 }

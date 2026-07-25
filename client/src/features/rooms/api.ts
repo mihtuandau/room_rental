@@ -148,6 +148,10 @@ export interface MyRoomItem {
   city: string;
   district: string;
   createdAt: string;
+  /** Set the moment admin approval flips status to 'active'; null otherwise. */
+  publishedAt: string | null;
+  viewCount: number;
+  contactCount: number;
   images: { url: string }[];
 }
 
@@ -173,4 +177,51 @@ export function confirmRoomImage(
     method: 'POST',
     body: JSON.stringify({ key: image.public_id, url: image.secure_url, isCover }),
   });
+}
+
+export function deleteRoomImage(roomId: number, imageId: string) {
+  return apiRequest<{ success: boolean }>(`/rooms/${roomId}/images/${imageId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** Full detail of one of the caller's own listings, any status — GET /rooms/mine/:id, powers the edit form. */
+export interface MyRoomDetail {
+  id: number;
+  title: string;
+  description: string | null;
+  roomType: RoomType;
+  price: number;
+  area: number | null;
+  deposit: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  maxOccupants: number | null;
+  city: string;
+  district: string;
+  ward: string | null;
+  address: string | null;
+  status: RoomStatus;
+  images: RoomImage[];
+  amenities: RoomAmenity[];
+}
+
+export function fetchMyRoomDetail(id: number) {
+  return apiRequest<MyRoomDetail>(`/rooms/mine/${id}`);
+}
+
+/** Mirrors the backend's UpdateRoomDto — every field of CreateRoomInput, all optional. */
+export type UpdateRoomInput = Partial<CreateRoomInput>;
+
+export function updateRoom(id: number, input: UpdateRoomInput) {
+  return apiRequest<MyRoomDetail>(`/rooms/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteRoom(id: number) {
+  // The backend returns the updated (soft-deleted) room, but callers only
+  // care that the call succeeded.
+  return apiRequest<unknown>(`/rooms/${id}`, { method: 'DELETE' });
 }

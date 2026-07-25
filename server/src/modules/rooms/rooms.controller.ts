@@ -44,6 +44,19 @@ export class RoomsController {
     return this.roomsService.findMine(userId);
   }
 
+  // Also before ":slug" (this has an extra segment so it wouldn't actually
+  // collide, but keeping every /mine route grouped together here).
+  @Get('mine/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Full detail of one of your own listings, any status — for editing',
+  })
+  findMineDetail(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.roomsService.findMineDetail(userId, Number(id));
+  }
+
   @Get(':slug')
   @ApiOperation({ summary: 'Public listing detail by slug' })
   findBySlug(@Param('slug') slug: string) {

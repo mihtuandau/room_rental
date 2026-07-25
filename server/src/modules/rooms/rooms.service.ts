@@ -177,6 +177,24 @@ export class RoomsService {
     });
   }
 
+  // Full detail (all images, amenities) of one of the caller's own listings,
+  // any status — powers the edit form. Unlike findActiveBySlug this doesn't
+  // touch viewCount; an owner opening their own edit page isn't a real view.
+  async findMineDetail(userId: string, roomId: number) {
+    const room = await this.findOwned(userId, roomId);
+    const full = await this.prisma.room.findUniqueOrThrow({
+      where: { id: room.id },
+      include: {
+        images: { orderBy: { position: 'asc' } },
+        amenities: { include: { amenity: true } },
+      },
+    });
+    return {
+      ...full,
+      amenities: full.amenities.map((ra) => ra.amenity),
+    };
+  }
+
   async update(userId: string, roomId: number, dto: UpdateRoomDto) {
     const room = await this.findOwned(userId, roomId);
     return this.prisma.room.update({ where: { id: room.id }, data: dto });
