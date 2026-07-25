@@ -51,6 +51,7 @@ export class AdminRoomsService {
     );
     // fire-and-forget: enqueueing is best-effort, never blocks/breaks approval
     await this.notificationsService.onRoomApproved(approved.id);
+    await this.notificationsService.notifyListingApproved(approved);
     return approved;
   }
 
@@ -59,13 +60,15 @@ export class AdminRoomsService {
     if (room.status !== RoomStatus.pending) {
       throw new BadRequestException('Only a pending listing can be rejected.');
     }
-    return this.transitionAndLog(
+    const rejected = await this.transitionAndLog(
       adminId,
       roomId,
       { status: RoomStatus.rejected },
       ModerationAction.rejected,
       note,
     );
+    await this.notificationsService.notifyListingRejected(rejected, note);
+    return rejected;
   }
 
   async hide(adminId: string, roomId: number, note?: string) {

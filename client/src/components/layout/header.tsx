@@ -3,11 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Search, UserRound } from 'lucide-react';
+import { ArrowLeft, Bell, Heart, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { useProfile } from '@/features/users/hooks';
+import { useFavorites } from '@/features/favorites/hooks';
+import { useNotifications } from '@/features/notifications/hooks';
 
 export function Header() {
   const pathname = usePathname();
@@ -18,6 +20,10 @@ export function Header() {
   // Only fetched once signed in — avatarUrl is the one bit of profile data
   // worth showing globally, everything else stays on the account page itself.
   const { data: profile } = useProfile();
+  const { data: favorites } = useFavorites();
+  const favoriteCount = favorites?.length ?? 0;
+  const { data: notifications } = useNotifications();
+  const unreadCount = notifications?.unreadCount ?? 0;
 
   // Two modes, not two accounts: any signed-in user both searches and posts.
   const inManageMode = pathname.startsWith('/manage');
@@ -35,19 +41,7 @@ export function Header() {
           <Image src="/logo.png" alt="Trọ Ơi" width={44} height={44} priority className="h-11 w-11" />
         </Link>
 
-        {/* On non-home pages, a search field doubles as a link back to the
-            home search — home itself already has the hero search bar. */}
-        {isHome ? (
-          <div className="flex-1" />
-        ) : (
-          <Link
-            href="/"
-            className="hidden h-10 flex-1 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:flex"
-          >
-            <Search className="h-4 w-4" aria-hidden />
-            Tìm theo khu vực, tên đường…
-          </Link>
-        )}
+        <div className="flex-1" />
 
         <div className="ml-auto flex items-center gap-2">
           {!isHome && (
@@ -58,6 +52,17 @@ export function Header() {
             </Button>
           )}
 
+          {isBootstrapped && isSignedIn && (
+            <>
+              <HeaderIconLink href="/notifications" label="Thông báo" count={unreadCount}>
+                <Bell className="h-5 w-5" aria-hidden />
+              </HeaderIconLink>
+              <HeaderIconLink href="/favorites" label="Tin đã lưu" count={favoriteCount}>
+                <Heart className="h-5 w-5" aria-hidden />
+              </HeaderIconLink>
+            </>
+          )}
+
           {inManageMode ? (
             <Button variant="outline" className="hidden sm:inline-flex" asChild>
               <Link href="/">
@@ -66,9 +71,12 @@ export function Header() {
               </Link>
             </Button>
           ) : (
-            <Button variant="outline" className="hidden sm:inline-flex" asChild>
-              <Link href="/manage/listings">Tin của tôi</Link>
-            </Button>
+            isBootstrapped &&
+            isSignedIn && (
+              <Button variant="outline" className="hidden sm:inline-flex" asChild>
+                <Link href="/manage/listings">Tin của tôi</Link>
+              </Button>
+            )
           )}
 
           <Button className="hidden sm:inline-flex" asChild>
@@ -113,5 +121,33 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function HeaderIconLink({
+  href,
+  label,
+  count,
+  children,
+}: {
+  href: string;
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button variant="ghost" size="icon" className="relative" asChild>
+      <Link href={href} aria-label={count > 0 ? `${label} (${count})` : label}>
+        {children}
+        {count > 0 && (
+          <span
+            aria-hidden
+            className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-semibold leading-none text-white"
+          >
+            {count > 99 ? '99+' : count}
+          </span>
+        )}
+      </Link>
+    </Button>
   );
 }

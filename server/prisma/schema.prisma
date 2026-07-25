@@ -14,7 +14,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
   // Both extensions ship with the postgis/postgis image used by
   // docker-compose.yml — a plain postgres install won't have postgis.
   extensions = [postgis, unaccent]
@@ -83,6 +83,12 @@ enum ModerationAction {
   expired
 }
 
+enum NotificationType {
+  listing_approved
+  listing_rejected
+  saved_search_match
+}
+
 enum AmenityType {
   basic
   utility
@@ -128,6 +134,7 @@ model User {
   reports         Report[]         @relation("ReportedBy")
   resolvedReports Report[]         @relation("ResolvedBy")
   moderations     RoomModeration[]
+  notifications   Notification[]
 
   @@index([role])
   @@map("users")
@@ -196,13 +203,14 @@ model Room {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
-  images      RoomImage[]
-  amenities   RoomAmenity[]
-  favorites   Favorite[]
-  contactLogs ContactLog[]
-  roomViews   RoomView[]
-  reports     Report[]
-  moderations RoomModeration[]
+  images        RoomImage[]
+  amenities     RoomAmenity[]
+  favorites     Favorite[]
+  contactLogs   ContactLog[]
+  roomViews     RoomView[]
+  reports       Report[]
+  moderations   RoomModeration[]
+  notifications Notification[]
 
   @@index([status])
   @@index([city, district])
@@ -335,6 +343,31 @@ model NotificationLog {
 
   @@unique([savedSearchId, roomId])
   @@map("notification_logs")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type  NotificationType
+  title String
+  body  String?
+
+  // Optional deep link — a listing-approved/rejected or saved-search-match
+  // notification always has one, but the model stays open for a future type
+  // that doesn't. SetNull, not Cascade: rooms are soft-deleted in practice, but
+  // if one ever is hard-deleted the notification should still be readable.
+  roomId Int?  @map("room_id")
+  room   Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  isRead Boolean @default(false) @map("is_read")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 
 model ContactLog {
