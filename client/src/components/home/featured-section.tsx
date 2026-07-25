@@ -7,7 +7,7 @@ import { formatPrice } from '@/lib/utils';
 import type { RoomCardItem } from '@/components/rooms/room-card';
 import type { RoomSearchResult } from '@/features/rooms/api';
 
-const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=RoomRent';
+const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=Tro+Oi';
 
 // "Nổi bật" has no curation flag of its own — verified-first is already the
 // backend's default ranking, so the highest-priced verified listings stand in

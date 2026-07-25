@@ -12,14 +12,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ProvinceOption } from '@/features/locations/api';
-import { useDistricts } from '@/features/locations/hooks';
+import { useWards } from '@/features/locations/hooks';
 import type { SearchState } from '@/features/rooms/search-params';
 
 // Radix Select forbids an empty item value, so "no filter" uses a sentinel.
 const ALL = '__all__';
 
 /**
- * The single, always-visible search surface: province → district → keyword. It
+ * The single, always-visible search surface: province → ward → keyword. It
  * writes the same URL state the results read, so it's editable right where the
  * results are — no jumping back to a hero. Price/type/area/amenities are the
  * "Bộ lọc" refinements, kept separate on purpose.
@@ -34,7 +34,8 @@ export function SearchToolbar({
   onChange: (patch: Partial<SearchState>) => void;
 }) {
   const [keyword, setKeyword] = useState(state.keyword);
-  const districts = useDistricts(state.city);
+  const cityCode = provinces.find((p) => p.value === state.city)?.code;
+  const wards = useWards(cityCode);
 
   const submitKeyword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +50,8 @@ export function SearchToolbar({
       <Select
         value={state.city || ALL}
         onValueChange={(v) =>
-          // Changing province invalidates the district, so clear it.
-          onChange({ city: v === ALL ? '' : v, district: '' })
+          // Changing province invalidates the ward, so clear it.
+          onChange({ city: v === ALL ? '' : v, ward: '' })
         }
       >
         <SelectTrigger
@@ -72,21 +73,21 @@ export function SearchToolbar({
       <span className="hidden h-6 w-px bg-zinc-200 sm:block" aria-hidden />
 
       <Select
-        value={state.district || ALL}
-        onValueChange={(v) => onChange({ district: v === ALL ? '' : v })}
+        value={state.ward || ALL}
+        onValueChange={(v) => onChange({ ward: v === ALL ? '' : v })}
         disabled={!state.city}
       >
         <SelectTrigger
           className="border-0 shadow-none sm:w-40"
-          aria-label="Quận, huyện"
+          aria-label="Phường, xã"
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>Tất cả quận/huyện</SelectItem>
-          {(districts.data ?? []).map((d) => (
-            <SelectItem key={d} value={d}>
-              {d}
+          <SelectItem value={ALL}>Tất cả phường/xã</SelectItem>
+          {(wards.data ?? []).map((w) => (
+            <SelectItem key={w} value={w}>
+              {w}
             </SelectItem>
           ))}
         </SelectContent>

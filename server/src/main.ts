@@ -30,7 +30,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('RoomRent API')
+    .setTitle('Trọ Ơi API')
     .setDescription('API for the room rental platform')
     .setVersion('1.0')
     .addBearerAuth()

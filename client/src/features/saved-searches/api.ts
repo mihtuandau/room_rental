@@ -5,6 +5,7 @@ import type { RoomType } from '@/lib/constants';
 export interface CreateSavedSearchInput {
   city?: string;
   district?: string;
+  ward?: string;
   roomType?: RoomType;
   priceMin?: number;
   priceMax?: number;

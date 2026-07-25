@@ -64,7 +64,7 @@ type ResultsView = 'list' | 'map';
 const CLEARED: Partial<SearchState> = {
   keyword: '',
   city: '',
-  district: '',
+  ward: '',
   roomType: null,
   priceMin: null,
   priceMax: null,
@@ -116,7 +116,7 @@ export function SearchView({
   const hasActiveFilters =
     !!state.keyword ||
     !!state.city ||
-    !!state.district ||
+    !!state.ward ||
     !!state.roomType ||
     state.priceMin !== null ||
     state.priceMax !== null ||
@@ -125,7 +125,7 @@ export function SearchView({
     state.verifiedOnly ||
     state.amenityIds.length > 0;
 
-  // Count only what lives inside the filter panel (keyword/city/district come
+  // Count only what lives inside the filter panel (keyword/city/ward come
   // from the toolbar above), so the mobile dialog's badge matches what it opens.
   const dialogFilterCount =
     (state.roomType ? 1 : 0) +
@@ -140,8 +140,8 @@ export function SearchView({
 
   // "Phòng trọ tại Quận 7, Hồ Chí Minh" when we know a place, otherwise a
   // generic heading matching whether any filter is actually narrowing results.
-  const resultsHeading = state.district
-    ? `Phòng trọ tại ${state.district}, ${state.city}`
+  const resultsHeading = state.ward
+    ? `Phòng trọ tại ${state.ward}, ${state.city}`
     : state.city
       ? `Phòng trọ tại ${state.city}`
       : hasActiveFilters
@@ -217,7 +217,7 @@ export function SearchView({
 
   return (
     <div id="ket-qua" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      {/* The one search surface: province → district → keyword, always visible. */}
+      {/* The one search surface: province → ward → keyword, always visible. */}
       <SearchToolbar state={state} provinces={provinces} onChange={applyFilter} />
 
       <div className="mt-6 lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">

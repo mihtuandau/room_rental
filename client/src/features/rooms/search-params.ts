@@ -24,7 +24,7 @@ export const PAGE_SIZE = 12;
 export const searchParsers = {
   keyword: parseAsString.withDefault(''),
   city: parseAsString.withDefault(''),
-  district: parseAsString.withDefault(''),
+  ward: parseAsString.withDefault(''),
   roomType: parseAsStringLiteral(ROOM_TYPE_VALUES),
   priceMin: parseAsInteger,
   priceMax: parseAsInteger,
@@ -44,7 +44,7 @@ export const searchParsers = {
 export interface SearchState {
   keyword: string;
   city: string;
-  district: string;
+  ward: string;
   roomType: RoomType | null;
   priceMin: number | null;
   priceMax: number | null;
@@ -66,7 +66,7 @@ export function toSearchParams(v: SearchState): SearchParams {
   return {
     keyword: v.keyword || undefined,
     city: v.city || undefined,
-    district: v.district || undefined,
+    ward: v.ward || undefined,
     roomType: v.roomType ?? undefined,
     priceMin: v.priceMin ?? undefined,
     priceMax: v.priceMax ?? undefined,
@@ -92,7 +92,7 @@ export function isSearchExpanded(v: SearchState): boolean {
     v.all ||
     !!v.keyword ||
     !!v.city ||
-    !!v.district ||
+    !!v.ward ||
     !!v.roomType ||
     v.priceMin !== null ||
     v.priceMax !== null ||

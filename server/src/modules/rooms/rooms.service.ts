@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '../../../generated/prisma/client';
 import { uniqueSlug } from '@/common/utils/slugify';
 import { CloudinaryService } from '../storage/cloudinary.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -66,21 +67,27 @@ export class RoomsService {
     // a parameterized raw query first, then apply the rest as normal Prisma filters.
     let keywordMatchedIds: number[] | undefined;
     if (dto.keyword?.trim()) {
-      const pattern = `%${dto.keyword.trim()}%`;
-      // Match the keyword against the listing text AND its location fields, so
-      // "Quận 7" or a street name finds rooms there — not only titles/descriptions.
-      const rows = await this.prisma.$queryRaw<{ id: number }[]>`
-        SELECT id FROM rooms
-        WHERE status = 'active' AND deleted_at IS NULL
-          AND (
-            unaccent(title) ILIKE unaccent(${pattern})
-            OR unaccent(coalesce(description, '')) ILIKE unaccent(${pattern})
-            OR unaccent(coalesce(district, '')) ILIKE unaccent(${pattern})
-            OR unaccent(coalesce(ward, '')) ILIKE unaccent(${pattern})
-            OR unaccent(coalesce(address, '')) ILIKE unaccent(${pattern})
-            OR unaccent(coalesce(city, '')) ILIKE unaccent(${pattern})
-          )
-      `;
+      // Matched as separate words (each word ANDed, found anywhere across the
+      // combined text) rather than one literal phrase — otherwise "phòng trọ
+      // quận 10" never matches, since no single field contains that exact
+      // string (the title has "phòng trọ", district has "Quận 10", never both).
+      const words = dto.keyword.trim().split(/\s+/).filter(Boolean);
+      const combinedText = Prisma.sql`unaccent(
+        title || ' ' || coalesce(description, '') || ' ' || coalesce(district, '')
+        || ' ' || coalesce(ward, '') || ' ' || coalesce(address, '') || ' ' || coalesce(city, '')
+      )`;
+      const wordConditions = words.map(
+        (word) =>
+          Prisma.sql`${combinedText} ILIKE unaccent(${'%' + word + '%'})`,
+      );
+
+      const rows = await this.prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`
+          SELECT id FROM rooms
+          WHERE status = 'active' AND deleted_at IS NULL
+            AND ${Prisma.join(wordConditions, ' AND ')}
+        `,
+      );
       keywordMatchedIds = rows.map((r) => r.id);
       if (keywordMatchedIds.length === 0) {
         return { rooms: [], total: 0, page, pageSize };
@@ -93,6 +100,7 @@ export class RoomsService {
       ...(keywordMatchedIds && { id: { in: keywordMatchedIds } }),
       ...(dto.city && { city: dto.city }),
       ...(dto.district && { district: dto.district }),
+      ...(dto.ward && { ward: dto.ward }),
       ...(dto.roomType && { roomType: dto.roomType }),
       ...((dto.priceMin ?? dto.priceMax) && {
         price: {
@@ -167,21 +175,6 @@ export class RoomsService {
       orderBy: { createdAt: 'desc' },
       include: COVER_IMAGE_INCLUDE,
     });
-  }
-
-  /** Distinct districts of active listings (optionally within one city). */
-  async listDistricts(city?: string): Promise<string[]> {
-    const rows = await this.prisma.room.findMany({
-      where: {
-        status: 'active',
-        deletedAt: null,
-        ...(city && { city }),
-      },
-      distinct: ['district'],
-      select: { district: true },
-      orderBy: { district: 'asc' },
-    });
-    return rows.map((r) => r.district).filter((d): d is string => !!d);
   }
 
   async update(userId: string, roomId: number, dto: UpdateRoomDto) {

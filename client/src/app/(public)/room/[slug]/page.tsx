@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${room.title} — ${formatPriceShort(room.price)}/tháng, ${where}`,
     description:
       room.description?.slice(0, 155) ??
-      `${ROOM_TYPE_LABELS[room.roomType]} tại ${where}, tin đã kiểm duyệt trên RoomRent.`,
+      `${ROOM_TYPE_LABELS[room.roomType]} tại ${where}, tin đã kiểm duyệt trên Trọ Ơi.`,
     alternates: { canonical: `/room/${room.slug}` },
     openGraph: {
       title: room.title,

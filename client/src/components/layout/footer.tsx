@@ -1,5 +1,5 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { House } from 'lucide-react';
 
 /**
  * Only links to routes that exist (or are planned in this milestone) — a footer
@@ -29,12 +29,8 @@ export function Footer() {
     <footer className="mt-12 border-t border-zinc-200 sm:mt-16">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:grid-cols-[1.5fr_1fr_1fr] sm:px-6">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600 text-white">
-              <House className="h-4 w-4" aria-hidden />
-            </span>
-            RoomRent
-          </div>
+          <Image src="/logo.png" alt="Trọ Ơi" width={40} height={40} className="h-10 w-10" />
+
           <p className="max-w-prose text-sm text-zinc-600">
             Tìm phòng trọ, nhà nguyên căn và chung cư mini. Mọi tin đăng đều qua kiểm
             duyệt trước khi hiển thị.
@@ -62,7 +58,7 @@ export function Footer() {
 
       <div className="border-t border-zinc-100">
         <p className="mx-auto w-full max-w-6xl px-4 py-4 text-xs text-zinc-500 sm:px-6">
-          © {new Date().getFullYear()} RoomRent
+          © {new Date().getFullYear()} Trọ Ơi
         </p>
       </div>
     </footer>

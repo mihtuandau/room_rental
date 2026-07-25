@@ -32,7 +32,7 @@ export interface RoomCardItem {
   images: { url: string }[];
 }
 
-const PLACEHOLDER_IMAGE = 'https://placehold.co/400x300?text=RoomRent';
+export const PLACEHOLDER_IMAGE = 'https://placehold.co/400x300?text=Tro+Oi';
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // "Mới": posted within the last 3 days
 
 export function RoomCard({

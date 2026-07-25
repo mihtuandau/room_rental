@@ -4,7 +4,7 @@ import { ForgotPasswordForm } from '@/features/auth/components/forgot-password-f
 
 export const metadata: Metadata = {
   title: 'Quên mật khẩu',
-  description: 'Đặt lại mật khẩu RoomRent bằng mã xác minh gửi tới số điện thoại của bạn.',
+  description: 'Đặt lại mật khẩu Trọ Ơi bằng mã xác minh gửi tới số điện thoại của bạn.',
   robots: { index: false, follow: false },
 };
 

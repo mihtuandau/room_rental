@@ -138,7 +138,7 @@ export function RoomContactCard({
       </div>
 
       {/* Only claim what's actually true: the listing went through admin
-          moderation. No fabricated "secure payment/contract" system — RoomRent
+          moderation. No fabricated "secure payment/contract" system — Trọ Ơi
           doesn't have one in this MVP. */}
       {isVerified && (
         <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-4">
@@ -146,7 +146,7 @@ export function RoomContactCard({
           <div>
             <p className="text-sm font-semibold text-brand-900">Tin đăng đã xác minh</p>
             <p className="mt-0.5 text-xs text-brand-700">
-              Tin này đã qua kiểm duyệt của RoomRent trước khi hiển thị.
+              Tin này đã qua kiểm duyệt của Trọ Ơi trước khi hiển thị.
             </p>
           </div>
         </div>

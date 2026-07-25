@@ -76,7 +76,7 @@ async function seedAmenities(): Promise<Amenity[]> {
     { name: 'Điều hòa', type: AmenityType.basic, icon: 'ac' },
     { name: 'Nóng lạnh', type: AmenityType.basic, icon: 'water-heater' },
     { name: 'Tủ lạnh', type: AmenityType.basic, icon: 'fridge' },
-    { name: 'Ban công', type: AmenityType.basic, icon: 'balcony' }, 
+    { name: 'Ban công', type: AmenityType.basic, icon: 'balcony' },
     { name: 'Nội thất đầy đủ', type: AmenityType.basic, icon: 'furniture' },
     { name: 'Cho nuôi thú cưng', type: AmenityType.basic, icon: 'pet' },
     { name: 'Máy giặt', type: AmenityType.utility, icon: 'washing-machine' },
@@ -128,6 +128,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 20,
     city: 'Hồ Chí Minh',
     district: 'Quận 10',
+    ward: 'Hòa Hưng',
     latitude: 10.7729,
     longitude: 106.6669,
     description: 'Phòng sạch sẽ, an ninh, giờ giấc tự do, gần trường đại học.',
@@ -144,6 +145,7 @@ const SEED_ROOMS: SeedRoom[] = [
     bathrooms: 2,
     city: 'Hồ Chí Minh',
     district: 'Bình Thạnh',
+    ward: 'Bình Thạnh',
     latitude: 10.8106,
     longitude: 106.7091,
     description: 'Nhà riêng, có sân trước, phù hợp gia đình hoặc ở ghép.',
@@ -160,6 +162,7 @@ const SEED_ROOMS: SeedRoom[] = [
     bathrooms: 1,
     city: 'Hồ Chí Minh',
     district: 'Quận 7',
+    ward: 'Tân Hưng',
     latitude: 10.734,
     longitude: 106.7215,
     description: 'Toà nhà có thang máy, bảo vệ 24/7, nội thất đầy đủ.',
@@ -174,6 +177,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 28,
     city: 'Hồ Chí Minh',
     district: 'Tân Bình',
+    ward: 'Tân Bình',
     latitude: 10.8014,
     longitude: 106.6526,
     description: 'Điện nước theo giá nhà nước, ra vào bằng vân tay.',
@@ -188,6 +192,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 15,
     city: 'Hồ Chí Minh',
     district: 'Thủ Đức',
+    ward: 'Thủ Đức',
     latitude: 10.8497,
     longitude: 106.7717,
     description: 'Phù hợp sinh viên, ở ghép 2-3 người, gần chợ.',
@@ -202,6 +207,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 22,
     city: 'Hồ Chí Minh',
     district: 'Gò Vấp',
+    ward: 'Gò Vấp',
     latitude: 10.8386,
     longitude: 106.6656,
     description: 'Phòng mới 100%, nội thất cơ bản, an ninh tốt.',
@@ -216,6 +222,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 25,
     city: 'Hồ Chí Minh',
     district: 'Thủ Đức',
+    ward: 'Linh Xuân',
     latitude: 10.851,
     longitude: 106.755,
     description: 'Thuận tiện đi lại, gần bệnh viện và trường học.',
@@ -230,6 +237,7 @@ const SEED_ROOMS: SeedRoom[] = [
     area: 24,
     city: 'Hồ Chí Minh',
     district: 'Bình Tân',
+    ward: 'Bình Tân',
     latitude: 10.7654,
     longitude: 106.603,
     description: 'Chủ nhà dễ tính, cho nuôi chó mèo, không chung chủ.',
@@ -248,10 +256,11 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
 
     const room = await prisma.room.upsert({
       where: { slug },
-      // apply coordinates to rooms seeded before they had any
+      // backfill fields added after the room was first seeded
       update: {
         latitude: roomData.latitude,
         longitude: roomData.longitude,
+        ward: roomData.ward,
       },
       create: {
         ...roomData,
@@ -262,7 +271,9 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
     });
 
     // idempotent: replace the amenity set every run instead of accumulating duplicates
-    const amenityIds = amenityNames.map((name) => byName.get(name)?.id).filter((id): id is number => !!id);
+    const amenityIds = amenityNames
+      .map((name) => byName.get(name)?.id)
+      .filter((id): id is number => !!id);
     await prisma.$transaction([
       prisma.roomAmenity.deleteMany({ where: { roomId: room.id } }),
       prisma.roomAmenity.createMany({
@@ -290,7 +301,9 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
 async function main() {
   console.log('Seeding users...');
   const { admin, landlord, tenant } = await seedUsers();
-  console.log(`  admin=${admin.phone} landlord=${landlord.phone} tenant=${tenant.phone} (password: ${SEED_PASSWORD})`);
+  console.log(
+    `  admin=${admin.phone} landlord=${landlord.phone} tenant=${tenant.phone} (password: ${SEED_PASSWORD})`,
+  );
 
   console.log('Seeding amenity catalog...');
   const amenities = await seedAmenities();
@@ -298,7 +311,9 @@ async function main() {
 
   console.log('Seeding sample rooms...');
   await seedRooms(landlord.id, amenities);
-  console.log(`  ${SEED_ROOMS.length} rooms (2 left "pending" to populate the admin review queue)`);
+  console.log(
+    `  ${SEED_ROOMS.length} rooms (2 left "pending" to populate the admin review queue)`,
+  );
 
   console.log('Done.');
 }

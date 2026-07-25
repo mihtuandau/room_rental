@@ -89,6 +89,34 @@ export const PRICE_RANGE_OPTIONS = [
 
 export type PriceRangeValue = (typeof PRICE_RANGE_OPTIONS)[number]['value'];
 
+/**
+ * Area-landing pages (`/rooms-for-rent/<slug>`) — SEO entry points for a
+ * specific district, pre-filtered server-rendered lists distinct from the
+ * general search results. `city`/`district` must match the backend's stored
+ * values exactly (same rule as VN_CITY_OPTIONS above).
+ */
+export interface AreaLanding {
+  slug: string;
+  city: string;
+  district: string;
+  /** Shown in headings/metadata, e.g. "Quận 7, Hồ Chí Minh". */
+  label: string;
+}
+
+export const AREA_LANDINGS: AreaLanding[] = [
+  { slug: 'quan-7', city: 'Hồ Chí Minh', district: 'Quận 7', label: 'Quận 7, Hồ Chí Minh' },
+  {
+    slug: 'binh-thanh',
+    city: 'Hồ Chí Minh',
+    district: 'Bình Thạnh',
+    label: 'Bình Thạnh, Hồ Chí Minh',
+  },
+];
+
+export function findAreaLanding(slug: string): AreaLanding | undefined {
+  return AREA_LANDINGS.find((a) => a.slug === slug);
+}
+
 /** Backend caps listings at 10 images; the UI enforces it too. */
 export const MAX_IMAGES_PER_ROOM = 10;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;

@@ -6,7 +6,7 @@ import type { Map as MlMap, Marker } from 'maplibre-gl';
 import { formatPriceShort } from '@/lib/utils';
 import { OSM_STYLE } from '@/lib/map-style';
 import { ROOM_TYPE_LABELS } from '@/lib/constants';
-import type { RoomCardItem } from '@/components/rooms/room-card';
+import { PLACEHOLDER_IMAGE, type RoomCardItem } from '@/components/rooms/room-card';
 
 const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
 
@@ -94,14 +94,17 @@ export function ResultsMap({
         const el = document.createElement('button');
         el.type = 'button';
         el.className = 'rr-marker';
-        el.textContent = formatPriceShort(room.price);
+        el.innerHTML = `
+          <img class="rr-marker-photo" src="${escapeHtml(room.images[0]?.url ?? PLACEHOLDER_IMAGE)}" alt="" />
+          <span class="rr-marker-price">${escapeHtml(formatPriceShort(room.price))}</span>
+        `;
         el.addEventListener('mouseenter', () => onActivateRef.current?.(room.id));
         el.addEventListener('mouseleave', () => onActivateRef.current?.(null));
 
-        const popup = new Popup({ offset: 22, closeButton: false }).setHTML(
+        const popup = new Popup({ offset: 32, closeButton: false }).setHTML(
           popupHtml(room),
         );
-        const marker = new Marker({ element: el })
+        const marker = new Marker({ element: el, anchor: 'bottom' })
           .setLngLat([room.longitude as number, room.latitude as number])
           .setPopup(popup)
           .addTo(map);

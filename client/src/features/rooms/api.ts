@@ -67,6 +67,7 @@ export interface SearchParams {
   keyword?: string;
   city?: string;
   district?: string;
+  ward?: string;
   roomType?: RoomType;
   priceMin?: number;
   priceMax?: number;

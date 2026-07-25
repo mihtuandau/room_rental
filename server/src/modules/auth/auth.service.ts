@@ -168,7 +168,7 @@ export class AuthService {
       },
     });
     // send via SMS provider — never log the raw code in production
-    await this.sms.send(phone, `Your RoomRent verification code is: ${code}`);
+    await this.sms.send(phone, `Your Trọ Ơi verification code is: ${code}`);
   }
 
   async verifyOtp(phone: string, purpose: OtpPurpose, code: string) {

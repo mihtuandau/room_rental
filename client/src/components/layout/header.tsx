@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, House, Search, UserRound } from 'lucide-react';
+import { ArrowLeft, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
@@ -32,12 +33,9 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-md font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600 text-white">
-            <House className="h-4 w-4" aria-hidden />
-          </span>
-          RoomRent
+          <Image src="/logo.png" alt="Trọ Ơi" width={44} height={44} priority className="h-11 w-11" />
         </Link>
 
         {!inManageMode && (

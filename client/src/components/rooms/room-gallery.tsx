@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogBody, DialogContent } from '@/components/ui/dialog';
 import type { RoomImage } from '@/features/rooms/api';
 
-const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=RoomRent';
+const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=Tro+Oi';
 
 export function RoomGallery({
   title,
@@ -49,12 +49,12 @@ export function RoomGallery({
 
   return (
     <>
-      <div className="grid h-[420px] grid-cols-4 grid-rows-2 gap-3 overflow-hidden rounded-lg">
+      <div className="grid h-[420px] grid-cols-6 grid-rows-2 gap-3 overflow-hidden rounded-lg">
         <button
           type="button"
           onClick={() => openAt(0)}
           aria-label={`Xem ảnh 1/${ordered.length}`}
-          className="group relative col-span-2 row-span-2 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className="group relative col-span-4 row-span-2 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
           <img

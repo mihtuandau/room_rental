@@ -25,6 +25,13 @@ export class SearchRoomsDto {
 
   @ApiPropertyOptional() @IsOptional() @IsString() city?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() district?: string;
+  @ApiPropertyOptional({
+    description:
+      'Ward/commune (phường/xã) — a finer-grained filter than district',
+  })
+  @IsOptional()
+  @IsString()
+  ward?: string;
   @ApiPropertyOptional({ enum: RoomType })
   @IsOptional()
   @IsEnum(RoomType)
@@ -56,7 +63,8 @@ export class SearchRoomsDto {
   areaMax?: number;
 
   @ApiPropertyOptional({
-    description: 'Only return verified listings (still ranked verified-first either way)',
+    description:
+      'Only return verified listings (still ranked verified-first either way)',
   })
   @IsOptional()
   @Transform(({ value }: { value: string }) => value === 'true')

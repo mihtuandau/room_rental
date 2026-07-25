@@ -7,7 +7,7 @@ import { AuthDivider } from '@/features/auth/components/auth-divider';
 
 export const metadata: Metadata = {
   title: 'Đăng ký',
-  description: 'Tạo tài khoản RoomRent để lưu tin và đăng tin cho thuê.',
+  description: 'Tạo tài khoản Trọ Ơi để lưu tin và đăng tin cho thuê.',
   robots: { index: false, follow: false },
 };
 
@@ -38,7 +38,7 @@ export default function RegisterPage() {
       </Suspense>
 
       <p className="text-center text-xs text-zinc-500">
-        Khi đăng ký, bạn đồng ý với điều khoản sử dụng của RoomRent.
+        Khi đăng ký, bạn đồng ý với điều khoản sử dụng của Trọ Ơi.
       </p>
     </div>
   );

@@ -2,7 +2,7 @@
 
 @theme {
   /* Brand — primary actions and the "verified" trust signal.
-     Competitors lean on orange/red urgency; RoomRent stays calm and credible. */
+     Competitors lean on orange/red urgency; Trọ Ơi stays calm and credible. */
   --color-brand-50: oklch(0.97 0.02 165);
   --color-brand-100: oklch(0.94 0.04 165);
   --color-brand-500: oklch(0.7 0.13 165);
@@ -36,32 +36,56 @@ body {
   color: var(--color-zinc-900);
 }
 
-/* Price markers on the results map. These sit on raw DOM elements created by
+/* Photo-pin markers on the results map: a room thumbnail with a price pill
+   overlapping its bottom edge. These sit on raw DOM elements created by
    MapLibre, not React, so they're styled here from the same tokens. */
 .rr-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.rr-marker-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-white);
+  box-shadow: var(--shadow-card);
+  object-fit: cover;
+  transition: transform 0.15s var(--ease-out-soft);
+}
+.rr-marker-price {
+  margin-top: -10px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
-  height: 28px;
-  padding: 0 10px;
+  padding: 0 8px;
   border-radius: var(--radius-full, 9999px);
   border: 1px solid var(--color-zinc-300);
   background: var(--color-white);
   box-shadow: var(--shadow-card);
-  font: 600 12.5px / 1 var(--font-sans);
+  font: 600 11px / 1 var(--font-sans);
   font-variant-numeric: tabular-nums;
   color: var(--color-zinc-900);
   white-space: nowrap;
-  cursor: pointer;
   transition:
-    transform 0.15s var(--ease-out-soft),
     background-color 0.15s,
-    color 0.15s;
+    color 0.15s,
+    border-color 0.15s;
 }
-.rr-marker:hover {
+.rr-marker:hover .rr-marker-photo {
   transform: scale(1.06);
 }
 .rr-marker.is-active {
   z-index: 2;
+}
+.rr-marker.is-active .rr-marker-photo {
+  border-color: var(--color-brand-600);
+}
+.rr-marker.is-active .rr-marker-price {
   border-color: var(--color-brand-600);
   background: var(--color-brand-600);
   color: var(--color-white);

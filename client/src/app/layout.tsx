@@ -11,8 +11,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000'),
   title: {
-    default: 'RoomRent — Tìm phòng trọ, tin đã xác minh',
-    template: '%s | RoomRent',
+    default: 'Trọ Ơi — Tìm phòng trọ, tin đã xác minh',
+    template: '%s | Trọ Ơi',
   },
   description:
     'Tìm phòng trọ, nhà nguyên căn, chung cư mini với tin đăng đã được kiểm duyệt. Cập nhật mỗi ngày.',

@@ -98,7 +98,7 @@ export function FilterPanel({ state, amenities, onChange, onClear }: FilterPanel
     createSavedSearch.mutate(
       {
         city: state.city || undefined,
-        district: state.district || undefined,
+        ward: state.ward || undefined,
         roomType: state.roomType ?? undefined,
         priceMin: state.priceMin ?? undefined,
         priceMax: state.priceMax ?? undefined,

@@ -52,7 +52,7 @@ export function HomeHero({ provinces }: { provinces: ProvinceOption[] }) {
     const range = PRICE_RANGE_OPTIONS.find((p) => p.value === priceRangeValue);
     setUrlState({
       city,
-      district: '', // a district from a previous search may not exist in the new city
+      ward: '', // a ward from a previous search may not exist in the new city
       roomType,
       priceMin: range?.priceMin ?? null,
       priceMax: range?.priceMax ?? null,
