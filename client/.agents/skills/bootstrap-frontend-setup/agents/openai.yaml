@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bootstrap Frontend Setup"
+  short_description: "Set up the RoomRent frontend foundation"
+  default_prompt: "Use $bootstrap-frontend-setup to initialize or repair the RoomRent frontend foundation."

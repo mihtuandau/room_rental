@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add React Query Hook"
+  short_description: "Build RoomRent server-state hooks"
+  default_prompt: "Use $add-react-query-hook to add a RoomRent query or mutation hook."

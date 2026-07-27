@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI State Patterns"
+  short_description: "Handle loading, empty, error, and denied"
+  default_prompt: "Use $ui-state-patterns to implement complete RoomRent data-screen states."

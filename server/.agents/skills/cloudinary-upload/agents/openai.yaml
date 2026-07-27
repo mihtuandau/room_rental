@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cloudinary Upload"
+  short_description: "Implement signed RoomRent image uploads"
+  default_prompt: "Use $cloudinary-upload to implement a secure signed Cloudinary upload flow."

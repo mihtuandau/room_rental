@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Map Search Experience"
+  short_description: "Build robust RoomRent MapLibre search"
+  default_prompt: "Use $build-map-search-experience to implement this RoomRent map or location-search change."

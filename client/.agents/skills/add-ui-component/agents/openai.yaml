@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add UI Component"
+  short_description: "Build shared RoomRent UI components"
+  default_prompt: "Use $add-ui-component to create a reusable RoomRent UI component."

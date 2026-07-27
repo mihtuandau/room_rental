@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Admin Moderation Flow"
+  short_description: "Build safe RoomRent moderation workflows"
+  default_prompt: "Use $build-admin-moderation-flow to implement this RoomRent admin moderation change."

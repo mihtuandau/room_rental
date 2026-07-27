@@ -13,8 +13,6 @@ export interface RoomOwner {
   id: string;
   fullName: string | null;
   avatarUrl: string | null;
-  contactPhone: string | null;
-  zaloUrl: string | null;
 }
 
 export interface RoomAmenity {

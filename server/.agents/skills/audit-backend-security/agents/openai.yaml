@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Backend Security"
+  short_description: "Audit RoomRent API security controls"
+  default_prompt: "Use $audit-backend-security to review this RoomRent backend change for security issues."

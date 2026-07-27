@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add BFF Proxy Route"
+  short_description: "Build secure Next.js BFF route handlers"
+  default_prompt: "Use $add-bff-proxy-route to implement a secure RoomRent BFF or authentication route."

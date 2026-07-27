@@ -1,0 +1,4 @@
+interface:
+  display_name: "RoomRent Design System"
+  short_description: "Apply RoomRent visual design tokens"
+  default_prompt: "Use $design-system to style a RoomRent interface consistently."

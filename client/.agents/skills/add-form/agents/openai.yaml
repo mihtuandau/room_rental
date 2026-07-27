@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Frontend Form"
+  short_description: "Build validated RoomRent frontend forms"
+  default_prompt: "Use $add-form to build a validated RoomRent form with mutation handling."

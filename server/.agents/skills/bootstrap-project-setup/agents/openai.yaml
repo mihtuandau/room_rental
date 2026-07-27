@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bootstrap Backend Setup"
+  short_description: "Set up the RoomRent NestJS foundation"
+  default_prompt: "Use $bootstrap-project-setup to initialize the RoomRent backend foundation."

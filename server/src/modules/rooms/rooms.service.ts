@@ -13,13 +13,12 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
 import { ConfirmImageDto } from './dto/confirm-image.dto';
 
-// Never select passwordHash/tokenVersion — only fields safe to show a tenant.
+// Public listing detail must not expose contact fields. Phone/Zalo are returned
+// only by ContactLogsService after authentication, rate limiting, and logging.
 const OWNER_PUBLIC_SELECT = {
   id: true,
   fullName: true,
   avatarUrl: true,
-  contactPhone: true,
-  zaloUrl: true,
 } as const;
 
 const COVER_IMAGE_INCLUDE = {

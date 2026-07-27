@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync API Contract"
+  short_description: "Keep RoomRent frontend and API aligned"
+  default_prompt: "Use $sync-api-contract to synchronize this RoomRent frontend API contract change."

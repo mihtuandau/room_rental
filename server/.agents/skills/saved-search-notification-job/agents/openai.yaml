@@ -1,0 +1,4 @@
+interface:
+  display_name: "Saved Search Notifications"
+  short_description: "Build RoomRent background notifications"
+  default_prompt: "Use $saved-search-notification-job to implement saved-search notification processing."

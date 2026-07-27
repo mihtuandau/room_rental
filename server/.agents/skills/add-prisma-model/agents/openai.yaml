@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Prisma Model"
+  short_description: "Change RoomRent Prisma models safely"
+  default_prompt: "Use $add-prisma-model to update the RoomRent Prisma schema and migration safely."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Room Search API"
+  short_description: "Implement RoomRent room search safely"
+  default_prompt: "Use $build-room-search-api to implement or modify the RoomRent search API."

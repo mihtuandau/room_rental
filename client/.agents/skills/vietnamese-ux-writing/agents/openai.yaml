@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vietnamese UX Writing"
+  short_description: "Write consistent Vietnamese product copy"
+  default_prompt: "Use $vietnamese-ux-writing to write clear, consistent RoomRent interface copy."

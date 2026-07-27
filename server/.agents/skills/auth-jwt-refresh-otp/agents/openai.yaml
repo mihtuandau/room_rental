@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auth JWT Refresh OTP"
+  short_description: "Build secure RoomRent authentication"
+  default_prompt: "Use $auth-jwt-refresh-otp to implement a secure RoomRent authentication change."

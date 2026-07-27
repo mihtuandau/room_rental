@@ -1,0 +1,4 @@
+interface:
+  display_name: "RoomRent Backend"
+  short_description: "Build and secure the RoomRent NestJS API"
+  default_prompt: "Use $roomrent-backend to implement a RoomRent backend change safely and verify it."

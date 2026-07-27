@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Frontend Feature"
+  short_description: "Test RoomRent frontend behavior safely"
+  default_prompt: "Use $test-frontend-feature to add focused tests for this RoomRent frontend change."

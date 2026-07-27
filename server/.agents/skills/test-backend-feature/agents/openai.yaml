@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Backend Feature"
+  short_description: "Test RoomRent NestJS behavior safely"
+  default_prompt: "Use $test-backend-feature to add focused tests for this RoomRent backend change."

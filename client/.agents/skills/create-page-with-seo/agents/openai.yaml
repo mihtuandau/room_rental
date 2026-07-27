@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Page with SEO"
+  short_description: "Build SEO-ready RoomRent App Router pages"
+  default_prompt: "Use $create-page-with-seo to add an SEO-ready RoomRent page."

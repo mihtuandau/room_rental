@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Nest Module"
+  short_description: "Create secure RoomRent NestJS modules"
+  default_prompt: "Use $add-nest-module to add a secure, validated RoomRent API module."
