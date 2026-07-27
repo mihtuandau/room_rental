@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { getProfile } from '@/features/users/api';
+import { profileKeys } from '@/features/users/hooks';
 import { ApiError } from '@/lib/api-client';
 import { loginSchema, type LoginInput } from '../schemas';
 import { useLogin } from '../hooks';
@@ -13,7 +16,8 @@ import { Field } from './field';
 
 export function LoginForm() {
   const router = useRouter();
-  const next = useSearchParams().get('next') ?? '/';
+  const queryClient = useQueryClient();
+  const nextParam = useSearchParams().get('next');
   const login = useLogin();
 
   const {
@@ -26,7 +30,13 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login.mutateAsync(values);
-      router.push(next);
+      const profile = await getProfile();
+      queryClient.setQueryData(profileKeys.me, profile);
+
+      const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/';
+      const destination = next === '/' && profile.role === 'admin' ? '/admin/dashboard' : next;
+
+      router.replace(destination);
       // Re-run Server Components so the header reflects the signed-in state.
       router.refresh();
     } catch (err) {

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '@/common/dto/pagination-query.dto';
 import { Role } from '../../../../../generated/prisma/client';
 
@@ -8,4 +8,15 @@ export class ListUsersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
+
+  @ApiPropertyOptional({ description: 'Match name, phone, or email' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  keyword?: string;
+
+  @ApiPropertyOptional({ enum: ['active', 'banned'] })
+  @IsOptional()
+  @IsIn(['active', 'banned'])
+  status?: 'active' | 'banned';
 }

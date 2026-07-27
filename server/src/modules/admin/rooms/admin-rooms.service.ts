@@ -35,6 +35,41 @@ export class AdminRoomsService {
     return { rooms, total, page, pageSize };
   }
 
+  async getReviewDetail(roomId: number) {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        images: { orderBy: { position: 'asc' } },
+        amenities: { include: { amenity: true } },
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+            phone: true,
+            contactPhone: true,
+            zaloUrl: true,
+            email: true,
+            isPhoneVerified: true,
+            createdAt: true,
+          },
+        },
+        moderations: {
+          orderBy: { createdAt: 'desc' },
+          include: { admin: { select: { id: true, fullName: true } } },
+        },
+      },
+    });
+
+    if (!room || room.deletedAt) {
+      throw new NotFoundException('Listing not found.');
+    }
+
+    return {
+      ...room,
+      amenities: room.amenities.map((roomAmenity) => roomAmenity.amenity),
+    };
+  }
+
   async approve(adminId: string, roomId: number) {
     const room = await this.getRoomOrThrow(roomId);
     if (room.status !== RoomStatus.pending) {

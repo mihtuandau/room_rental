@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Query,
   UseGuards,
@@ -34,55 +35,70 @@ export class AdminRoomsController {
     );
   }
 
+  @Get(':id')
+  @ApiOperation({
+    summary:
+      'Full listing review detail, including images, amenities, owner contact, and moderation history',
+  })
+  getReviewDetail(@Param('id', ParseIntPipe) id: number) {
+    return this.adminRoomsService.getReviewDetail(id);
+  }
+
   @Patch(':id/approve')
   @ApiOperation({ summary: 'Approve a pending listing (pending → active)' })
-  approve(@CurrentUser('id') adminId: string, @Param('id') id: string) {
-    return this.adminRoomsService.approve(adminId, Number(id));
+  approve(
+    @CurrentUser('id') adminId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.adminRoomsService.approve(adminId, id);
   }
 
   @Patch(':id/reject')
   @ApiOperation({ summary: 'Reject a pending listing (pending → rejected)' })
   reject(
     @CurrentUser('id') adminId: string,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: ModerationNoteDto,
   ) {
-    return this.adminRoomsService.reject(adminId, Number(id), dto.note);
+    return this.adminRoomsService.reject(adminId, id, dto.note);
   }
 
   @Patch(':id/hide')
   @ApiOperation({ summary: 'Hide an active listing (active → hidden)' })
   hide(
     @CurrentUser('id') adminId: string,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: ModerationNoteDto,
   ) {
-    return this.adminRoomsService.hide(adminId, Number(id), dto.note);
+    return this.adminRoomsService.hide(adminId, id, dto.note);
   }
 
   @Patch(':id/restore')
   @ApiOperation({ summary: 'Restore a hidden listing (hidden → active)' })
-  restore(@CurrentUser('id') adminId: string, @Param('id') id: string) {
-    return this.adminRoomsService.restore(adminId, Number(id));
+  restore(
+    @CurrentUser('id') adminId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.adminRoomsService.restore(adminId, id);
   }
 
   @Patch(':id/verified')
   @ApiOperation({ summary: 'Toggle the verified badge on a listing' })
   setVerified(
     @CurrentUser('id') adminId: string,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: SetVerifiedDto,
   ) {
     return this.adminRoomsService.setVerified(
       adminId,
-      Number(id),
+      id,
       dto.isVerified,
     );
   }
 
   @Get(':id/moderations')
   @ApiOperation({ summary: 'Moderation history for a listing (audit trail)' })
-  listModerationHistory(@Param('id') id: string) {
-    return this.adminRoomsService.listModerationHistory(Number(id));
+  listModerationHistory(@Param('id', ParseIntPipe) id: number) {
+    return this.adminRoomsService.listModerationHistory(id);
   }
 }
