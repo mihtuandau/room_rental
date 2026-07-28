@@ -441,7 +441,7 @@ function AmenityForm({
           <DialogTitle>
             {data ? "Chỉnh sửa tiện ích" : "Thêm tiện ích mới"}
           </DialogTitle>
-          <p className="mt-1 text-sm text-zinc-600">Cập nhật thông tin tiện ích cho hệ thống RoomRent.</p>
+          <p className="mt-1 text-sm text-zinc-600">Cập nhật thông tin tiện ích cho hệ thống Trọ Ơi.</p>
         </DialogHeader>
         <DialogBody className="grid gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.4fr)_minmax(180px,1fr)]">
           <label className="block text-sm font-medium text-zinc-800">

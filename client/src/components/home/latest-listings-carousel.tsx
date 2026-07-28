@@ -53,7 +53,7 @@ export function LatestListingsCarousel({ rooms }: { rooms: RoomCardItem[] }) {
       </div>
 
       {(canPrev || canNext) && (
-        <div className="mt-1 flex justify-end gap-2 sm:absolute sm:-top-14 sm:right-0 sm:mt-0">
+        <div className="mt-4 hidden justify-end gap-2 sm:flex">
           <CarouselButton
             direction="prev"
             disabled={!canPrev}

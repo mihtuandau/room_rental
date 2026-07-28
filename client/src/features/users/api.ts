@@ -9,7 +9,7 @@ export interface Profile {
   zaloUrl: string | null;
   // Not shown in the UI — there's no role picker or account-type concept here,
   // it only gates /admin (see client/CLAUDE.md section 1).
-  role: 'tenant' | 'landlord' | 'admin';
+  role: 'user' | 'admin';
   isPhoneVerified: boolean;
   createdAt: string;
 }
@@ -17,8 +17,10 @@ export interface Profile {
 export interface UpdateProfileInput {
   fullName?: string;
   avatarUrl?: string;
-  contactPhone?: string;
-  zaloUrl?: string;
+  /** `null` explicitly removes an existing contact detail. */
+  contactPhone?: string | null;
+  /** `null` explicitly removes an existing contact detail. */
+  zaloUrl?: string | null;
 }
 
 export function getProfile() {

@@ -35,39 +35,39 @@ async function seedUsers() {
     create: {
       phone: '0900000000',
       passwordHash,
-      fullName: 'RoomRent Admin',
+      fullName: 'Quản trị Trọ Ơi',
       role: Role.admin,
       isPhoneVerified: true,
     },
   });
 
-  const landlord = await prisma.user.upsert({
+  const listingUser = await prisma.user.upsert({
     where: { phone: '0911111111' },
     update: {},
     create: {
       phone: '0911111111',
       passwordHash,
-      fullName: 'Landlord Demo',
-      role: Role.landlord,
+      fullName: 'Người đăng tin demo',
+      role: Role.user,
       isPhoneVerified: true,
       contactPhone: '0911111111',
       zaloUrl: 'https://zalo.me/0911111111',
     },
   });
 
-  const tenant = await prisma.user.upsert({
+  const regularUser = await prisma.user.upsert({
     where: { phone: '0922222222' },
     update: {},
     create: {
       phone: '0922222222',
       passwordHash,
-      fullName: 'Tenant Demo',
-      role: Role.tenant,
+      fullName: 'Người dùng demo',
+      role: Role.user,
       isPhoneVerified: true,
     },
   });
 
-  return { admin, landlord, tenant };
+  return { admin, listingUser, regularUser };
 }
 
 async function seedAmenities(): Promise<Amenity[]> {
@@ -247,10 +247,26 @@ const SEED_ROOMS: SeedRoom[] = [
   },
 ];
 
-async function seedRooms(landlordId: string, amenities: Amenity[]) {
+// Files are served by the Next.js app from client/public. Every seeded room
+// gets the complete gallery; rotating the array gives each listing a distinct
+// cover while keeping room1.jpg ... room10.jpg available on its detail page.
+const SEED_ROOM_IMAGE_URLS = [
+  '/room1.jpg',
+  '/room2.jpg',
+  '/room3.jpg',
+  '/room4.jpg',
+  '/room5.jpg',
+  '/room6.jpg',
+  '/room7.jpg',
+  '/room8.jpg',
+  '/room9.jpg',
+  '/room10.jpg',
+] as const;
+
+async function seedRooms(ownerId: string, amenities: Amenity[]) {
   const byName = new Map(amenities.map((a) => [a.name, a]));
 
-  for (const seedRoom of SEED_ROOMS) {
+  for (const [roomIndex, seedRoom] of SEED_ROOMS.entries()) {
     const slug = slugify(seedRoom.title);
     const { amenityNames, ...roomData } = seedRoom;
 
@@ -265,7 +281,7 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
       create: {
         ...roomData,
         slug,
-        ownerId: landlordId,
+        ownerId,
         publishedAt: seedRoom.status === RoomStatus.active ? new Date() : null,
       },
     });
@@ -281,18 +297,46 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
       }),
     ]);
 
-    // placeholder gallery — not real Cloudinary assets, just enough for the
-    // frontend's bento gallery (needs 5+ photos) to render in dev. Idempotent:
-    // replace the full set every run, same as the amenity assignments above.
-    const IMAGES_PER_ROOM = 7;
+    const imageUrls = [
+      ...SEED_ROOM_IMAGE_URLS.slice(roomIndex),
+      ...SEED_ROOM_IMAGE_URLS.slice(0, roomIndex),
+    ];
+
+    // Idempotent: replace the complete local development gallery on every run.
     await prisma.roomImage.deleteMany({ where: { roomId: room.id } });
     await prisma.roomImage.createMany({
-      data: Array.from({ length: IMAGES_PER_ROOM }, (_, i) => ({
+      data: imageUrls.map((url, position) => ({
         roomId: room.id,
-        key: `seed/placeholder-${room.id}-${i}`,
-        url: `https://picsum.photos/seed/room-${room.id}-${i}/800/600`,
-        isCover: i === 0,
-        position: i,
+        key: `seed/local-room-${room.id}-${position + 1}`,
+        url,
+        isCover: position === 0,
+        position,
+      })),
+    });
+  }
+
+  // Development databases can also contain rooms created manually before the
+  // sample seed runs. Give image-less rooms a local gallery without replacing
+  // any real Cloudinary images that the user has already uploaded.
+  const roomsWithoutImages = await prisma.room.findMany({
+    where: { images: { none: {} } },
+    select: { id: true },
+    orderBy: { id: 'asc' },
+  });
+
+  for (const [roomIndex, room] of roomsWithoutImages.entries()) {
+    const imageUrls = [
+      ...SEED_ROOM_IMAGE_URLS.slice(roomIndex % SEED_ROOM_IMAGE_URLS.length),
+      ...SEED_ROOM_IMAGE_URLS.slice(0, roomIndex % SEED_ROOM_IMAGE_URLS.length),
+    ];
+
+    await prisma.roomImage.createMany({
+      data: imageUrls.map((url, position) => ({
+        roomId: room.id,
+        key: `seed/local-room-${room.id}-${position + 1}`,
+        url,
+        isCover: position === 0,
+        position,
       })),
     });
   }
@@ -300,9 +344,9 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
 
 async function main() {
   console.log('Seeding users...');
-  const { admin, landlord, tenant } = await seedUsers();
+  const { admin, listingUser, regularUser } = await seedUsers();
   console.log(
-    `  admin=${admin.phone} landlord=${landlord.phone} tenant=${tenant.phone} (password: ${SEED_PASSWORD})`,
+    `  admin=${admin.phone} listingUser=${listingUser.phone} regularUser=${regularUser.phone} (password: ${SEED_PASSWORD})`,
   );
 
   console.log('Seeding amenity catalog...');
@@ -310,7 +354,7 @@ async function main() {
   console.log(`  ${amenities.length} amenities`);
 
   console.log('Seeding sample rooms...');
-  await seedRooms(landlord.id, amenities);
+  await seedRooms(listingUser.id, amenities);
   console.log(
     `  ${SEED_ROOMS.length} rooms (2 left "pending" to populate the admin review queue)`,
   );

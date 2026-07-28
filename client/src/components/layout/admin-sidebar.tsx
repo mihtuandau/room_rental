@@ -24,7 +24,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-[#bccac0] bg-[#eef4ff] md:flex md:flex-col md:justify-between md:py-6">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-zinc-200 bg-zinc-100 md:flex md:flex-col md:justify-between md:py-6">
       <div className="space-y-8">
         <Link
           href="/admin"
@@ -34,7 +34,7 @@ export function AdminSidebar() {
             <ShieldCheck className="h-5 w-5" aria-hidden />
           </span>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Quản trị RoomRent</p>
+            <p className="text-sm font-semibold text-zinc-900">Quản trị Trọ Ơi</p>
             <p className="text-xs text-zinc-600">Khu vực quản trị</p>
           </div>
         </Link>
@@ -62,7 +62,7 @@ export function AdminSidebar() {
         </nav>
       </div>
 
-      <div className="border-t border-zinc-200 px-4 pt-6 text-xs text-zinc-500">RoomRent Admin</div>
+      <div className="border-t border-zinc-200 px-4 pt-6 text-xs text-zinc-500">Trọ Ơi Admin</div>
     </aside>
   );
 }

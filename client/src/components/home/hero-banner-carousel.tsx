@@ -47,7 +47,12 @@ export function HeroBannerCarousel() {
   // side effect that must not re-run on every render, and reading a ref's
   // .current during render (the alternative) is disallowed by the compiler.
   const [autoplayPlugin] = useState(() =>
-    Autoplay({ delay: 4500, stopOnInteraction: true, stopOnMouseEnter: true }),
+    Autoplay({
+      delay: 4500,
+      playOnInit: false,
+      stopOnInteraction: true,
+      stopOnMouseEnter: true,
+    }),
   );
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'center' }, [
     autoplayPlugin,
@@ -56,6 +61,7 @@ export function HeroBannerCarousel() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const tweenFactor = useRef(0);
   const tweenNodes = useRef<HTMLElement[]>([]);
+  const reducedMotion = useRef(false);
 
   const setTweenNodes = useCallback((api: EmblaCarouselType) => {
     tweenNodes.current = api
@@ -69,6 +75,14 @@ export function HeroBannerCarousel() {
   }, []);
 
   const tweenScale = useCallback((api: EmblaCarouselType, eventName?: EmblaEventType) => {
+    if (reducedMotion.current) {
+      tweenNodes.current.forEach((node) => {
+        node.style.transform = 'scale(1)';
+        node.style.opacity = '1';
+      });
+      return;
+    }
+
     const engine = api.internalEngine();
     const scrollProgress = api.scrollProgress();
     const slidesInView = api.slidesInView();
@@ -113,9 +127,16 @@ export function HeroBannerCarousel() {
 
     setTweenNodes(emblaApi);
     setTweenFactor(emblaApi);
-    tweenScale(emblaApi);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads embla's real initial state, same pattern as latest-listings-carousel.tsx
     onSelect(emblaApi);
+
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncMotionPreference = () => {
+      reducedMotion.current = motionPreference.matches;
+      if (motionPreference.matches) autoplayPlugin.stop();
+      else autoplayPlugin.play();
+      tweenScale(emblaApi);
+    };
 
     emblaApi
       .on('reInit', setTweenNodes)
@@ -125,8 +146,12 @@ export function HeroBannerCarousel() {
       .on('scroll', tweenScale)
       .on('slideFocus', tweenScale)
       .on('select', onSelect);
+    motionPreference.addEventListener('change', syncMotionPreference);
+    syncMotionPreference();
 
     return () => {
+      autoplayPlugin.stop();
+      motionPreference.removeEventListener('change', syncMotionPreference);
       emblaApi
         .off('reInit', setTweenNodes)
         .off('reInit', setTweenFactor)
@@ -136,7 +161,14 @@ export function HeroBannerCarousel() {
         .off('slideFocus', tweenScale)
         .off('select', onSelect);
     };
-  }, [emblaApi, setTweenNodes, setTweenFactor, tweenScale, onSelect]);
+  }, [
+    autoplayPlugin,
+    emblaApi,
+    onSelect,
+    setTweenFactor,
+    setTweenNodes,
+    tweenScale,
+  ]);
 
   return (
     <div className="relative px-4 sm:px-6">

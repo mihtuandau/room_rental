@@ -1,8 +1,19 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { House } from 'lucide-react';
 import { serverFetch } from '@/lib/server-api';
-import { ROOM_TYPE_OPTIONS } from '@/lib/constants';
+import {
+  ROOM_TYPE_OPTIONS,
+  type RoomType,
+} from '@/lib/constants';
 import type { RoomSearchResult } from '@/features/rooms/api';
+
+const CATEGORY_IMAGES: Record<RoomType, string> = {
+  boarding_house: '/phong_tro.png',
+  whole_house: '/nha_nguyen_can.png',
+  mini_apartment: '/chung_cu_mini.png',
+  serviced_apartment: '/can_ho_dich_vu.png',
+  shared_room: '/o_ghep.png',
+};
 
 async function getCategorySummary(roomType: string) {
   return serverFetch<RoomSearchResult>(
@@ -12,10 +23,8 @@ async function getCategorySummary(roomType: string) {
 }
 
 /**
- * Each tile's photo is the category's own real cover image (its most recent
- * active listing) — never stock photography — and its count is a live total
- * from the search endpoint, not a made-up number. A category with zero
- * listings falls back to a plain icon tile instead of a missing image.
+ * Category artwork is curated in /public so every room type stays visually
+ * consistent. Counts remain live data from the search endpoint.
  */
 export async function CategorySection() {
   const categories = await Promise.all(
@@ -26,12 +35,14 @@ export async function CategorySection() {
   );
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+    <section
+      id="kham-pha"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 sm:px-6"
+    >
       <h2 className="text-lg font-semibold">Khám phá theo danh mục</h2>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {categories.map(({ value, label, data }) => {
-          const cover = data?.rooms[0]?.images[0]?.url;
           const total = data?.total ?? 0;
           return (
             <Link
@@ -40,18 +51,13 @@ export async function CategorySection() {
               className="group overflow-hidden rounded-lg border border-zinc-200 transition-shadow hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             >
               <div className="relative aspect-[4/3] bg-zinc-100">
-                {cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured
-                  <img
-                    src={cover}
-                    alt=""
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-zinc-300">
-                    <House className="h-8 w-8" aria-hidden />
-                  </div>
-                )}
+                <Image
+                  src={CATEGORY_IMAGES[value]}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 220px, (min-width: 640px) 33vw, 50vw"
+                  className="object-cover transition-transform duration-200 group-hover:scale-105"
+                />
               </div>
               <div className="p-2.5">
                 <p className="text-sm font-medium">{label}</p>

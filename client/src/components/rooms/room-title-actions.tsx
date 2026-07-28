@@ -7,7 +7,13 @@ import { cn } from '@/lib/utils';
 import { useIsSignedIn } from '@/stores/auth-store';
 import { useIsFavorited, useToggleFavorite } from '@/features/favorites/hooks';
 
-export function RoomTitleActions({ roomId }: { roomId: number }) {
+export function RoomTitleActions({
+  roomId,
+  roomSlug,
+}: {
+  roomId: number;
+  roomSlug: string;
+}) {
   const router = useRouter();
   const isSignedIn = useIsSignedIn();
   const { isFavorited } = useIsFavorited(roomId);
@@ -26,7 +32,7 @@ export function RoomTitleActions({ roomId }: { roomId: number }) {
 
   const handleSave = () => {
     if (!isSignedIn) {
-      router.push(`/login?next=${encodeURIComponent(`/room/${roomId}`)}`);
+      router.push(`/login?next=${encodeURIComponent(`/room/${roomSlug}`)}`);
       return;
     }
     toggleFavorite.mutate(isFavorited);

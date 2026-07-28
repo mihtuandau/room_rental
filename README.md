@@ -1,8 +1,8 @@
-# RoomRent
+# Trọ Ơi
 
-Room-rental discovery platform for the Vietnamese market. Landlords post listings,
-an admin approves them, tenants search and contact. The differentiator is
-**verified listings** as a defence against the fake postings that plague the market.
+Nền tảng tìm phòng trọ tại Việt Nam. Mọi tài khoản đều có thể tìm phòng,
+liên hệ và đăng tin; quản trị viên duyệt tin trước khi hiển thị công khai.
+Điểm khác biệt là các **tin đăng đã xác minh** và quy trình hạn chế tin giả.
 
 ```
 server/   NestJS + Prisma + PostgreSQL API   ->  http://localhost:3000  (docs at /docs)
@@ -41,11 +41,11 @@ pnpm run dev
 
 Seeded accounts, all with the password `Passw0rd!`:
 
-| Phone | Role |
+| Số điện thoại | Loại tài khoản |
 |---|---|
 | `0900000000` | admin |
-| `0911111111` | landlord |
-| `0922222222` | tenant |
+| `0911111111` | user — có tin đăng mẫu |
+| `0922222222` | user |
 
 ## Notes
 

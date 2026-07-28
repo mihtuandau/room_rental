@@ -45,7 +45,7 @@ export class AuthService {
         phone: dto.phone,
         passwordHash,
         fullName: dto.fullName,
-        role: dto.role === 'landlord' ? Role.landlord : Role.tenant,
+        role: Role.user,
       },
     });
     return this.issueTokens(user.id, user.role, user.tokenVersion);
@@ -106,7 +106,7 @@ export class AuthService {
         email: profile.email,
         fullName: profile.fullName,
         avatarUrl: profile.avatarUrl,
-        role: Role.tenant,
+        role: Role.user,
       },
     });
   }

@@ -19,4 +19,9 @@ export class ListUsersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['active', 'banned'])
   status?: 'active' | 'banned';
+
+  @ApiPropertyOptional({ enum: ['none', 'any', 'active'] })
+  @IsOptional()
+  @IsIn(['none', 'any', 'active'])
+  listing?: 'none' | 'any' | 'active';
 }

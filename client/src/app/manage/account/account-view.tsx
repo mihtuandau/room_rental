@@ -184,8 +184,11 @@ function ProfileForm({
   const onSubmit = handleSubmit(async (values) => {
     await updateProfile.mutateAsync({
       fullName: values.fullName || undefined,
-      contactPhone: values.contactPhone || undefined,
-      zaloUrl: values.zaloUrl || undefined,
+      // `undefined` means "leave unchanged" to PATCH; `null` deliberately
+      // clears an existing value in Prisma, which lets users remove stale
+      // contact details rather than accidentally continuing to publish them.
+      contactPhone: values.contactPhone || null,
+      zaloUrl: values.zaloUrl || null,
     });
   });
 

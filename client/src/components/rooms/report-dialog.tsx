@@ -33,9 +33,11 @@ import { reportSchema, type ReportInput } from '@/features/reports/schemas';
 
 export function ReportDialog({
   roomId,
+  roomSlug,
   variant = 'button',
 }: {
   roomId: number;
+  roomSlug: string;
   /** 'link' is the quiet bottom-of-page style ("Report this listing"); 'button' is a normal ghost button. */
   variant?: 'button' | 'link';
 }) {
@@ -54,7 +56,7 @@ export function ReportDialog({
 
   const onOpenChange = (next: boolean) => {
     if (next && !isSignedIn) {
-      router.push(`/login?next=${encodeURIComponent(`/room/${roomId}`)}`);
+      router.push(`/login?next=${encodeURIComponent(`/room/${roomSlug}`)}`);
       return;
     }
     setOpen(next);
@@ -69,7 +71,7 @@ export function ReportDialog({
       reset();
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        router.push(`/login?next=${encodeURIComponent(`/room/${roomId}`)}`);
+        router.push(`/login?next=${encodeURIComponent(`/room/${roomSlug}`)}`);
       } else {
         toast.error('Không gửi được báo cáo, thử lại sau.');
       }

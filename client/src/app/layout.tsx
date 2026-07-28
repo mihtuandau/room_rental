@@ -8,6 +8,19 @@ const inter = Inter({
   subsets: ['latin', 'vietnamese'],
 });
 
+const themeScript = `
+(() => {
+  try {
+    const stored = JSON.parse(localStorage.getItem('tro-oi-theme') || 'null');
+    const preference = stored?.state?.preference || 'system';
+    const dark = preference === 'dark' ||
+      (preference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+  } catch {}
+})();
+`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000'),
   title: {
@@ -22,7 +35,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`${inter.variable} h-full`}>
+    <html
+      lang="vi"
+      className={`${inter.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-full flex-col antialiased">
         <AppProviders>{children}</AppProviders>
       </body>

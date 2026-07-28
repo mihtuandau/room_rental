@@ -25,8 +25,7 @@ datasource db {
 // -----------------------------------------------------------------------------
 
 enum Role {
-  tenant
-  landlord
+  user
   admin
 }
 
@@ -118,7 +117,7 @@ model User {
   contactPhone String? @map("contact_phone")
   zaloUrl      String? @map("zalo_url")
 
-  role            Role    @default(tenant)
+  role            Role    @default(user)
   tokenVersion    Int     @default(0) @map("token_version")
   isPhoneVerified Boolean @default(false) @map("is_phone_verified")
 
