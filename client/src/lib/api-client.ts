@@ -4,6 +4,8 @@
  * httpOnly cookie and the backend URL never ships to the browser.
  */
 
+import { useAuthStore } from '@/stores/auth-store';
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -21,11 +23,51 @@ interface BackendError {
   message?: string | string[];
 }
 
+let refreshInFlight: Promise<string | null> | null = null;
+
+/**
+ * Refresh once for every group of concurrent 401s. The refresh endpoint sets
+ * the replacement httpOnly session cookie; the returned token only keeps the
+ * in-memory signed-in indicator current and is never used as API transport.
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch('/api/auth/refresh', { method: 'POST' })
+      .then(async (res) => {
+        if (!res.ok) {
+          useAuthStore.getState().setAccessToken(null);
+          return null;
+        }
+
+        const { accessToken } = (await res.json()) as { accessToken: string };
+        useAuthStore.getState().setAccessToken(accessToken);
+        return accessToken;
+      })
+      .catch(() => {
+        useAuthStore.getState().setAccessToken(null);
+        return null;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+
+  return refreshInFlight;
+}
+
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api/proxy${path}`, {
+  const request = () => fetch(`/api/proxy${path}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   });
+  let res = await request();
+
+  // Access tokens are short-lived. Refreshing through the dedicated auth route
+  // keeps rr_refresh scoped to /api/auth, then a single retry uses its new
+  // rr_session cookie. Never retry a second 401 to avoid refresh loops.
+  if (res.status === 401 && (await refreshAccessToken())) {
+    res = await request();
+  }
 
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as BackendError | null;

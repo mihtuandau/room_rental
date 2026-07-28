@@ -17,8 +17,10 @@ export interface Profile {
 export interface UpdateProfileInput {
   fullName?: string;
   avatarUrl?: string;
-  contactPhone?: string;
-  zaloUrl?: string;
+  /** `null` explicitly removes an existing contact detail. */
+  contactPhone?: string | null;
+  /** `null` explicitly removes an existing contact detail. */
+  zaloUrl?: string | null;
 }
 
 export function getProfile() {
