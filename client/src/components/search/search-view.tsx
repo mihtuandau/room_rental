@@ -166,11 +166,11 @@ export function SearchView({
     return (
       <div
         id="ket-qua"
-        className="mx-auto w-full max-w-6xl space-y-12 pb-8 pt-28 sm:space-y-16 sm:pt-16"
+        className="mx-auto w-full max-w-6xl space-y-12 pb-8 pt-8 sm:space-y-16 sm:pt-12"
       >
         {browseTop}
 
-        <section className="px-4 sm:px-6">
+        <section id="tin-moi" className="scroll-mt-20 px-4 sm:px-6">
           <div className="flex items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">Tin đăng mới nhất</h2>

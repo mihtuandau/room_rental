@@ -73,7 +73,10 @@ export function HomeHero({ provinces }: { provinces: ProvinceOption[] }) {
   if (expanded) return null;
 
   return (
-    <section className="relative isolate overflow-hidden pb-16 pt-6 sm:pb-20 sm:pt-8">
+    <section
+      id="tim-phong"
+      className="relative isolate scroll-mt-20 overflow-hidden pb-8 pt-6 sm:pb-12 sm:pt-8"
+    >
       {/* The banner's headline is baked into the image (not real text), so the
           page still needs an actual h1 for SEO/screen readers — same wording,
           visually hidden since the image already shows it. */}

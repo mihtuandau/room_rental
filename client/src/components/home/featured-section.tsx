@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { serverFetch } from '@/lib/server-api';
 import { VerifiedBadge } from '@/components/ui/badge';
@@ -50,16 +51,17 @@ export async function FeaturedSection() {
 }
 
 function HeroCard({ room }: { room: RoomCardItem }) {
+  const imageUrl = room.images[0]?.url ?? PLACEHOLDER_IMAGE;
+
   return (
     <Link
       href={`/room/${room.slug}`}
-      className="group relative block aspect-[4/3] overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 lg:aspect-auto lg:h-full lg:min-h-[320px]"
+      className="group relative block aspect-[4/3] overflow-hidden rounded-lg bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 lg:aspect-auto lg:h-full lg:min-h-[320px]"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-      <img
-        src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
+      <FeaturedImage
+        src={imageUrl}
         alt={room.title}
-        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        sizes="(max-width: 1024px) 100vw, 50vw"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
@@ -78,17 +80,18 @@ function HeroCard({ room }: { room: RoomCardItem }) {
 }
 
 function MiniCard({ room }: { room: RoomCardItem }) {
+  const imageUrl = room.images[0]?.url ?? PLACEHOLDER_IMAGE;
+
   return (
     <Link
       href={`/room/${room.slug}`}
       className="group block overflow-hidden rounded-lg border border-zinc-200 transition-shadow hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
     >
-      <div className="aspect-[16/9] overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-        <img
-          src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
+      <div className="relative aspect-[16/9] overflow-hidden bg-zinc-100">
+        <FeaturedImage
+          src={imageUrl}
           alt={room.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
       </div>
       <div className="space-y-0.5 p-3">
@@ -98,5 +101,21 @@ function MiniCard({ room }: { room: RoomCardItem }) {
         </p>
       </div>
     </Link>
+  );
+}
+
+function FeaturedImage({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+  return (
+    <>
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes={sizes}
+        className="object-cover opacity-30 blur-xl"
+        aria-hidden
+      />
+      <Image src={src} alt={alt} fill sizes={sizes} className="object-contain" />
+    </>
   );
 }
