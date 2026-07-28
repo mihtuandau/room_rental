@@ -60,13 +60,16 @@ export type AdminReportStatus = AdminReport['status'];
 export interface AdminReportsParams { status?: AdminReportStatus; page: number; pageSize: number; }
 export interface AdminReportsPage { reports: AdminReport[]; total: number; page: number; pageSize: number; }
 
-export type AdminUserRole = 'tenant' | 'landlord' | 'admin';
+export type AdminUserRole = 'user' | 'admin';
+export type AdminUserListingScope = 'none' | 'any' | 'active';
 
 export interface AdminUser {
   id: string;
   phone: string | null;
   fullName: string | null;
   role: AdminUserRole;
+  listingCount: number;
+  hasActiveListing: boolean;
   isPhoneVerified: boolean;
   deletedAt: string | null;
   createdAt: string;
@@ -74,6 +77,7 @@ export interface AdminUser {
 
 export interface AdminUsersParams {
   role?: AdminUserRole;
+  listing?: AdminUserListingScope;
   keyword?: string;
   status?: 'active' | 'banned';
   page: number;
@@ -158,9 +162,10 @@ export function createAdminAmenity(body: { name: string; type: AmenityType; icon
 export function updateAdminAmenity({ id, ...body }: { id: number; name?: string; type?: AmenityType; icon?: string; description?: string; isActive?: boolean }) { return apiRequest<Amenity>(`/admin/amenities/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); }
 export function deleteAdminAmenity(id: number) { return apiRequest<{ success: boolean }>(`/admin/amenities/${id}`, { method: 'DELETE' }); }
 
-function buildAdminUsersQuery({ role, keyword, status, page, pageSize }: AdminUsersParams) {
+function buildAdminUsersQuery({ role, listing, keyword, status, page, pageSize }: AdminUsersParams) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (role) params.set('role', role);
+  if (listing) params.set('listing', listing);
   if (keyword) params.set('keyword', keyword);
   if (status) params.set('status', status);
   return params.toString();

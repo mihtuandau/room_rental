@@ -34,7 +34,7 @@ export function AdminSidebar() {
             <ShieldCheck className="h-5 w-5" aria-hidden />
           </span>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">Quản trị RoomRent</p>
+            <p className="text-sm font-semibold text-zinc-900">Quản trị Trọ Ơi</p>
             <p className="text-xs text-zinc-600">Khu vực quản trị</p>
           </div>
         </Link>
@@ -62,7 +62,7 @@ export function AdminSidebar() {
         </nav>
       </div>
 
-      <div className="border-t border-zinc-200 px-4 pt-6 text-xs text-zinc-500">RoomRent Admin</div>
+      <div className="border-t border-zinc-200 px-4 pt-6 text-xs text-zinc-500">Trọ Ơi Admin</div>
     </aside>
   );
 }

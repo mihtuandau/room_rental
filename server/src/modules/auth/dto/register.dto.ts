@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsIn,
   IsOptional,
   IsString,
   Length,
@@ -27,13 +26,4 @@ export class RegisterDto {
   @IsString()
   @Length(2, 100)
   fullName?: string;
-
-  @ApiProperty({
-    required: false,
-    enum: ['tenant', 'landlord'],
-    default: 'tenant',
-  })
-  @IsOptional()
-  @IsIn(['tenant', 'landlord'])
-  role?: 'tenant' | 'landlord';
 }

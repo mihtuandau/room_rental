@@ -35,7 +35,7 @@ export class AuthController {
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Register a new tenant/landlord account' })
+  @ApiOperation({ summary: 'Register a new user account' })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,

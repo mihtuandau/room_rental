@@ -52,18 +52,24 @@ import {
 } from '@/components/admin/admin-page';
 
 const PAGE_SIZE = 20;
-const ROLE_VALUES = ['tenant', 'landlord', 'admin'] as const;
+const ROLE_VALUES = ['user', 'admin'] as const;
+const LISTING_VALUES = ['none', 'any', 'active'] as const;
 const STATUS_VALUES = ['active', 'banned'] as const;
 const ROLE_LABELS = {
-  tenant: 'Người thuê',
-  landlord: 'Chủ trọ',
+  user: 'Người dùng',
   admin: 'Quản trị viên',
+} as const;
+const LISTING_LABELS = {
+  none: 'Chưa có tin đăng',
+  any: 'Đã có tin đăng',
+  active: 'Có tin đang hoạt động',
 } as const;
 const STATUS_LABELS = { active: 'Đang hoạt động', banned: 'Đã khóa' } as const;
 
 const userParsers = {
   keyword: parseAsString.withDefault(''),
   role: parseAsStringLiteral(ROLE_VALUES),
+  listing: parseAsStringLiteral(LISTING_VALUES),
   status: parseAsStringLiteral(STATUS_VALUES),
   page: parseAsInteger.withDefault(1),
 };
@@ -79,6 +85,7 @@ export function AdminUsersView() {
   const filters = {
     keyword: state.keyword || undefined,
     role: state.role ?? undefined,
+    listing: state.listing ?? undefined,
     status: state.status ?? undefined,
   };
   const users = useAdminUsers({ ...filters, page: state.page, pageSize: PAGE_SIZE });
@@ -90,12 +97,12 @@ export function AdminUsersView() {
     event.preventDefault();
     void setState({ keyword: keywordInput.trim(), page: 1 });
   };
-  const setFilter = (key: 'role' | 'status', value: string) => {
+  const setFilter = (key: 'role' | 'listing' | 'status', value: string) => {
     void setState({ [key]: value === 'all' ? null : value, page: 1 });
   };
   const clearFilters = () => {
     setKeywordInput('');
-    void setState({ keyword: '', role: null, status: null, page: 1 });
+    void setState({ keyword: '', role: null, listing: null, status: null, page: 1 });
   };
   const exportCsv = async () => {
     const result = await exportUsers.mutateAsync({ ...filters, page: 1, pageSize: 10_000 });
@@ -109,7 +116,7 @@ export function AdminUsersView() {
 
   const { data } = users;
   const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
-  const hasFilters = Boolean(state.keyword || state.role || state.status);
+  const hasFilters = Boolean(state.keyword || state.role || state.listing || state.status);
 
   return (
     <div className="space-y-6">
@@ -142,16 +149,23 @@ export function AdminUsersView() {
             </div>
           </div>
 
-          <form onSubmit={applyKeyword} className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
+          <form onSubmit={applyKeyword} className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_190px_170px_auto]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden />
               <Input value={keywordInput} onChange={(event) => setKeywordInput(event.target.value)} placeholder="Tìm theo tên, số điện thoại hoặc email" className="pl-9" />
             </div>
             <Select value={state.role ?? 'all'} onValueChange={(value) => setFilter('role', value)}>
-              <SelectTrigger aria-label="Lọc theo vai trò"><SelectValue placeholder="Tất cả vai trò" /></SelectTrigger>
+              <SelectTrigger aria-label="Lọc theo loại tài khoản"><SelectValue placeholder="Mọi tài khoản" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả vai trò</SelectItem>
+                <SelectItem value="all">Mọi tài khoản</SelectItem>
                 {ROLE_VALUES.map((role) => <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={state.listing ?? 'all'} onValueChange={(value) => setFilter('listing', value)}>
+              <SelectTrigger aria-label="Lọc theo hoạt động đăng tin"><SelectValue placeholder="Mọi hoạt động đăng tin" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Mọi hoạt động đăng tin</SelectItem>
+                {LISTING_VALUES.map((listing) => <SelectItem key={listing} value={listing}>{LISTING_LABELS[listing]}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={state.status ?? 'all'} onValueChange={(value) => setFilter('status', value)}>
@@ -172,7 +186,7 @@ export function AdminUsersView() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className={adminTableHeadClassName}>
                 <tr>
-                  <th className="px-4 py-3 sm:px-5">Thông tin người dùng</th><th className="px-4 py-3">Liên hệ</th><th className="px-4 py-3">Vai trò</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Tham gia</th><th className="px-4 py-3 text-right sm:px-5">Thao tác</th>
+                  <th className="px-4 py-3 sm:px-5">Thông tin người dùng</th><th className="px-4 py-3">Liên hệ</th><th className="px-4 py-3">Tài khoản & tin đăng</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Tham gia</th><th className="px-4 py-3 text-right sm:px-5">Thao tác</th>
                 </tr>
               </thead>
               <tbody className={users.isPlaceholderData ? 'opacity-60' : undefined}>
@@ -199,10 +213,12 @@ export function AdminUsersView() {
 }
 
 function UserRow({ user, onBan, onUnban, isUnbanning }: { user: AdminUser; onBan: () => void; onUnban: () => void; isUnbanning: boolean }) {
-  return <tr className={adminTableRowClassName}><td className="px-4 py-4 sm:px-5"><p className="font-medium text-zinc-900">{user.fullName || 'Chưa cập nhật tên'}</p><p className="mt-1 text-xs text-zinc-500">ID: …{user.id.slice(-6)}</p></td><td className="px-4 py-4 text-zinc-600">{user.phone || 'Chưa có số điện thoại'}</td><td className="px-4 py-4"><RoleBadge role={user.role} /></td><td className="px-4 py-4"><div className="space-y-1.5">{user.deletedAt ? <Badge variant="danger">Đã khóa</Badge> : <Badge variant="verified">Đang hoạt động</Badge>}<p className={user.isPhoneVerified ? 'flex items-center gap-1 text-xs text-brand-700' : 'flex items-center gap-1 text-xs text-zinc-500'}><span className={user.isPhoneVerified ? 'h-1.5 w-1.5 rounded-full bg-brand-600' : 'h-1.5 w-1.5 rounded-full bg-zinc-400'} />{user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh'}</p></div></td><td className="px-4 py-4 text-zinc-600">{formatDate(user.createdAt)}</td><td className="px-4 py-4 text-right sm:px-5">{user.role === 'admin' ? <span className="text-xs text-zinc-400">Tài khoản quản trị</span> : user.deletedAt ? <Button variant="outline" size="sm" disabled={isUnbanning} onClick={onUnban}><UnlockKeyhole className="h-4 w-4" aria-hidden />{isUnbanning ? 'Đang mở khóa…' : 'Mở khóa'}</Button> : <Button variant="danger" size="sm" onClick={onBan}><LockKeyhole className="h-4 w-4" aria-hidden />Khóa</Button>}</td></tr>;
+  return <tr className={adminTableRowClassName}><td className="px-4 py-4 sm:px-5"><p className="font-medium text-zinc-900">{user.fullName || 'Chưa cập nhật tên'}</p><p className="mt-1 text-xs text-zinc-500">ID: …{user.id.slice(-6)}</p></td><td className="px-4 py-4 text-zinc-600">{user.phone || 'Chưa có số điện thoại'}</td><td className="px-4 py-4"><AccountActivity user={user} /></td><td className="px-4 py-4"><div className="space-y-1.5">{user.deletedAt ? <Badge variant="danger">Đã khóa</Badge> : <Badge variant="verified">Đang hoạt động</Badge>}<p className={user.isPhoneVerified ? 'flex items-center gap-1 text-xs text-brand-700' : 'flex items-center gap-1 text-xs text-zinc-500'}><span className={user.isPhoneVerified ? 'h-1.5 w-1.5 rounded-full bg-brand-600' : 'h-1.5 w-1.5 rounded-full bg-zinc-400'} />{user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh'}</p></div></td><td className="px-4 py-4 text-zinc-600">{formatDate(user.createdAt)}</td><td className="px-4 py-4 text-right sm:px-5">{user.role === 'admin' ? <span className="text-xs text-zinc-400">Tài khoản quản trị</span> : user.deletedAt ? <Button variant="outline" size="sm" disabled={isUnbanning} onClick={onUnban}><UnlockKeyhole className="h-4 w-4" aria-hidden />{isUnbanning ? 'Đang mở khóa…' : 'Mở khóa'}</Button> : <Button variant="danger" size="sm" onClick={onBan}><LockKeyhole className="h-4 w-4" aria-hidden />Khóa</Button>}</td></tr>;
 }
 
-function RoleBadge({ role }: { role: AdminUser['role'] }) { return <Badge variant={role === 'admin' ? 'verified' : 'neutral'}>{ROLE_LABELS[role]}</Badge>; }
+function AccountActivity({ user }: { user: AdminUser }) {
+  return <div className="space-y-1.5"><Badge variant={user.role === 'admin' ? 'verified' : 'neutral'}>{ROLE_LABELS[user.role]}</Badge>{user.role === 'user' ? <p className="text-xs text-zinc-500">{user.hasActiveListing ? 'Có tin đang hoạt động' : user.listingCount > 0 ? `${user.listingCount.toLocaleString('vi-VN')} tin đăng` : 'Chưa có tin đăng'}</p> : null}</div>;
+}
 
 function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (page: number) => void }) {
   if (totalPages <= 1) return null;
@@ -212,12 +228,12 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 function downloadCsv(users: AdminUser[]) {
   const escape = (value: string) => `"${value.replaceAll('"', '""')}"`;
   const safe = (value: string) => (/^[=+\-@]/.test(value) ? `'${value}` : value);
-  const rows = users.map((user) => [user.fullName || '', user.phone || '', ROLE_LABELS[user.role], user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh', user.deletedAt ? 'Đã khóa' : 'Đang hoạt động', formatDate(user.createdAt)].map((value) => escape(safe(value))).join(','));
-  const content = `\uFEFFTên,Số điện thoại,Vai trò,Xác minh,Trạng thái,Ngày tham gia\n${rows.join('\n')}`;
+  const rows = users.map((user) => [user.fullName || '', user.phone || '', ROLE_LABELS[user.role], String(user.listingCount), user.hasActiveListing ? 'Có' : 'Không', user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh', user.deletedAt ? 'Đã khóa' : 'Đang hoạt động', formatDate(user.createdAt)].map((value) => escape(safe(value))).join(','));
+  const content = `\uFEFFTên,Số điện thoại,Loại tài khoản,Số tin đăng,Có tin hoạt động,Xác minh,Trạng thái,Ngày tham gia\n${rows.join('\n')}`;
   const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `roomrent-nguoi-dung-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `tro-oi-nguoi-dung-${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }

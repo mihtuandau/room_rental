@@ -35,39 +35,39 @@ async function seedUsers() {
     create: {
       phone: '0900000000',
       passwordHash,
-      fullName: 'RoomRent Admin',
+      fullName: 'Quản trị Trọ Ơi',
       role: Role.admin,
       isPhoneVerified: true,
     },
   });
 
-  const landlord = await prisma.user.upsert({
+  const listingUser = await prisma.user.upsert({
     where: { phone: '0911111111' },
     update: {},
     create: {
       phone: '0911111111',
       passwordHash,
-      fullName: 'Landlord Demo',
-      role: Role.landlord,
+      fullName: 'Người đăng tin demo',
+      role: Role.user,
       isPhoneVerified: true,
       contactPhone: '0911111111',
       zaloUrl: 'https://zalo.me/0911111111',
     },
   });
 
-  const tenant = await prisma.user.upsert({
+  const regularUser = await prisma.user.upsert({
     where: { phone: '0922222222' },
     update: {},
     create: {
       phone: '0922222222',
       passwordHash,
-      fullName: 'Tenant Demo',
-      role: Role.tenant,
+      fullName: 'Người dùng demo',
+      role: Role.user,
       isPhoneVerified: true,
     },
   });
 
-  return { admin, landlord, tenant };
+  return { admin, listingUser, regularUser };
 }
 
 async function seedAmenities(): Promise<Amenity[]> {
@@ -247,7 +247,7 @@ const SEED_ROOMS: SeedRoom[] = [
   },
 ];
 
-async function seedRooms(landlordId: string, amenities: Amenity[]) {
+async function seedRooms(ownerId: string, amenities: Amenity[]) {
   const byName = new Map(amenities.map((a) => [a.name, a]));
 
   for (const seedRoom of SEED_ROOMS) {
@@ -265,7 +265,7 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
       create: {
         ...roomData,
         slug,
-        ownerId: landlordId,
+        ownerId,
         publishedAt: seedRoom.status === RoomStatus.active ? new Date() : null,
       },
     });
@@ -300,9 +300,9 @@ async function seedRooms(landlordId: string, amenities: Amenity[]) {
 
 async function main() {
   console.log('Seeding users...');
-  const { admin, landlord, tenant } = await seedUsers();
+  const { admin, listingUser, regularUser } = await seedUsers();
   console.log(
-    `  admin=${admin.phone} landlord=${landlord.phone} tenant=${tenant.phone} (password: ${SEED_PASSWORD})`,
+    `  admin=${admin.phone} listingUser=${listingUser.phone} regularUser=${regularUser.phone} (password: ${SEED_PASSWORD})`,
   );
 
   console.log('Seeding amenity catalog...');
@@ -310,7 +310,7 @@ async function main() {
   console.log(`  ${amenities.length} amenities`);
 
   console.log('Seeding sample rooms...');
-  await seedRooms(landlord.id, amenities);
+  await seedRooms(listingUser.id, amenities);
   console.log(
     `  ${SEED_ROOMS.length} rooms (2 left "pending" to populate the admin review queue)`,
   );

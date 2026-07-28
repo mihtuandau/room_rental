@@ -9,7 +9,7 @@ export interface Profile {
   zaloUrl: string | null;
   // Not shown in the UI — there's no role picker or account-type concept here,
   // it only gates /admin (see client/CLAUDE.md section 1).
-  role: 'tenant' | 'landlord' | 'admin';
+  role: 'user' | 'admin';
   isPhoneVerified: boolean;
   createdAt: string;
 }
