@@ -247,10 +247,26 @@ const SEED_ROOMS: SeedRoom[] = [
   },
 ];
 
+// Files are served by the Next.js app from client/public. Every seeded room
+// gets the complete gallery; rotating the array gives each listing a distinct
+// cover while keeping room1.jpg ... room10.jpg available on its detail page.
+const SEED_ROOM_IMAGE_URLS = [
+  '/room1.jpg',
+  '/room2.jpg',
+  '/room3.jpg',
+  '/room4.jpg',
+  '/room5.jpg',
+  '/room6.jpg',
+  '/room7.jpg',
+  '/room8.jpg',
+  '/room9.jpg',
+  '/room10.jpg',
+] as const;
+
 async function seedRooms(ownerId: string, amenities: Amenity[]) {
   const byName = new Map(amenities.map((a) => [a.name, a]));
 
-  for (const seedRoom of SEED_ROOMS) {
+  for (const [roomIndex, seedRoom] of SEED_ROOMS.entries()) {
     const slug = slugify(seedRoom.title);
     const { amenityNames, ...roomData } = seedRoom;
 
@@ -281,18 +297,46 @@ async function seedRooms(ownerId: string, amenities: Amenity[]) {
       }),
     ]);
 
-    // placeholder gallery — not real Cloudinary assets, just enough for the
-    // frontend's bento gallery (needs 5+ photos) to render in dev. Idempotent:
-    // replace the full set every run, same as the amenity assignments above.
-    const IMAGES_PER_ROOM = 7;
+    const imageUrls = [
+      ...SEED_ROOM_IMAGE_URLS.slice(roomIndex),
+      ...SEED_ROOM_IMAGE_URLS.slice(0, roomIndex),
+    ];
+
+    // Idempotent: replace the complete local development gallery on every run.
     await prisma.roomImage.deleteMany({ where: { roomId: room.id } });
     await prisma.roomImage.createMany({
-      data: Array.from({ length: IMAGES_PER_ROOM }, (_, i) => ({
+      data: imageUrls.map((url, position) => ({
         roomId: room.id,
-        key: `seed/placeholder-${room.id}-${i}`,
-        url: `https://picsum.photos/seed/room-${room.id}-${i}/800/600`,
-        isCover: i === 0,
-        position: i,
+        key: `seed/local-room-${room.id}-${position + 1}`,
+        url,
+        isCover: position === 0,
+        position,
+      })),
+    });
+  }
+
+  // Development databases can also contain rooms created manually before the
+  // sample seed runs. Give image-less rooms a local gallery without replacing
+  // any real Cloudinary images that the user has already uploaded.
+  const roomsWithoutImages = await prisma.room.findMany({
+    where: { images: { none: {} } },
+    select: { id: true },
+    orderBy: { id: 'asc' },
+  });
+
+  for (const [roomIndex, room] of roomsWithoutImages.entries()) {
+    const imageUrls = [
+      ...SEED_ROOM_IMAGE_URLS.slice(roomIndex % SEED_ROOM_IMAGE_URLS.length),
+      ...SEED_ROOM_IMAGE_URLS.slice(0, roomIndex % SEED_ROOM_IMAGE_URLS.length),
+    ];
+
+    await prisma.roomImage.createMany({
+      data: imageUrls.map((url, position) => ({
+        roomId: room.id,
+        key: `seed/local-room-${room.id}-${position + 1}`,
+        url,
+        isCover: position === 0,
+        position,
       })),
     });
   }

@@ -13,9 +13,14 @@ export async function serverFetch<T>(
   init?: RequestInit & { revalidate?: number },
 ): Promise<T> {
   const { revalidate, ...rest } = init ?? {};
+  const cacheOptions =
+    process.env.NODE_ENV === 'development'
+      ? ({ cache: 'no-store' } as const)
+      : ({ next: { revalidate: revalidate ?? 60 } } as const);
+
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
-    next: { revalidate: revalidate ?? 60 },
+    ...cacheOptions,
     headers: { 'Content-Type': 'application/json', ...rest.headers },
   });
 
