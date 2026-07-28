@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Brand — primary actions and the "verified" trust signal.
      Competitors lean on orange/red urgency; Trọ Ơi stays calm and credible. */
@@ -20,6 +22,9 @@
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
+  /* Large media frame used by the room-detail gallery */
+  --spacing-room-gallery: 30rem;
+
   /* Three radius steps only */
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -34,6 +39,101 @@
 body {
   background: var(--color-white);
   color: var(--color-zinc-900);
+  transition:
+    background-color 150ms var(--ease-out-soft),
+    color 150ms var(--ease-out-soft);
+}
+
+.dark body {
+  background: var(--color-zinc-950);
+  color: var(--color-zinc-100);
+}
+
+/* Existing screens use the zinc ramp consistently, so these mappings turn
+   those light surfaces into one coherent dark palette without duplicating
+   dark variants across every feature page. */
+.dark .bg-white {
+  background-color: var(--color-zinc-900);
+}
+.dark [class*='bg-white/'] {
+  background-color: color-mix(in oklab, var(--color-zinc-800) 92%, transparent);
+}
+.dark .bg-zinc-50 {
+  background-color: var(--color-zinc-950);
+}
+.dark .bg-zinc-100 {
+  background-color: var(--color-zinc-800);
+}
+.dark .bg-zinc-200 {
+  background-color: var(--color-zinc-700);
+}
+.dark [class*='bg-zinc-50/'] {
+  background-color: color-mix(in oklab, var(--color-zinc-900) 75%, transparent);
+}
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: var(--color-zinc-100);
+}
+.dark .text-zinc-700 {
+  color: var(--color-zinc-200);
+}
+.dark .text-zinc-600 {
+  color: var(--color-zinc-300);
+}
+.dark .text-zinc-500 {
+  color: var(--color-zinc-400);
+}
+.dark .border-zinc-100,
+.dark .border-zinc-200 {
+  border-color: var(--color-zinc-800);
+}
+.dark .border-zinc-300 {
+  border-color: var(--color-zinc-700);
+}
+.dark .bg-brand-50,
+.dark [class*='bg-brand-50/'] {
+  background-color: color-mix(
+    in oklab,
+    var(--color-brand-900) 55%,
+    var(--color-zinc-900)
+  );
+}
+.dark .text-brand-900 {
+  color: var(--color-brand-100);
+}
+.dark .text-brand-700 {
+  color: var(--color-brand-500);
+}
+.dark .bg-warning-50,
+.dark [class*='bg-warning-50/'] {
+  background-color: color-mix(
+    in oklab,
+    var(--color-warning-600) 18%,
+    var(--color-zinc-900)
+  );
+}
+.dark .bg-danger-50,
+.dark [class*='bg-danger-50/'] {
+  background-color: color-mix(
+    in oklab,
+    var(--color-danger-600) 18%,
+    var(--color-zinc-900)
+  );
+}
+.dark [class*='hover:bg-zinc-50']:hover,
+.dark [class*='hover:bg-zinc-100']:hover,
+.dark [class*='hover:bg-white']:hover,
+.dark [data-highlighted] {
+  background-color: var(--color-zinc-800);
+  color: var(--color-zinc-100);
+}
+.dark input,
+.dark textarea,
+.dark select {
+  color: var(--color-zinc-100);
+}
+.dark * {
+  --tw-ring-offset-color: var(--color-zinc-950);
 }
 
 /* Photo-pin markers on the results map: a room thumbnail with a price pill

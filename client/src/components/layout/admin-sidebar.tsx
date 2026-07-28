@@ -24,7 +24,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-[#bccac0] bg-[#eef4ff] md:flex md:flex-col md:justify-between md:py-6">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-zinc-200 bg-zinc-100 md:flex md:flex-col md:justify-between md:py-6">
       <div className="space-y-8">
         <Link
           href="/admin"

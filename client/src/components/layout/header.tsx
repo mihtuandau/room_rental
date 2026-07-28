@@ -6,10 +6,17 @@ import { usePathname } from 'next/navigation';
 import { ArrowLeft, Bell, Heart, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { useProfile } from '@/features/users/hooks';
 import { useFavorites } from '@/features/favorites/hooks';
 import { useNotifications } from '@/features/notifications/hooks';
+
+const PUBLIC_NAV_ITEMS = [
+  { href: '/#tim-phong', label: 'Tìm phòng' },
+  { href: '/#kham-pha', label: 'Khám phá' },
+  { href: '/#tin-moi', label: 'Tin mới' },
+] as const;
 
 export function Header() {
   const pathname = usePathname();
@@ -36,14 +43,39 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <Link
           href="/"
-          className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          aria-label="Trọ Ơi — Trang chủ"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
-          <Image src="/logo.png" alt="Trọ Ơi" width={44} height={44} priority className="h-11 w-11" />
+          <Image
+            src="/logo.png"
+            alt=""
+            width={64}
+            height={64}
+            priority
+            className="h-16 w-16 object-contain"
+          />
         </Link>
+
+        <nav
+          aria-label="Điều hướng chính"
+          className="hidden items-center gap-1 lg:flex"
+        >
+          {PUBLIC_NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
 
         <div className="flex-1" />
 
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
+
           {!isHome && (
             <Button variant="ghost" size="icon" className="sm:hidden" asChild>
               <Link href="/" aria-label="Tìm phòng">
@@ -114,7 +146,7 @@ export function Header() {
               )}
             </Link>
           ) : (
-            <Button variant="ghost" asChild>
+            <Button variant="outline" className="px-2 sm:px-4" asChild>
               <Link href="/login">Đăng nhập</Link>
             </Button>
           )}
