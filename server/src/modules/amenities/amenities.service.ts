@@ -14,6 +14,7 @@ export class AmenitiesService {
   async list() {
     return this.prisma.amenity.findMany({
       orderBy: [{ type: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { rooms: true } } },
     });
   }
 

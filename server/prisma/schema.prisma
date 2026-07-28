@@ -268,7 +268,9 @@ model Amenity {
   name String
   slug String      @unique
   icon String?
+  description String?
   type AmenityType @default(basic)
+  isActive Boolean @default(true) @map("is_active")
 
   rooms RoomAmenity[]
 

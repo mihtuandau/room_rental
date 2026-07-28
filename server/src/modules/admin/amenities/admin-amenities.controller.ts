@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Patch,
   Post,
@@ -21,6 +22,12 @@ import { CreateAmenityDto, UpdateAmenityDto } from './dto/create-amenity.dto';
 @Controller('admin/amenities')
 export class AdminAmenitiesController {
   constructor(private readonly adminAmenitiesService: AdminAmenitiesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List the full amenity catalog, including inactive entries and usage counts' })
+  list() {
+    return this.adminAmenitiesService.list();
+  }
 
   @Post()
   @ApiOperation({ summary: 'Add an amenity to the catalog' })

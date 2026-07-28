@@ -6,5 +6,8 @@ export interface Amenity {
   name: string;
   slug: string;
   icon: string | null;
+  description?: string | null;
   type: AmenityType;
+  isActive: boolean;
+  _count?: { rooms: number };
 }

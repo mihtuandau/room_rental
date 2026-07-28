@@ -44,6 +44,12 @@ import {
   useExportAdminUsers,
   useUnbanAdminUser,
 } from '@/features/admin/hooks';
+import {
+  AdminMetricCard,
+  AdminPageHeader,
+  adminTableHeadClassName,
+  adminTableRowClassName,
+} from '@/components/admin/admin-page';
 
 const PAGE_SIZE = 20;
 const ROLE_VALUES = ['tenant', 'landlord', 'admin'] as const;
@@ -107,22 +113,20 @@ export function AdminUsersView() {
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">Người dùng</h1>
-          <p className="mt-1 text-sm text-zinc-600">Quản lý tài khoản, trạng thái xác minh và quyền truy cập nền tảng.</p>
-        </div>
-        <Button variant="outline" onClick={() => void exportCsv()} disabled={exportUsers.isPending || data.total === 0}>
+      <AdminPageHeader
+        title="Người dùng"
+        description="Quản lý tài khoản, trạng thái xác minh và quyền truy cập nền tảng."
+        action={<Button variant="outline" onClick={() => void exportCsv()} disabled={exportUsers.isPending || data.total === 0}>
           <Download className="h-4 w-4" aria-hidden />
           {exportUsers.isPending ? 'Đang xuất…' : 'Xuất CSV'}
-        </Button>
-      </section>
+        </Button>}
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <UserMetric label="Tổng kết quả" value={data.total} detail="Theo bộ lọc hiện tại" icon={UsersRound} tone="brand" />
-        <UserMetric label="Đang hoạt động" value={data.summary.active} detail="Theo từ khóa và vai trò" icon={BadgeCheck} tone="brand" />
-        <UserMetric label="Chưa xác minh" value={data.summary.unverified} detail="Trong nhóm đang xem" icon={CircleAlert} tone="warning" />
-        <UserMetric label="Tài khoản đã khóa" value={data.summary.banned} detail="Theo từ khóa và vai trò" icon={ShieldAlert} tone="danger" />
+        <AdminMetricCard label="Tổng kết quả" value={data.total.toLocaleString('vi-VN')} detail="Theo bộ lọc hiện tại" icon={UsersRound} tone="brand" />
+        <AdminMetricCard label="Đang hoạt động" value={data.summary.active.toLocaleString('vi-VN')} detail="Theo từ khóa và vai trò" icon={BadgeCheck} tone="brand" />
+        <AdminMetricCard label="Chưa xác minh" value={data.summary.unverified.toLocaleString('vi-VN')} detail="Trong nhóm đang xem" icon={CircleAlert} tone="warning" />
+        <AdminMetricCard label="Tài khoản đã khóa" value={data.summary.banned.toLocaleString('vi-VN')} detail="Theo từ khóa và vai trò" icon={ShieldAlert} tone="danger" />
       </section>
 
       <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
@@ -166,7 +170,7 @@ export function AdminUsersView() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50 text-xs font-medium text-zinc-500">
+              <thead className={adminTableHeadClassName}>
                 <tr>
                   <th className="px-4 py-3 sm:px-5">Thông tin người dùng</th><th className="px-4 py-3">Liên hệ</th><th className="px-4 py-3">Vai trò</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Tham gia</th><th className="px-4 py-3 text-right sm:px-5">Thao tác</th>
                 </tr>
@@ -195,15 +199,10 @@ export function AdminUsersView() {
 }
 
 function UserRow({ user, onBan, onUnban, isUnbanning }: { user: AdminUser; onBan: () => void; onUnban: () => void; isUnbanning: boolean }) {
-  return <tr className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/70"><td className="px-4 py-4 sm:px-5"><p className="font-medium text-zinc-900">{user.fullName || 'Chưa cập nhật tên'}</p><p className="mt-1 text-xs text-zinc-500">ID: …{user.id.slice(-6)}</p></td><td className="px-4 py-4 text-zinc-600">{user.phone || 'Chưa có số điện thoại'}</td><td className="px-4 py-4"><RoleBadge role={user.role} /></td><td className="px-4 py-4"><div className="space-y-1.5">{user.deletedAt ? <Badge variant="danger">Đã khóa</Badge> : <Badge variant="verified">Đang hoạt động</Badge>}<p className={user.isPhoneVerified ? 'flex items-center gap-1 text-xs text-brand-700' : 'flex items-center gap-1 text-xs text-zinc-500'}><span className={user.isPhoneVerified ? 'h-1.5 w-1.5 rounded-full bg-brand-600' : 'h-1.5 w-1.5 rounded-full bg-zinc-400'} />{user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh'}</p></div></td><td className="px-4 py-4 text-zinc-600">{formatDate(user.createdAt)}</td><td className="px-4 py-4 text-right sm:px-5">{user.role === 'admin' ? <span className="text-xs text-zinc-400">Tài khoản quản trị</span> : user.deletedAt ? <Button variant="outline" size="sm" disabled={isUnbanning} onClick={onUnban}><UnlockKeyhole className="h-4 w-4" aria-hidden />{isUnbanning ? 'Đang mở khóa…' : 'Mở khóa'}</Button> : <Button variant="danger" size="sm" onClick={onBan}><LockKeyhole className="h-4 w-4" aria-hidden />Khóa</Button>}</td></tr>;
+  return <tr className={adminTableRowClassName}><td className="px-4 py-4 sm:px-5"><p className="font-medium text-zinc-900">{user.fullName || 'Chưa cập nhật tên'}</p><p className="mt-1 text-xs text-zinc-500">ID: …{user.id.slice(-6)}</p></td><td className="px-4 py-4 text-zinc-600">{user.phone || 'Chưa có số điện thoại'}</td><td className="px-4 py-4"><RoleBadge role={user.role} /></td><td className="px-4 py-4"><div className="space-y-1.5">{user.deletedAt ? <Badge variant="danger">Đã khóa</Badge> : <Badge variant="verified">Đang hoạt động</Badge>}<p className={user.isPhoneVerified ? 'flex items-center gap-1 text-xs text-brand-700' : 'flex items-center gap-1 text-xs text-zinc-500'}><span className={user.isPhoneVerified ? 'h-1.5 w-1.5 rounded-full bg-brand-600' : 'h-1.5 w-1.5 rounded-full bg-zinc-400'} />{user.isPhoneVerified ? 'Đã xác minh' : 'Chưa xác minh'}</p></div></td><td className="px-4 py-4 text-zinc-600">{formatDate(user.createdAt)}</td><td className="px-4 py-4 text-right sm:px-5">{user.role === 'admin' ? <span className="text-xs text-zinc-400">Tài khoản quản trị</span> : user.deletedAt ? <Button variant="outline" size="sm" disabled={isUnbanning} onClick={onUnban}><UnlockKeyhole className="h-4 w-4" aria-hidden />{isUnbanning ? 'Đang mở khóa…' : 'Mở khóa'}</Button> : <Button variant="danger" size="sm" onClick={onBan}><LockKeyhole className="h-4 w-4" aria-hidden />Khóa</Button>}</td></tr>;
 }
 
 function RoleBadge({ role }: { role: AdminUser['role'] }) { return <Badge variant={role === 'admin' ? 'verified' : 'neutral'}>{ROLE_LABELS[role]}</Badge>; }
-
-function UserMetric({ label, value, detail, icon: Icon, tone }: { label: string; value: number; detail: string; icon: typeof UsersRound; tone: 'brand' | 'warning' | 'danger' }) {
-  const toneClasses = { brand: 'bg-brand-50 text-brand-700', warning: 'bg-warning-50 text-warning-600', danger: 'bg-danger-50 text-danger-600' };
-  return <article className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium uppercase tracking-[0.08em] text-zinc-500">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">{value.toLocaleString('vi-VN')}</p><p className="mt-1 text-xs text-zinc-500">{detail}</p></div><span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClasses[tone]}`}><Icon className="h-5 w-5" aria-hidden /></span></div></article>;
-}
 
 function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (page: number) => void }) {
   if (totalPages <= 1) return null;

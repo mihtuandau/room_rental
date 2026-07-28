@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <AdminAccessGate>
       <div className="flex min-h-screen">
         <AdminSidebar />
-        <div className="min-w-0 flex-1 bg-zinc-50">
+        <div className="min-w-0 flex-1 bg-[#f8f9ff]">
           <AdminTopbar />
           <main>{children}</main>
         </div>

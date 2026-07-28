@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: 'Duyệt tin | RoomRent Admin' };
 
 export default function PendingRoomsPage() {
   return (
-    <div className="mx-auto w-full px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
       <PendingRoomsView />
     </div>
   );

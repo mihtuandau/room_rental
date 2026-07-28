@@ -15,6 +15,7 @@ import {
   YAxis,
 } from 'recharts';
 import { formatPrice } from '@/lib/utils';
+import { AdminMetricCard, AdminPageHeader } from '@/components/admin/admin-page';
 import { ErrorState } from '@/components/ui/states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminDashboardSummary, usePendingAdminReports, usePendingAdminRooms } from '@/features/admin/hooks';
@@ -42,17 +43,17 @@ export function AdminDashboardView() {
   if (!data) return null;
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">Tổng quan hệ thống</h1>
-        <p className="mt-1 text-sm text-zinc-600">Theo dõi các mục cần được xử lý trong hôm nay.</p>
-      </section>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Tổng quan hệ thống"
+        description="Theo dõi các mục cần được xử lý trong hôm nay."
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={UsersRound} label="Người dùng mới hôm nay" value={data.newUsersToday} tone="brand" />
-        <MetricCard icon={ClipboardCheck} label="Tin đăng chờ duyệt" value={data.pendingRooms} tone="warning" />
-        <MetricCard icon={FileWarning} label="Báo cáo chờ xử lý" value={data.pendingReports} tone="danger" />
-        <MetricCard icon={AlertTriangle} label="Tình trạng hệ thống" value="Ổn định" tone="brand" />
+        <AdminMetricCard icon={UsersRound} label="Người dùng mới hôm nay" value={data.newUsersToday.toLocaleString('vi-VN')} detail="Trong ngày hiện tại" tone="brand" />
+        <AdminMetricCard icon={ClipboardCheck} label="Tin đăng chờ duyệt" value={data.pendingRooms.toLocaleString('vi-VN')} detail="Cần kiểm tra nội dung" tone="warning" />
+        <AdminMetricCard icon={FileWarning} label="Báo cáo chờ xử lý" value={data.pendingReports.toLocaleString('vi-VN')} detail="Cần phản hồi người dùng" tone="danger" />
+        <AdminMetricCard icon={AlertTriangle} label="Tình trạng hệ thống" value="Ổn định" detail="Không có cảnh báo mới" tone="brand" />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
@@ -192,11 +193,6 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: Array<{
   );
 }
 
-function MetricCard({ icon: Icon, label, value, tone }: { icon: typeof UsersRound; label: string; value: string | number; tone: 'brand' | 'warning' | 'danger' }) {
-  const toneClasses = { brand: 'bg-brand-50 text-brand-700', warning: 'bg-warning-50 text-warning-600', danger: 'bg-danger-50 text-danger-600' };
-  return <article className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5"><span className={`flex h-10 w-10 items-center justify-center rounded-md ${toneClasses[tone]}`}><Icon className="h-5 w-5" aria-hidden /></span><p className="mt-4 text-sm text-zinc-600">{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{value}</p></article>;
-}
-
 function DashboardSkeleton() {
-  return <div className="space-y-8"><div><Skeleton className="h-9 w-72" /><Skeleton className="mt-3 h-5 w-96" /></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-40 w-full rounded-lg" />)}</div><div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]"><Skeleton className="h-80 w-full rounded-lg" /><Skeleton className="h-80 w-full rounded-lg" /></div></div>;
+  return <div className="space-y-6"><div><Skeleton className="h-9 w-72" /><Skeleton className="mt-3 h-5 w-96" /></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-32 w-full rounded-lg" />)}</div><div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]"><Skeleton className="h-80 w-full rounded-lg" /><Skeleton className="h-80 w-full rounded-lg" /></div></div>;
 }

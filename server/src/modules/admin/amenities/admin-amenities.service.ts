@@ -11,6 +11,13 @@ import { CreateAmenityDto, UpdateAmenityDto } from './dto/create-amenity.dto';
 export class AdminAmenitiesService {
   constructor(private prisma: PrismaService) {}
 
+  async list() {
+    return this.prisma.amenity.findMany({
+      orderBy: [{ type: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { rooms: true } } },
+    });
+  }
+
   async create(dto: CreateAmenityDto) {
     const slug = slugify(dto.name);
     const existing = await this.prisma.amenity.findUnique({ where: { slug } });

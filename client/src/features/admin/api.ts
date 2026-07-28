@@ -153,9 +153,9 @@ export function resolveAdminReport({ id, status, resolutionNote }: { id: string;
   return apiRequest<AdminReport>(`/admin/reports/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ status, resolutionNote }) });
 }
 
-export function getAdminAmenities() { return apiRequest<Amenity[]>('/amenities'); }
-export function createAdminAmenity(body: { name: string; type: AmenityType; icon?: string }) { return apiRequest<Amenity>('/admin/amenities', { method: 'POST', body: JSON.stringify(body) }); }
-export function updateAdminAmenity({ id, ...body }: { id: number; name?: string; type?: AmenityType; icon?: string }) { return apiRequest<Amenity>(`/admin/amenities/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); }
+export function getAdminAmenities() { return apiRequest<Amenity[]>('/admin/amenities'); }
+export function createAdminAmenity(body: { name: string; type: AmenityType; icon?: string; description?: string; isActive?: boolean }) { return apiRequest<Amenity>('/admin/amenities', { method: 'POST', body: JSON.stringify(body) }); }
+export function updateAdminAmenity({ id, ...body }: { id: number; name?: string; type?: AmenityType; icon?: string; description?: string; isActive?: boolean }) { return apiRequest<Amenity>(`/admin/amenities/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); }
 export function deleteAdminAmenity(id: number) { return apiRequest<{ success: boolean }>(`/admin/amenities/${id}`, { method: 'DELETE' }); }
 
 function buildAdminUsersQuery({ role, keyword, status, page, pageSize }: AdminUsersParams) {
