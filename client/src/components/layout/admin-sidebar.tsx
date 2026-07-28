@@ -15,12 +15,9 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Người dùng', icon: UsersRound },
-];
-
-const UPCOMING_NAV_ITEMS = [
-  { label: 'Duyệt tin', icon: ClipboardCheck },
-  { label: 'Báo cáo', icon: FileWarning },
-  { label: 'Tiện ích', icon: Settings },
+  { href: '/admin/rooms/pending', label: 'Duyệt tin', icon: ClipboardCheck },
+  { href: '/admin/reports', label: 'Báo cáo', icon: FileWarning },
+  { href: '/admin/amenities', label: 'Tiện ích', icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -62,16 +59,6 @@ export function AdminSidebar() {
               </Link>
             );
           })}
-          {UPCOMING_NAV_ITEMS.map((item) => (
-            <span
-              key={item.label}
-              aria-disabled="true"
-              className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2.5 text-sm text-zinc-400"
-            >
-              <item.icon className="h-[18px] w-[18px]" aria-hidden />
-              {item.label}
-            </span>
-          ))}
         </nav>
       </div>
 

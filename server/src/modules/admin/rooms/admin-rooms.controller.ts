@@ -13,10 +13,10 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { PaginationQueryDto } from '@/common/dto/pagination-query.dto';
 import { AdminRoomsService } from './admin-rooms.service';
 import { ModerationNoteDto } from './dto/moderation-note.dto';
 import { SetVerifiedDto } from './dto/set-verified.dto';
+import { ListPendingRoomsQueryDto } from './dto/list-pending-rooms-query.dto';
 
 @ApiTags('admin/rooms')
 @ApiBearerAuth()
@@ -28,10 +28,12 @@ export class AdminRoomsController {
 
   @Get('pending')
   @ApiOperation({ summary: 'List listings awaiting approval, oldest first' })
-  listPending(@Query() query: PaginationQueryDto) {
+  listPending(@Query() query: ListPendingRoomsQueryDto) {
     return this.adminRoomsService.listPending(
       query.page ?? 1,
       query.pageSize ?? 20,
+      query.keyword,
+      query.verified,
     );
   }
 

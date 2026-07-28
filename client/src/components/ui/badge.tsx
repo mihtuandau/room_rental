@@ -10,6 +10,7 @@ const badgeVariants = cva(
       variant: {
         verified: 'bg-brand-50 text-brand-700',
         pending: 'bg-warning-50 text-warning-600',
+        warning: 'bg-warning-50 text-warning-600',
         danger: 'bg-danger-50 text-danger-600',
         neutral: 'bg-zinc-100 text-zinc-600',
       },

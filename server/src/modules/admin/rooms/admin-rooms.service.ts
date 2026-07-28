@@ -18,15 +18,47 @@ export class AdminRoomsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async listPending(page: number, pageSize: number) {
-    const where = { status: RoomStatus.pending, deletedAt: null };
+  async listPending(
+    page: number,
+    pageSize: number,
+    keyword?: string,
+    verified?: 'verified' | 'unverified',
+  ) {
+    const search = keyword?.trim();
+    const where: Prisma.RoomWhereInput = {
+      status: RoomStatus.pending,
+      deletedAt: null,
+      ...(verified ? { isVerified: verified === 'verified' } : {}),
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: 'insensitive' } },
+              { city: { contains: search, mode: 'insensitive' } },
+              { district: { contains: search, mode: 'insensitive' } },
+              {
+                owner: {
+                  is: {
+                    OR: [
+                      { fullName: { contains: search, mode: 'insensitive' } },
+                      { phone: { contains: search, mode: 'insensitive' } },
+                    ],
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
     const [rooms, total] = await this.prisma.$transaction([
       this.prisma.room.findMany({
         where,
         orderBy: { createdAt: 'asc' }, // oldest waiting first
         skip: (page - 1) * pageSize,
         take: pageSize,
-        include: {
+        select: {
+          id: true, title: true, price: true, roomType: true, status: true,
+          city: true, district: true, createdAt: true, isVerified: true,
+          images: { where: { isCover: true }, take: 1, select: { url: true } },
           owner: { select: { id: true, fullName: true, phone: true } },
         },
       }),
