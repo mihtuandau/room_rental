@@ -16,7 +16,7 @@ function ZaloIcon({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded bg-[#0068ff] text-[10px] font-bold leading-none text-white',
+        'inline-flex items-center justify-center rounded bg-blue-600 text-[10px] font-bold leading-none text-white',
         className,
       )}
       aria-hidden
@@ -28,12 +28,14 @@ function ZaloIcon({ className }: { className?: string }) {
 
 export function RoomContactCard({
   roomId,
+  roomSlug,
   price,
   deposit,
   isVerified,
   owner,
 }: {
   roomId: number;
+  roomSlug: string;
   price: number;
   deposit: number | null;
   isVerified: boolean;
@@ -47,7 +49,7 @@ export function RoomContactCard({
   const [revealedZalo, setRevealedZalo] = useState<string | null>(null);
 
   const requireSignIn = () => {
-    router.push(`/login?next=${encodeURIComponent(`/room/${roomId}`)}`);
+    router.push(`/login?next=${encodeURIComponent(`/room/${roomSlug}`)}`);
   };
 
   const handleReveal = async (type: 'phone' | 'zalo') => {
@@ -63,11 +65,11 @@ export function RoomContactCard({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-card">
       {/* Price stays zinc-900 per design-system — it's information, not an
           action, so it doesn't borrow the brand accent even though the
           reference design uses it there. */}
-      <div className="space-y-4 rounded-2xl border border-zinc-200 p-5 shadow-card">
+      <div className="space-y-4">
         <p className="text-2xl font-bold text-zinc-900">
           {formatPrice(price)}
           <span className="text-base font-normal text-zinc-500">/tháng</span>
@@ -122,7 +124,7 @@ export function RoomContactCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 p-5">
+      <div className="mt-5 flex items-center gap-3 border-t border-zinc-100 pt-5">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-500">
           {owner.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured
@@ -141,7 +143,7 @@ export function RoomContactCard({
           moderation. No fabricated "secure payment/contract" system — Trọ Ơi
           doesn't have one in this MVP. */}
       {isVerified && (
-        <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-4">
+        <div className="mt-5 flex items-start gap-3 rounded-lg bg-brand-50 p-4">
           <ShieldCheck className="h-5 w-5 shrink-0 text-brand-700" aria-hidden />
           <div>
             <p className="text-sm font-semibold text-brand-900">Tin đăng đã xác minh</p>

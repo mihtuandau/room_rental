@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
@@ -29,12 +30,15 @@ export function RoomGallery({
 
   if (ordered.length === 0) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured
-      <img
-        src={PLACEHOLDER_IMAGE}
-        alt={title}
-        className="aspect-video w-full rounded-lg object-cover"
-      />
+      <div className="relative aspect-video overflow-hidden rounded-lg bg-zinc-100">
+        <Image
+          src={PLACEHOLDER_IMAGE}
+          alt={title}
+          fill
+          sizes="(max-width: 1152px) 100vw, 1152px"
+          className="object-cover"
+        />
+      </div>
     );
   }
 
@@ -49,18 +53,34 @@ export function RoomGallery({
 
   return (
     <>
-      <div className="grid h-[420px] grid-cols-6 grid-rows-2 gap-3 overflow-hidden rounded-lg">
+      <div className="md:hidden">
+        <CarouselGallery title={title} images={ordered} />
+      </div>
+
+      <div className="hidden h-room-gallery grid-cols-8 grid-rows-2 gap-3 overflow-hidden rounded-lg md:grid">
         <button
           type="button"
           onClick={() => openAt(0)}
           aria-label={`Xem ảnh 1/${ordered.length}`}
-          className="group relative col-span-4 row-span-2 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className="group relative col-span-6 row-span-2 overflow-hidden bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-          <img
+          <Image
+            src={main.url}
+            alt=""
+            fill
+            sizes="(max-width: 1152px) 75vw, 864px"
+            quality={60}
+            className="object-cover opacity-25 blur-xl"
+            aria-hidden
+          />
+          <Image
             src={main.url}
             alt={title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 1152px) 75vw, 864px"
+            quality={90}
+            priority
+            className="object-contain"
           />
           <div className="absolute bottom-3 left-3 flex gap-2">
             {isVerified && (
@@ -86,14 +106,15 @@ export function RoomGallery({
               aria-label={`Xem ảnh ${i + 2}/${ordered.length}`}
               className="group relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-              <img
+              <Image
                 src={image.url}
                 alt=""
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                fill
+                sizes="(max-width: 1152px) 25vw, 288px"
+                className="object-cover"
               />
               {isLast && remaining > 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-sm font-semibold text-white">
                   Xem tất cả {ordered.length} ảnh
                 </div>
               )}
@@ -146,12 +167,24 @@ function CarouselGallery({
       <div className="overflow-hidden rounded-lg" ref={emblaRef}>
         <div className="flex">
           {images.map((image, i) => (
-            <div key={image.id} className="min-w-0 flex-[0_0_100%]">
-              {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-              <img
+            <div
+              key={image.id}
+              className="relative aspect-video min-w-0 flex-[0_0_100%] bg-zinc-100"
+            >
+              <Image
+                src={image.url}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover opacity-25 blur-xl"
+                aria-hidden
+              />
+              <Image
                 src={image.url}
                 alt={`${title} — ảnh ${i + 1}/${images.length}`}
-                className="aspect-video w-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-contain"
               />
             </div>
           ))}
@@ -190,12 +223,17 @@ function CarouselGallery({
                 aria-label={`Xem ảnh ${i + 1}`}
                 aria-current={selected === i}
                 className={cn(
-                  'h-14 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-colors',
+                  'relative h-14 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-colors',
                   selected === i ? 'border-brand-600' : 'border-transparent',
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-                <img src={image.url} alt="" className="h-full w-full object-cover" />
+                <Image
+                  src={image.url}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
               </button>
             ))}
           </div>

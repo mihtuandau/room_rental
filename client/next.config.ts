@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 
   images: {
+    qualities: [60, 75, 90],
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       // seed data uses placeholder images; drop this once real listings exist
