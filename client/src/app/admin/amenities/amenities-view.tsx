@@ -11,6 +11,7 @@ import {
   BarChart3,
   Building2,
   Camera,
+  Check,
   Hospital,
   Pencil,
   PawPrint,
@@ -60,6 +61,8 @@ import type { AmenityType } from "@/lib/constants";
 import {
   AdminMetricCard,
   AdminPageHeader,
+  adminStickyActionCellClassName,
+  adminStickyActionHeadClassName,
   adminTableHeadClassName,
   adminTableRowClassName,
 } from "@/components/admin/admin-page";
@@ -71,8 +74,47 @@ const labels: Record<AmenityType, string> = {
   security: "An ninh",
   nearby: "Xung quanh",
 };
-const ICON_OPTIONS = ["wifi", "ac", "water-heater", "fridge", "balcony", "furniture", "pet", "washing-machine", "elevator", "parking", "shield", "camera", "market", "school", "hospital"];
-type Values = { name: string; type: AmenityType; icon?: string; description?: string; isActive?: boolean };
+const ICON_OPTIONS = [
+  "wifi",
+  "ac",
+  "water-heater",
+  "fridge",
+  "balcony",
+  "furniture",
+  "pet",
+  "washing-machine",
+  "elevator",
+  "parking",
+  "shield",
+  "camera",
+  "market",
+  "school",
+  "hospital",
+];
+const iconLabels: Record<(typeof ICON_OPTIONS)[number], string> = {
+  wifi: "WiFi",
+  ac: "Điều hòa",
+  "water-heater": "Nóng lạnh",
+  fridge: "Tủ lạnh",
+  balcony: "Ban công",
+  furniture: "Nội thất",
+  pet: "Thú cưng",
+  "washing-machine": "Máy giặt",
+  elevator: "Thang máy",
+  parking: "Chỗ để xe",
+  shield: "Bảo vệ",
+  camera: "Camera",
+  market: "Chợ",
+  school: "Trường học",
+  hospital: "Bệnh viện",
+};
+type Values = {
+  name: string;
+  type: AmenityType;
+  icon?: string;
+  description?: string;
+  isActive?: boolean;
+};
 
 function AmenitySymbol({ icon }: { icon: string | null }) {
   const isEmoji = Boolean(icon && /\p{Extended_Pictographic}/u.test(icon));
@@ -162,12 +204,14 @@ export function AdminAmenitiesView() {
       <AdminPageHeader
         title="Quản lý tiện ích"
         description="Chuẩn hóa các tiện ích hiển thị trên tin đăng."
-        action={<Button onClick={() => setForm("new")}>
-          <Plus className="h-4 w-4" />
-          Thêm tiện ích
-        </Button>}
+        action={
+          <Button onClick={() => setForm("new")}>
+            <Plus className="h-4 w-4" />
+            Thêm tiện ích
+          </Button>
+        }
       />
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <AdminMetricCard
           label="Tổng tiện ích"
           value={summary.total.toLocaleString("vi-VN")}
@@ -183,6 +227,7 @@ export function AdminAmenitiesView() {
           tone="brand"
         />
         <AdminMetricCard
+          className="col-span-2 sm:col-span-1"
           label="Lượt gắn tin"
           value={summary.used.toLocaleString("vi-VN")}
           detail="Trên tất cả tin đăng"
@@ -266,6 +311,9 @@ export function AdminAmenitiesView() {
           />
         ) : (
           <div className="overflow-x-auto">
+            <p className="px-5 pb-2 text-xs text-zinc-500 md:hidden">
+              Vuốt ngang để xem đầy đủ thông tin.
+            </p>
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className={adminTableHeadClassName}>
                 <tr>
@@ -274,15 +322,14 @@ export function AdminAmenitiesView() {
                   <th className="px-4 py-3">Tin sử dụng</th>
                   <th className="px-4 py-3">Trạng thái</th>
                   <th className="px-4 py-3">Mã catalogue</th>
-                  <th className="px-5 py-3 text-right">Thao tác</th>
+                  <th className={`${adminStickyActionHeadClassName} px-5 py-3`}>
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr
-                    key={item.id}
-                    className={adminTableRowClassName}
-                  >
+                  <tr key={item.id} className={adminTableRowClassName}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-sm">
@@ -340,7 +387,9 @@ export function AdminAmenitiesView() {
                     <td className="px-4 py-4 font-mono text-xs text-zinc-500">
                       {item.slug}
                     </td>
-                    <td className="px-5 py-4">
+                    <td
+                      className={`${adminStickyActionCellClassName} px-5 py-4`}
+                    >
                       <div className="flex justify-end gap-1">
                         <Button
                           size="icon"
@@ -370,7 +419,9 @@ export function AdminAmenitiesView() {
       </section>
       <section className="grid gap-4 lg:grid-cols-3">
         <article className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-zinc-900">Quy chuẩn catalogue</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">
+            Quy chuẩn catalogue
+          </h2>
           <p className="mt-3 text-sm leading-6 text-zinc-600">
             Tên tiện ích nên ngắn gọn, dễ nhận diện và dùng biểu tượng nhất
             quán. Điều này giúp người thuê so sánh các tin đăng nhanh hơn.
@@ -441,7 +492,9 @@ function AmenityForm({
           <DialogTitle>
             {data ? "Chỉnh sửa tiện ích" : "Thêm tiện ích mới"}
           </DialogTitle>
-          <p className="mt-1 text-sm text-zinc-600">Cập nhật thông tin tiện ích cho hệ thống Trọ Ơi.</p>
+          <p className="mt-1 text-sm text-zinc-600">
+            Cập nhật thông tin tiện ích cho hệ thống Trọ Ơi.
+          </p>
         </DialogHeader>
         <DialogBody className="grid gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.4fr)_minmax(180px,1fr)]">
           <label className="block text-sm font-medium text-zinc-800">
@@ -470,9 +523,63 @@ function AmenityForm({
               </SelectContent>
             </Select>
           </label>
-          <section className="border-t border-zinc-100 pt-5 sm:col-span-2"><p className="text-sm font-medium text-zinc-800">Chọn biểu tượng</p><p className="mt-1 text-xs text-zinc-500">Biểu tượng giúp người thuê nhận diện tiện ích nhanh hơn.</p><div className="mt-3 grid grid-cols-5 gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-10">{ICON_OPTIONS.map((value) => <button key={value} type="button" aria-label={value} onClick={() => setIcon(value)} className={`flex h-11 items-center justify-center rounded-md border bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${icon === value ? "border-brand-600" : "border-transparent hover:border-brand-300"}`}><AmenitySymbol icon={value} /></button>)}</div></section>
-          <label className="border-t border-zinc-100 pt-5 text-sm font-medium text-zinc-800 sm:col-span-2">Mô tả tiện ích<Textarea className="mt-2 min-h-24 resize-none" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nhập mô tả chi tiết về tiện ích này..." /></label>
-          <div className="flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50/50 p-4 sm:col-span-2"><div><p className="text-sm font-medium text-zinc-900">Hiển thị trên tin đăng</p><p className="mt-1 text-xs text-zinc-500">Tắt tùy chọn này để tạm ẩn tiện ích khỏi catalogue công khai.</p></div><button type="button" role="switch" aria-checked={isActive} aria-label="Hiển thị tiện ích trên tin đăng" onClick={() => setIsActive((value) => !value)} className={`relative inline-flex h-6 w-11 shrink-0 rounded-full p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 ${isActive ? "bg-brand-600" : "bg-zinc-300"}`}><span className={`h-5 w-5 rounded-full bg-white shadow-card transition-transform ${isActive ? "translate-x-5" : "translate-x-0"}`} /></button></div>
+          <section className="border-t border-zinc-100 pt-5 sm:col-span-2">
+            <p className="text-sm font-medium text-zinc-800">Chọn biểu tượng</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Biểu tượng giúp người thuê nhận diện tiện ích nhanh hơn.
+            </p>
+            <div className="mt-3 grid grid-cols-5 gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-10">
+              {ICON_OPTIONS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-label={`Chọn biểu tượng ${iconLabels[value]}`}
+                  aria-pressed={icon === value}
+                  title={iconLabels[value]}
+                  onClick={() => setIcon(value)}
+                  className={`relative flex h-11 items-center justify-center rounded-md border bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${icon === value ? "border-brand-600 bg-brand-50 text-brand-700 ring-2 ring-brand-100" : "border-zinc-200 hover:border-brand-300"}`}
+                >
+                  <AmenitySymbol icon={value} />
+                  {icon === value ? (
+                    <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-600 text-white">
+                      <Check className="h-2.5 w-2.5" aria-hidden />
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </section>
+          <label className="border-t border-zinc-100 pt-5 text-sm font-medium text-zinc-800 sm:col-span-2">
+            Mô tả tiện ích
+            <Textarea
+              className="mt-2 min-h-24 resize-none"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Nhập mô tả chi tiết về tiện ích này..."
+            />
+          </label>
+          <div className="flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50/50 p-4 sm:col-span-2">
+            <div>
+              <p className="text-sm font-medium text-zinc-900">
+                Hiển thị trên tin đăng
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Tắt tùy chọn này để tạm ẩn tiện ích khỏi catalogue công khai.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isActive}
+              aria-label="Hiển thị tiện ích trên tin đăng"
+              onClick={() => setIsActive((value) => !value)}
+              className={`relative inline-flex h-6 w-11 shrink-0 rounded-full p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 ${isActive ? "bg-brand-600" : "bg-zinc-300"}`}
+            >
+              <span
+                className={`h-5 w-5 rounded-full bg-white shadow-card transition-transform ${isActive ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
@@ -485,7 +592,9 @@ function AmenityForm({
                 name: name.trim(),
                 type,
                 ...(icon.trim() ? { icon: icon.trim() } : {}),
-                ...(description.trim() ? { description: description.trim() } : {}),
+                ...(description.trim()
+                  ? { description: description.trim() }
+                  : {}),
                 isActive,
               })
             }
