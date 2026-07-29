@@ -37,7 +37,7 @@ export async function CategorySection() {
   return (
     <section
       id="kham-pha"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 sm:px-6"
+      className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 sm:px-6"
     >
       <h2 className="text-lg font-semibold">Khám phá theo danh mục</h2>
 

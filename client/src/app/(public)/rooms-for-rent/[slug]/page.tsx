@@ -54,7 +54,7 @@ export default async function AreaLandingPage({ params, searchParams }: Props) {
   const exploreHref = `/?city=${encodeURIComponent(area.city)}&all=true`;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       {/* A plain Link, not the client BackButton — this page is often an entry
           point (Google, the footer), so there may be no in-app history to
           go back to. */}

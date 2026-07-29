@@ -166,7 +166,7 @@ export function SearchView({
     return (
       <div
         id="ket-qua"
-        className="mx-auto w-full max-w-6xl space-y-12 pb-8 pt-8 sm:space-y-16 sm:pt-12"
+        className="mx-auto w-full max-w-7xl space-y-12 pb-8 pt-8 sm:space-y-16 sm:pt-12"
       >
         {browseTop}
 
@@ -216,7 +216,7 @@ export function SearchView({
   }
 
   return (
-    <div id="ket-qua" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div id="ket-qua" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       {/* The one search surface: province → ward → keyword, always visible. */}
       <SearchToolbar state={state} provinces={provinces} onChange={applyFilter} />
 

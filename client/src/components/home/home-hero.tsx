@@ -82,7 +82,7 @@ export function HomeHero({ provinces }: { provinces: ProvinceOption[] }) {
           visually hidden since the image already shows it. */}
       <h1 className="sr-only">Trọ Ơi — Tìm trọ dễ dàng, sống an tâm mỗi ngày</h1>
 
-      {/* Full-bleed on purpose here (unlike other sections' max-w-6xl px-4
+      {/* Full-bleed on purpose here (unlike other sections' max-w-7xl px-4
           wrapper) — the carousel's own centre slide is capped to match that
           same 1152px width internally, but the side peek slides are meant to
           spill past it into the gutters for the coverflow look. */}
@@ -92,7 +92,7 @@ export function HomeHero({ provinces }: { provinces: ProvinceOption[] }) {
           the old single-image version did, since the carousel now has its
           own dot pagination sitting there instead. */}
       {!expanded && (
-        <div className="relative mx-auto mt-8 w-full max-w-4xl px-4 sm:px-6">
+        <div className="relative mx-auto mt-6 w-full max-w-4xl px-4 sm:px-6">
           <div className="flex flex-col gap-2 rounded-lg border border-zinc-100 bg-white p-3 shadow-popover sm:flex-row sm:items-center sm:gap-0 sm:divide-x sm:divide-zinc-200">
             <Field label="Vị trí">
               <Select value={city || ALL} onValueChange={(v) => setCity(v === ALL ? '' : v)}>
@@ -158,7 +158,7 @@ export function HomeHero({ provinces }: { provinces: ProvinceOption[] }) {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex-1 px-3 py-1 text-left first:pl-1 sm:first:pl-3">
+    <div className="min-w-0 flex-1 px-3 py-1 text-left first:pl-1 sm:first:pl-3">
       <span className="block text-xs font-medium text-zinc-500">{label}</span>
       {children}
     </div>
