@@ -1,14 +1,14 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-type MetricTone = 'brand' | 'warning' | 'danger' | 'neutral';
+type MetricTone = "brand" | "warning" | "danger" | "neutral";
 
 const metricToneClasses: Record<MetricTone, string> = {
-  brand: 'bg-brand-50 text-brand-700',
-  warning: 'bg-warning-50 text-warning-600',
-  danger: 'bg-danger-50 text-danger-600',
-  neutral: 'bg-zinc-100 text-zinc-700',
+  brand: "bg-brand-50 text-brand-700",
+  warning: "bg-warning-50 text-warning-600",
+  danger: "bg-danger-50 text-danger-600",
+  neutral: "bg-zinc-100 text-zinc-700",
 };
 
 export function AdminPageHeader({
@@ -25,7 +25,7 @@ export function AdminPageHeader({
   return (
     <header
       className={cn(
-        'flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between',
+        "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
@@ -45,7 +45,7 @@ export function AdminMetricCard({
   label,
   value,
   detail,
-  tone = 'brand',
+  tone = "brand",
   className,
 }: {
   icon: LucideIcon;
@@ -58,25 +58,28 @@ export function AdminMetricCard({
   return (
     <article
       className={cn(
-        'min-h-32 rounded-lg border border-zinc-200 bg-white p-4 sm:p-5',
+        "min-h-28 rounded-lg border border-zinc-200 bg-white p-3 sm:min-h-32 sm:p-5",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-4">
         <div className="min-w-0">
-          <p className="text-sm text-zinc-600">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">
+          <p className="text-xs text-zinc-600 sm:text-sm">{label}</p>
+          <p className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
             {value}
           </p>
-          {detail ? <p className="mt-1 text-xs text-zinc-500">{detail}</p> : null}
+          {detail ? (
+            <p className="mt-1 text-xs text-zinc-500">{detail}</p>
+          ) : null}
         </div>
         <span
           className={cn(
-            'flex h-10 w-10 shrink-0 items-center justify-center rounded-md',
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-md",
+            "max-sm:h-8 max-sm:w-8",
             metricToneClasses[tone],
           )}
         >
-          <Icon className="h-5 w-5" aria-hidden />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
         </span>
       </div>
     </article>
@@ -93,7 +96,7 @@ export function AdminPanel({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-lg border border-zinc-200 bg-white',
+        "overflow-hidden rounded-lg border border-zinc-200 bg-white",
         className,
       )}
     >
@@ -116,7 +119,7 @@ export function AdminPanelHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('border-b border-zinc-100 p-4 sm:p-5', className)}>
+    <div className={cn("border-b border-zinc-100 p-4 sm:p-5", className)}>
       {title || action ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -136,7 +139,13 @@ export function AdminPanelHeader({
 }
 
 export const adminTableHeadClassName =
-  'border-b border-zinc-100 bg-zinc-50 text-xs font-medium text-zinc-500';
+  "border-b border-zinc-100 bg-zinc-50 text-xs font-medium text-zinc-500";
 
 export const adminTableRowClassName =
-  'border-b border-zinc-100 last:border-0 transition-colors hover:bg-zinc-50/70';
+  "group border-b border-zinc-100 last:border-0 transition-colors hover:bg-zinc-50/70";
+
+export const adminStickyActionHeadClassName =
+  "sticky right-0 z-10 border-l border-zinc-100 bg-zinc-50 text-right";
+
+export const adminStickyActionCellClassName =
+  "sticky right-0 z-10 border-l border-zinc-100 bg-white text-right group-hover:bg-zinc-50";
