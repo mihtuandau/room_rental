@@ -1,6 +1,6 @@
 ---
 name: add-bff-proxy-route
-description: "Write Next.js App Router route handlers that act as the RoomRent BFF for login, registration, Google sign-in, logout, refresh, and authenticated proxy requests to NestJS. Use when Codex changes authentication routes or when a Client Component needs an authenticated backend endpoint. Keep authentication transport in secure httpOnly cookies and attach bearer credentials only inside the server-side proxy."
+description: "Create RoomRent Next.js BFF routes. Use for authentication, secure cookies, token refresh, logout, or authenticated NestJS proxy requests."
 ---
 
 # Route Handlers as a BFF proxy

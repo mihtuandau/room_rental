@@ -1,0 +1,4 @@
+interface:
+  display_name: "Redesign Existing Projects"
+  short_description: "Upgrade interfaces without regressions"
+  default_prompt: "Use $redesign-existing-projects to upgrade this interface safely."

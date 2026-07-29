@@ -1,6 +1,6 @@
 ---
 name: add-zustand-store
-description: "Create or modify a Zustand store for RoomRent browser-owned state such as dialogs, drawers, draft filters, multi-step form position, or temporary guest state. Use when Codex must preserve client-side state that has no API source of truth. Keep URL-shareable state in nuqs and server-owned data in React Query."
+description: "Create RoomRent Zustand stores. Use only for browser-owned UI state such as dialogs, drawers, drafts, steps, or temporary guest state."
 ---
 
 # Creating a Zustand store (UI state only)

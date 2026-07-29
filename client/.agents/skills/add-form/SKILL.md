@@ -1,6 +1,6 @@
 ---
 name: add-form
-description: "Build RoomRent frontend forms with React Hook Form and Zod, connect them to React Query mutations, and map backend validation failures to fields. Use when Codex creates or changes login, registration, OTP, listing, report, profile, saved-search, or other forms. Mirror relevant backend constraints while keeping backend validation authoritative."
+description: "Build RoomRent forms with React Hook Form and Zod. Use for validation, React Query mutations, and backend field errors."
 ---
 
 # Building a form (react-hook-form + zod)

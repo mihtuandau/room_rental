@@ -1,6 +1,6 @@
 ---
 name: build-map-search-experience
-description: "Build or modify RoomRent MapLibre maps and location-aware search, including result markers, list-map highlighting, viewport fitting, listing location previews, coordinate handling, lazy loading, popups, tile styles, geolocation, clustering, and URL-backed filters. Use whenever Codex changes files involving maplibre-gl, latitude or longitude, map markers, bounds, nearby search, directions, or map/list synchronization."
+description: "Build RoomRent MapLibre and location search. Use for markers, bounds, coordinates, geolocation, clustering, map/list sync, or URL filters."
 ---
 
 # Build the map search experience

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Image to Code"
+  short_description: "Turn visual references into faithful frontend"
+  default_prompt: "Use $image-to-code to implement this visual reference faithfully."

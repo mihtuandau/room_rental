@@ -1,6 +1,6 @@
 ---
 name: vietnamese-ux-writing
-description: "Write consistent Vietnamese user-facing copy for RoomRent, including labels, placeholders, buttons, toasts, errors, empty states, headings, metadata, dates, money, tone, and canonical domain terms. Use whenever Codex creates or edits text that users will read."
+description: "Write consistent Vietnamese UX copy for RoomRent. Use for labels, buttons, errors, empty states, metadata, dates, money, and domain terms."
 ---
 
 # Vietnamese UX writing

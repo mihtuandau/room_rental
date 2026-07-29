@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brand Kit"
+  short_description: "Create premium visual brand systems"
+  default_prompt: "Use $brandkit to create a premium visual brand system."

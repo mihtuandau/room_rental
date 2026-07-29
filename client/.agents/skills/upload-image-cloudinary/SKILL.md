@@ -1,6 +1,6 @@
 ---
 name: upload-image-cloudinary
-description: "Implement RoomRent frontend image uploads by requesting signed parameters, uploading bytes directly to Cloudinary, and confirming public_id and secure_url with the backend. Use whenever Codex adds or changes listing photos, avatars, cover images, or other uploads. Never proxy image bytes through Next.js or NestJS."
+description: "Implement RoomRent signed Cloudinary uploads. Use for listing photos, avatars, covers, previews, retries, removal, or upload validation."
 ---
 
 # Uploading an image to Cloudinary

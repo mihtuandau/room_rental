@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Design Taste V1"
+  short_description: "Apply the original high-agency design system"
+  default_prompt: "Use $design-taste-frontend-v1 to apply the original design system."

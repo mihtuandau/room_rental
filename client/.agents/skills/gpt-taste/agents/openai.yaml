@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPT Taste"
+  short_description: "Build editorial GSAP-rich web experiences"
+  default_prompt: "Use $gpt-taste to create an editorial motion-rich web experience."
