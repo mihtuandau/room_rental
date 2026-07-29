@@ -1,6 +1,6 @@
 ---
 name: ui-state-patterns
-description: "Implement RoomRent loading, empty, error, permission-denied, mutation-pending, skeleton, and pagination states. Use whenever Codex builds or changes a screen that renders data that may be absent, delayed, unauthorized, or failed. Ensure data-driven interfaces never collapse into blank content or expose raw errors."
+description: "Implement RoomRent loading, empty, error, denied, pending, skeleton, and pagination states for data-driven interfaces."
 ---
 
 # Loading, empty, error, denied

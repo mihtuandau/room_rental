@@ -1,6 +1,6 @@
 ---
 name: add-ui-component
-description: "Build shared RoomRent UI components by wrapping Radix UI primitives with Tailwind CSS and class-variance-authority variants. Use when Codex creates or changes reusable buttons, inputs, dialogs, selects, checkboxes, dropdowns, tabs, badges, or similar interface elements. Keep reusable styling and accessibility behavior out of individual pages."
+description: "Build accessible shared RoomRent UI primitives with Radix, Tailwind, and CVA. Use for buttons, inputs, dialogs, selects, tabs, or badges."
 ---
 
 # Building a shared UI component (Radix + Tailwind + cva)

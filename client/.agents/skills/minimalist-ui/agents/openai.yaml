@@ -1,0 +1,4 @@
+interface:
+  display_name: "Minimalist UI"
+  short_description: "Design clean editorial minimalist interfaces"
+  default_prompt: "Use $minimalist-ui to design a clean editorial interface."

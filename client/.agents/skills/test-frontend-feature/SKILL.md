@@ -1,6 +1,6 @@
 ---
 name: test-frontend-feature
-description: "Add or update focused tests for RoomRent frontend components, forms, React Query hooks, Zustand stores, Next.js route handlers, authentication behavior, and critical browser flows. Use when Codex implements a frontend feature, fixes a regression, changes validation or state behavior, or introduces a test framework under client/. Select the smallest useful test layer and verify user-visible behavior instead of implementation details."
+description: "Test RoomRent frontend features. Use for components, forms, hooks, stores, route handlers, authentication, regressions, or browser flows."
 ---
 
 # Test a frontend feature

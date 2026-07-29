@@ -1,0 +1,4 @@
+interface:
+  display_name: "Industrial Brutalist UI"
+  short_description: "Design raw tactical dashboard interfaces"
+  default_prompt: "Use $industrial-brutalist-ui to design a tactical dashboard interface."

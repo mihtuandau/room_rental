@@ -1,6 +1,6 @@
 ---
 name: bootstrap-frontend-setup
-description: "Set up or repair the RoomRent frontend foundation: React Query, Google OAuth, nuqs, Toaster, API clients, authentication state, providers, and shared constants and utilities. Use before feature work when src/providers, src/lib/api-client.ts, src/lib/server-api.ts, or src/stores/auth-store.ts is absent or incomplete."
+description: "Set up or repair the RoomRent frontend foundation. Use for providers, API clients, authentication state, React Query, nuqs, or shared utilities."
 ---
 
 # Bootstrapping the frontend foundation

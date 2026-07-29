@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: "Apply the RoomRent visual system for color, typography, spacing, radius, shadows, motion, responsive behavior, and accessibility. Use whenever Codex styles or redesigns a page or component, selects visual values, or adds a reusable UI element. Prefer established semantic tokens and shared patterns over raw colors and arbitrary one-off values."
+description: "Apply the RoomRent visual system. Use for colors, typography, spacing, radius, shadows, motion, responsive design, and accessibility."
 ---
 
 # RoomRent design system

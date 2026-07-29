@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Web ImageGen"
+  short_description: "Generate section-based website concept images"
+  default_prompt: "Use $imagegen-frontend-web to generate website concepts by section."

@@ -1,6 +1,6 @@
 ---
 name: sync-api-contract
-description: "Synchronize RoomRent frontend API functions, TypeScript types, Zod schemas, React Query hooks, BFF routes, and error handling with the NestJS Swagger/OpenAPI contract and current backend DTOs. Use when Codex adds or changes an endpoint, request field, response shape, enum, authentication requirement, pagination contract, upload flow, or generated API types across client/ and server/."
+description: "Synchronize RoomRent frontend contracts with NestJS OpenAPI. Use for endpoints, DTOs, schemas, enums, pagination, BFF routes, or generated types."
 ---
 
 # Synchronize the API contract

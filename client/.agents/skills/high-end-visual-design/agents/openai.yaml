@@ -1,0 +1,4 @@
+interface:
+  display_name: "High-End Visual Design"
+  short_description: "Craft premium agency-level web interfaces"
+  default_prompt: "Use $high-end-visual-design to craft a premium web interface."

@@ -1,6 +1,6 @@
 ---
 name: add-react-query-hook
-description: "Write TanStack React Query hooks for RoomRent queries and mutations, including room search, favorites, saved searches, reports, listings, and landlord contact access. Use whenever Codex makes a Client Component fetch or mutate server data. Separate api.ts from hooks.ts, use the BFF proxy where authentication is required, and maintain stable query keys and invalidation."
+description: "Create RoomRent TanStack Query hooks. Use when Client Components fetch or mutate API data, manage query keys, or invalidate caches."
 ---
 
 # Writing a React Query hook

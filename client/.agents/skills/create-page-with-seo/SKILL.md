@@ -1,6 +1,6 @@
 ---
 name: create-page-with-seo
-description: "Create RoomRent Next.js App Router pages with appropriate Server Component data fetching, metadata, canonical URLs, OpenGraph data, JSON-LD, and sitemap handling. Use whenever Codex adds or changes a public page, listing detail, area landing, home/search experience, management screen, or admin screen. Apply full SEO to public indexable routes and safe access handling to protected routes."
+description: "Create RoomRent App Router pages. Use for Server Components, metadata, canonical URLs, OpenGraph, JSON-LD, sitemaps, or protected screens."
 ---
 
 # Creating an App Router page with SEO

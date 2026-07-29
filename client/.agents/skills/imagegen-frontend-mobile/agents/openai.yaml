@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Mobile ImageGen"
+  short_description: "Generate premium mobile UI concept images"
+  default_prompt: "Use $imagegen-frontend-mobile to generate premium mobile UI concepts."
