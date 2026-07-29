@@ -80,6 +80,8 @@ enum ModerationAction {
   hidden
   restored
   expired
+  verified
+  unverified
 }
 
 enum NotificationType {

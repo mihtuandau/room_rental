@@ -52,6 +52,9 @@ export interface AdminReport {
   description: string | null;
   status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
   createdAt: string;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
+  resolvedBy: { id: string; fullName: string | null } | null;
   room: { id: number; title: string; slug: string; status: RoomStatus };
   reporter: { id: string; fullName: string | null; phone: string | null };
 }

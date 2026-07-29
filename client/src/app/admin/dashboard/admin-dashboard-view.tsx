@@ -41,6 +41,7 @@ export function AdminDashboardView() {
 
   const data = summary.data;
   if (!data) return null;
+  const pendingWork = data.pendingRooms + data.pendingReports;
 
   return (
     <div className="space-y-6">
@@ -53,7 +54,13 @@ export function AdminDashboardView() {
         <AdminMetricCard icon={UsersRound} label="Người dùng mới hôm nay" value={data.newUsersToday.toLocaleString('vi-VN')} detail="Trong ngày hiện tại" tone="brand" />
         <AdminMetricCard icon={ClipboardCheck} label="Tin đăng chờ duyệt" value={data.pendingRooms.toLocaleString('vi-VN')} detail="Cần kiểm tra nội dung" tone="warning" />
         <AdminMetricCard icon={FileWarning} label="Báo cáo chờ xử lý" value={data.pendingReports.toLocaleString('vi-VN')} detail="Cần phản hồi người dùng" tone="danger" />
-        <AdminMetricCard icon={AlertTriangle} label="Tình trạng hệ thống" value="Ổn định" detail="Không có cảnh báo mới" tone="brand" />
+        <AdminMetricCard
+          icon={AlertTriangle}
+          label="Việc cần xử lý"
+          value={pendingWork.toLocaleString('vi-VN')}
+          detail="Tin đăng và báo cáo đang chờ"
+          tone={pendingWork > 0 ? 'warning' : 'brand'}
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">

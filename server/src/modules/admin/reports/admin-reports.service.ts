@@ -22,6 +22,7 @@ export class AdminReportsService {
         include: {
           room: { select: { id: true, title: true, slug: true, status: true } },
           reporter: { select: { id: true, fullName: true, phone: true } },
+          resolvedBy: { select: { id: true, fullName: true } },
         },
       }),
       this.prisma.report.count({ where }),
@@ -30,28 +31,45 @@ export class AdminReportsService {
   }
 
   async resolve(adminId: string, reportId: string, dto: ResolveReportDto) {
-    const report = await this.prisma.report.findUnique({
-      where: { id: reportId },
-    });
-    if (!report) throw new NotFoundException('Report not found.');
-    if (
-      report.status === ReportStatus.resolved ||
-      report.status === ReportStatus.dismissed
-    ) {
-      throw new BadRequestException('This report has already been closed.');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const report = await tx.report.findUnique({ where: { id: reportId } });
+      if (!report) throw new NotFoundException('Report not found.');
+      if (
+        report.status === ReportStatus.resolved ||
+        report.status === ReportStatus.dismissed
+      ) {
+        throw new BadRequestException('This report has already been closed.');
+      }
 
-    return this.prisma.report.update({
-      where: { id: reportId },
-      data: {
-        status:
-          dto.status === 'resolved'
-            ? ReportStatus.resolved
-            : ReportStatus.dismissed,
-        resolutionNote: dto.resolutionNote,
-        resolvedById: adminId,
-        resolvedAt: new Date(),
-      },
+      const result = await tx.report.updateMany({
+        where: {
+          id: reportId,
+          status: { in: [ReportStatus.pending, ReportStatus.reviewing] },
+        },
+        data: {
+          status:
+            dto.status === 'resolved'
+              ? ReportStatus.resolved
+              : ReportStatus.dismissed,
+          resolutionNote: dto.resolutionNote,
+          resolvedById: adminId,
+          resolvedAt: new Date(),
+        },
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException(
+          'Report status changed. Refresh and try again.',
+        );
+      }
+
+      return tx.report.findUniqueOrThrow({
+        where: { id: reportId },
+        include: {
+          room: { select: { id: true, title: true, slug: true, status: true } },
+          reporter: { select: { id: true, fullName: true, phone: true } },
+          resolvedBy: { select: { id: true, fullName: true } },
+        },
+      });
     });
   }
 }
