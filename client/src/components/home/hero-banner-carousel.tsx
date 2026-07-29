@@ -177,11 +177,10 @@ export function HeroBannerCarousel() {
           {SLIDES.map((slide, i) => (
             <div
               key={slide.src}
-              // The centre slide caps at 1152px (max-w-6xl, same as every
-              // other home section) so it reads as "the same size", while
-              // still being percentage-based below that so the side slides
-              // have room to peek in and spill past that width on wide screens.
-              className="min-w-0 flex-[0_0_88%] px-2 sm:flex-[0_0_78%] sm:px-3 lg:flex-[0_0_min(70%,1152px)]"
+              // Keep enough of the neighbouring slides visible on desktop so
+              // the carousel is obvious without pushing the primary search
+              // action below the first viewport.
+              className="min-w-0 flex-[0_0_88%] px-2 sm:flex-[0_0_78%] sm:px-3 lg:flex-[0_0_min(75%,1200px)]"
             >
               <div
                 data-slide-inner
@@ -191,7 +190,7 @@ export function HeroBannerCarousel() {
                   src={slide.src}
                   alt={slide.alt}
                   fill
-                  sizes="(min-width: 1024px) 70vw, 88vw"
+                  sizes="(min-width: 1024px) 75vw, 88vw"
                   className="object-cover"
                   priority={i === 0}
                 />

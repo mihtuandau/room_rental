@@ -8,18 +8,31 @@ async function forward(req: NextRequest, path: string[]) {
   const url = `${API_URL}/${path.join('/')}${req.nextUrl.search}`;
   const hasBody = !['GET', 'HEAD'].includes(req.method);
 
-  const beRes = await fetch(url, {
-    method: req.method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: hasBody ? await req.text() : undefined,
-  });
+  try {
+    const beRes = await fetch(url, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: hasBody ? await req.text() : undefined,
+      signal: AbortSignal.timeout(15_000),
+    });
 
-  if (beRes.status === 204) return new NextResponse(null, { status: 204 });
-  const data = await beRes.json().catch(() => null);
-  return NextResponse.json(data, { status: beRes.status });
+    if (beRes.status === 204) return new NextResponse(null, { status: 204 });
+    const data = await beRes.json().catch(() => null);
+    return NextResponse.json(data, { status: beRes.status });
+  } catch {
+    return NextResponse.json(
+      {
+        statusCode: 502,
+        message:
+          'Không kết nối được máy chủ. Kiểm tra backend và thử lại nhé.',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 502 },
+    );
+  }
 }
 
 type Ctx = { params: Promise<{ path: string[] }> };

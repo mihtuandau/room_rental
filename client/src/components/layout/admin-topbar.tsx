@@ -1,6 +1,8 @@
 'use client';
 
 import { ChevronDown, House, LogOut, Search, ShieldCheck, UserRound } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLogout } from '@/features/auth/hooks';
 import { useProfile } from '@/features/users/hooks';
@@ -15,20 +17,30 @@ import {
 
 export function AdminTopbar() {
   const router = useRouter();
+  const [keyword, setKeyword] = useState('');
   const { data: profile } = useProfile();
   const logout = useLogout();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:px-6">
-      <div className="relative w-full max-w-md">
+      <form
+        className="relative w-full max-w-md"
+        onSubmit={(event: FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          const search = keyword.trim();
+          router.push(search ? `/admin/users?keyword=${encodeURIComponent(search)}` : '/admin/users');
+        }}
+      >
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden />
         <Input
           type="search"
-          aria-label="Tìm kiếm trong khu vực quản trị"
-          placeholder="Tìm kiếm tin đăng, người dùng…"
+          value={keyword}
+          onChange={(event) => setKeyword(event.target.value)}
+          aria-label="Tìm người dùng"
+          placeholder="Tìm người dùng…"
           className="border-zinc-200 bg-zinc-50 pl-9"
         />
-      </div>
+      </form>
 
       <div className="ml-3 flex items-center gap-1">
         <ThemeToggle />

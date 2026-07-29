@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsIn, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 const RESOLUTION_STATUSES = ['resolved', 'dismissed'] as const;
 
@@ -8,9 +8,12 @@ export class ResolveReportDto {
   @IsIn(RESOLUTION_STATUSES)
   status!: (typeof RESOLUTION_STATUSES)[number];
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty({
+    description: 'Audit note describing the review outcome',
+    maxLength: 500,
+  })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(500)
-  resolutionNote?: string;
+  resolutionNote!: string;
 }

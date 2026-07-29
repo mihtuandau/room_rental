@@ -56,8 +56,15 @@ export class AdminRoomsService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: {
-          id: true, title: true, price: true, roomType: true, status: true,
-          city: true, district: true, createdAt: true, isVerified: true,
+          id: true,
+          title: true,
+          price: true,
+          roomType: true,
+          status: true,
+          city: true,
+          district: true,
+          createdAt: true,
+          isVerified: true,
           images: { where: { isCover: true }, take: 1, select: { url: true } },
           owner: { select: { id: true, fullName: true, phone: true } },
         },
@@ -103,73 +110,94 @@ export class AdminRoomsService {
   }
 
   async approve(adminId: string, roomId: number) {
-    const room = await this.getRoomOrThrow(roomId);
-    if (room.status !== RoomStatus.pending) {
-      throw new BadRequestException('Only a pending listing can be approved.');
-    }
     const approved = await this.transitionAndLog(
       adminId,
       roomId,
-      {
+      RoomStatus.pending,
+      (room) => ({
         status: RoomStatus.active,
         publishedAt: room.publishedAt ?? new Date(),
-      },
+      }),
       ModerationAction.approved,
+      undefined,
+      'Only a pending listing can be approved.',
     );
-    // fire-and-forget: enqueueing is best-effort, never blocks/breaks approval
+    // Both notification paths are best-effort and log their own failures.
     await this.notificationsService.onRoomApproved(approved.id);
     await this.notificationsService.notifyListingApproved(approved);
     return approved;
   }
 
   async reject(adminId: string, roomId: number, note?: string) {
-    const room = await this.getRoomOrThrow(roomId);
-    if (room.status !== RoomStatus.pending) {
-      throw new BadRequestException('Only a pending listing can be rejected.');
-    }
     const rejected = await this.transitionAndLog(
       adminId,
       roomId,
+      RoomStatus.pending,
       { status: RoomStatus.rejected },
       ModerationAction.rejected,
       note,
+      'Only a pending listing can be rejected.',
     );
     await this.notificationsService.notifyListingRejected(rejected, note);
     return rejected;
   }
 
   async hide(adminId: string, roomId: number, note?: string) {
-    const room = await this.getRoomOrThrow(roomId);
-    if (room.status !== RoomStatus.active) {
-      throw new BadRequestException('Only an active listing can be hidden.');
-    }
     return this.transitionAndLog(
       adminId,
       roomId,
+      RoomStatus.active,
       { status: RoomStatus.hidden },
       ModerationAction.hidden,
       note,
+      'Only an active listing can be hidden.',
     );
   }
 
   async restore(adminId: string, roomId: number) {
-    const room = await this.getRoomOrThrow(roomId);
-    if (room.status !== RoomStatus.hidden) {
-      throw new BadRequestException('Only a hidden listing can be restored.');
-    }
     return this.transitionAndLog(
       adminId,
       roomId,
+      RoomStatus.hidden,
       { status: RoomStatus.active },
       ModerationAction.restored,
+      undefined,
+      'Only a hidden listing can be restored.',
     );
   }
 
   async setVerified(adminId: string, roomId: number, isVerified: boolean) {
-    await this.getRoomOrThrow(roomId);
-    return this.prisma.room.update({
-      where: { id: roomId },
-      data: { isVerified, verifiedAt: isVerified ? new Date() : null },
+    return this.prisma.$transaction(async (tx) => {
+      const room = await tx.room.findUnique({ where: { id: roomId } });
+      if (!room || room.deletedAt) {
+        throw new NotFoundException('Listing not found.');
+      }
+      if (room.isVerified === isVerified) return room;
+
+      const result = await tx.room.updateMany({
+        where: {
+          id: roomId,
+          deletedAt: null,
+          isVerified: room.isVerified,
+        },
+        data: { isVerified, verifiedAt: isVerified ? new Date() : null },
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException(
+          'Listing verification changed. Refresh and try again.',
+        );
+      }
+
+      await tx.roomModeration.create({
+        data: {
+          roomId,
+          adminId,
+          action: isVerified
+            ? ModerationAction.verified
+            : ModerationAction.unverified,
+        },
+      });
+      return tx.room.findUniqueOrThrow({ where: { id: roomId } });
     });
   }
 
@@ -194,16 +222,39 @@ export class AdminRoomsService {
   private async transitionAndLog(
     adminId: string,
     roomId: number,
-    data: Prisma.RoomUpdateInput,
+    expectedStatus: RoomStatus,
+    data:
+      | Prisma.RoomUpdateManyMutationInput
+      | ((room: {
+          publishedAt: Date | null;
+        }) => Prisma.RoomUpdateManyMutationInput),
     action: ModerationAction,
     note?: string,
+    invalidStatusMessage = 'Listing cannot be changed from its current state.',
   ) {
-    const [room] = await this.prisma.$transaction([
-      this.prisma.room.update({ where: { id: roomId }, data }),
-      this.prisma.roomModeration.create({
+    return this.prisma.$transaction(async (tx) => {
+      const room = await tx.room.findUnique({ where: { id: roomId } });
+      if (!room || room.deletedAt) {
+        throw new NotFoundException('Listing not found.');
+      }
+      if (room.status !== expectedStatus) {
+        throw new BadRequestException(invalidStatusMessage);
+      }
+
+      const result = await tx.room.updateMany({
+        where: { id: roomId, status: expectedStatus, deletedAt: null },
+        data: typeof data === 'function' ? data(room) : data,
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException(
+          'Listing status changed. Refresh and try again.',
+        );
+      }
+
+      await tx.roomModeration.create({
         data: { roomId, adminId, action, note },
-      }),
-    ]);
-    return room;
+      });
+      return tx.room.findUniqueOrThrow({ where: { id: roomId } });
+    });
   }
 }

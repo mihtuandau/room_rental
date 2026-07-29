@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
  */
 export function LandlordCta() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       <div className="relative isolate overflow-hidden rounded-lg bg-brand-700 px-6 py-10 sm:px-12 sm:py-14">
         <div
           aria-hidden

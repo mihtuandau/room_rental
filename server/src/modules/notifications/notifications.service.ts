@@ -56,28 +56,42 @@ export class NotificationsService {
     id: number;
     title: string;
   }) {
-    await this.create({
-      userId: room.ownerId,
-      type: NotificationType.listing_approved,
-      title: 'Tin đăng đã được duyệt',
-      body: `Tin "${room.title}" của bạn đang hiển thị công khai.`,
-      roomId: room.id,
-    });
+    try {
+      await this.create({
+        userId: room.ownerId,
+        type: NotificationType.listing_approved,
+        title: 'Tin đăng đã được duyệt',
+        body: `Tin "${room.title}" của bạn đang hiển thị công khai.`,
+        roomId: room.id,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Failed to create approval notification for room ${room.id}`,
+        err instanceof Error ? err.stack : err,
+      );
+    }
   }
 
   async notifyListingRejected(
     room: { ownerId: string; id: number; title: string },
     note?: string,
   ) {
-    await this.create({
-      userId: room.ownerId,
-      type: NotificationType.listing_rejected,
-      title: 'Tin đăng bị từ chối',
-      body: note
-        ? `Tin "${room.title}" của bạn bị từ chối: ${note}`
-        : `Tin "${room.title}" của bạn không được duyệt.`,
-      roomId: room.id,
-    });
+    try {
+      await this.create({
+        userId: room.ownerId,
+        type: NotificationType.listing_rejected,
+        title: 'Tin đăng bị từ chối',
+        body: note
+          ? `Tin "${room.title}" của bạn bị từ chối: ${note}`
+          : `Tin "${room.title}" của bạn không được duyệt.`,
+        roomId: room.id,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Failed to create rejection notification for room ${room.id}`,
+        err instanceof Error ? err.stack : err,
+      );
+    }
   }
 
   async findMine(userId: string, page = 1, pageSize = NOTIFICATIONS_PAGE_SIZE) {

@@ -45,5 +45,90 @@ export function AdminReportsView() {
 }
 
 function StatusBadge({ status }: { status: AdminReportStatus }) { return <Badge variant={status === 'resolved' ? 'verified' : status === 'dismissed' ? 'neutral' : status === 'pending' ? 'pending' : 'warning'}>{statusLabels[status]}</Badge>; }
-function ReportDialog({ report, note, setNote, loading, onClose, onSubmit }: { report: AdminReport | null; note: string; setNote: (note: string) => void; loading: boolean; onClose: () => void; onSubmit: (status: 'resolved' | 'dismissed') => void }) { const open = !!report; const actionable = report?.status === 'pending' || report?.status === 'reviewing'; return <Dialog open={open} onOpenChange={(value) => !value && !loading && onClose()}><DialogContent><DialogHeader><DialogTitle>Chi tiết báo cáo</DialogTitle></DialogHeader><DialogBody>{report && <div className="space-y-4"><div className="rounded-md bg-zinc-50 p-4"><p className="font-medium text-zinc-900">{report.room.title}</p><p className="mt-1 text-sm text-zinc-600">{reasonLabels[report.reason]}</p><p className="mt-3 text-sm leading-6 text-zinc-700">{report.description || 'Người dùng không cung cấp mô tả bổ sung.'}</p></div><div><p className="text-sm font-medium text-zinc-800">Ghi chú xử lý</p><Textarea className="mt-2 min-h-28" value={note} onChange={(event) => setNote(event.target.value)} disabled={!actionable} placeholder="Ghi lại kết quả kiểm tra hoặc lý do bỏ qua…"/></div></div>}</DialogBody>{actionable && <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button variant="danger" disabled={!note.trim() || loading} onClick={() => onSubmit('dismissed')}>Bỏ qua</Button><Button disabled={!note.trim() || loading} onClick={() => onSubmit('resolved')}>{loading ? 'Đang lưu…' : 'Đã xử lý'}</Button></DialogFooter>}</DialogContent></Dialog>; }
+function ReportDialog({
+  report,
+  note,
+  setNote,
+  loading,
+  onClose,
+  onSubmit,
+}: {
+  report: AdminReport | null;
+  note: string;
+  setNote: (note: string) => void;
+  loading: boolean;
+  onClose: () => void;
+  onSubmit: (status: 'resolved' | 'dismissed') => void;
+}) {
+  const open = !!report;
+  const actionable =
+    report?.status === 'pending' || report?.status === 'reviewing';
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(value) => !value && !loading && onClose()}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Chi tiết báo cáo</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          {report && (
+            <div className="space-y-4">
+              <div className="rounded-md bg-zinc-50 p-4">
+                <p className="font-medium text-zinc-900">{report.room.title}</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  {reasonLabels[report.reason]}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-zinc-700">
+                  {report.description ||
+                    'Người dùng không cung cấp mô tả bổ sung.'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-800">
+                  Ghi chú xử lý
+                </p>
+                <Textarea
+                  className="mt-2 min-h-28"
+                  value={actionable ? note : report.resolutionNote ?? ''}
+                  onChange={(event) => setNote(event.target.value)}
+                  disabled={!actionable}
+                  placeholder="Ghi lại kết quả kiểm tra hoặc lý do bỏ qua…"
+                />
+                {!actionable && report.resolvedAt && (
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {report.resolvedBy?.fullName || 'Quản trị viên'} xử lý lúc{' '}
+                    {date(report.resolvedAt)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogBody>
+        {actionable && (
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              disabled={!note.trim() || loading}
+              onClick={() => onSubmit('dismissed')}
+            >
+              Bỏ qua
+            </Button>
+            <Button
+              disabled={!note.trim() || loading}
+              onClick={() => onSubmit('resolved')}
+            >
+              {loading ? 'Đang lưu…' : 'Đã xử lý'}
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 function ReportsSkeleton() { return <div className="space-y-6"><Skeleton className="h-20 w-80"/><div className="grid gap-4 md:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-32"/>)}</div><Skeleton className="h-[520px] w-full"/></div>; }

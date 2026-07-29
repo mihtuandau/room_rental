@@ -101,7 +101,7 @@ export default async function RoomDetailPage({ params }: Props) {
 
   return (
     <div className="bg-zinc-50">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

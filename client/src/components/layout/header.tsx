@@ -2,12 +2,19 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ArrowLeft, Bell, Heart, Search, UserRound } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft, Bell, ChevronDown, Heart, LogOut, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
+import { useLogout } from '@/features/auth/hooks';
 import { useProfile } from '@/features/users/hooks';
 import { useFavorites } from '@/features/favorites/hooks';
 import { useNotifications } from '@/features/notifications/hooks';
@@ -20,7 +27,9 @@ const PUBLIC_NAV_ITEMS = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const isSignedIn = useIsSignedIn();
+  const logout = useLogout();
   // false until the refresh call settles — rendering "Đăng nhập" before then
   // would flash the wrong state at every signed-in user on every reload
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
@@ -39,8 +48,8 @@ export function Header() {
   const isHome = pathname === '/';
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 shadow-card backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <Link
           href="/"
           aria-label="Trọ Ơi — Trang chủ"
@@ -129,22 +138,54 @@ export function Header() {
           {!isBootstrapped ? (
             <Skeleton className="h-10 w-10 rounded-full" />
           ) : isSignedIn ? (
-            <Link
-              href="/manage/account"
-              aria-label="Tài khoản của bạn"
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-            >
-              {profile?.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- remote host (Cloudinary), see upload-image-cloudinary skill
-                <img
-                  src={profile.avatarUrl}
-                  alt=""
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <UserRound className="h-5 w-5" />
-              )}
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Mở menu tài khoản"
+                  className="flex h-10 items-center gap-1 rounded-md px-1 text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:px-2"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-700">
+                    {profile?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- remote host (Cloudinary), see upload-image-cloudinary skill
+                      <img
+                        src={profile.avatarUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <UserRound className="h-4 w-4" aria-hidden />
+                    )}
+                  </span>
+                  <ChevronDown className="hidden h-4 w-4 sm:block" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="border-b border-zinc-100 px-3 py-2">
+                  <p className="max-w-48 truncate text-sm font-medium text-zinc-900">
+                    {profile?.fullName || 'Tài khoản của bạn'}
+                  </p>
+                  <p className="mt-0.5 text-xs text-zinc-500">Quản lý thông tin và tin đăng</p>
+                </div>
+                <DropdownMenuItem onSelect={() => router.push('/manage/account')}>
+                  <UserRound className="h-4 w-4" aria-hidden />
+                  Tài khoản
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={logout.isPending}
+                  onSelect={() => {
+                    void logout.mutateAsync().then(() => {
+                      router.push('/');
+                      router.refresh();
+                    });
+                  }}
+                  className="mt-1 text-danger-600 data-[highlighted]:bg-danger-50 data-[highlighted]:text-danger-600"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden />
+                  {logout.isPending ? 'Đang đăng xuất…' : 'Đăng xuất'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button variant="outline" className="px-2 sm:px-4" asChild>
               <Link href="/login">Đăng nhập</Link>

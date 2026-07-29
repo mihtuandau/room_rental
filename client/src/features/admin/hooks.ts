@@ -61,7 +61,18 @@ function useRoomMutation<T>(mutationFn: (value: T) => Promise<unknown>, success:
 
 export function useApproveAdminRoom() { return useRoomMutation(approveAdminRoom, 'Đã duyệt tin và chuyển sang trạng thái hoạt động.'); }
 export function useRejectAdminRoom() { return useRoomMutation(rejectAdminRoom, 'Đã từ chối tin và lưu lý do cho chủ trọ.'); }
-export function useSetAdminRoomVerified() { return useRoomMutation(setAdminRoomVerified, 'Đã cập nhật trạng thái xác minh.'); }
+export function useSetAdminRoomVerified() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setAdminRoomVerified,
+    onSuccess: (_, values) => {
+      void queryClient.invalidateQueries({ queryKey: adminKeys.pendingRooms() });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.roomReview(values.roomId) });
+      toast.success('Đã cập nhật trạng thái xác minh.');
+    },
+    onError: () => toast.error('Không thể cập nhật trạng thái xác minh. Bạn thử lại nhé.'),
+  });
+}
 
 export function usePendingAdminReports() {
   return useQuery({ queryKey: adminKeys.pendingReports(), queryFn: getPendingReports });

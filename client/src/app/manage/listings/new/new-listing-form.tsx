@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Check, ChevronLeft, ChevronRight, ImagePlus, X } from 'lucide-react';
@@ -41,30 +41,25 @@ import type { ProvinceOption } from '@/features/locations/api';
 
 const AMENITY_TYPE_ORDER: AmenityType[] = ['basic', 'utility', 'security', 'nearby'];
 
-// Figma only designed step 1 ("Cơ bản") — steps 2-4 are laid out here to match
-// its visual language, reusing the single-page form's existing field groups
-// rather than inventing new ones. "Liên hệ" (contact) became "Hình ảnh": this
-// app has no per-listing contact info, only the account-level phone/Zalo
-// already collected at signup, so a 4th step named "Contact" would have
-// nothing real to hold.
-const STEPS = ['Cơ bản', 'Vị trí', 'Tiện ích', 'Hình ảnh'] as const;
+const STEPS = [
+  'Thông tin chính',
+  'Vị trí',
+  'Chi tiết và tiện ích',
+  'Hình ảnh và xem lại',
+] as const;
 
 const STEP_FIELDS: (keyof CreateRoomFormInput)[][] = [
-  [
-    'title',
-    'roomType',
-    'description',
-    'price',
-    'deposit',
-    'area',
-    'maxOccupants',
-    'bedrooms',
-    'bathrooms',
-  ],
+  ['title', 'roomType', 'price', 'area', 'description'],
   ['city', 'district', 'ward', 'address'],
-  [],
+  ['deposit', 'maxOccupants', 'bedrooms', 'bathrooms'],
   [],
 ];
+
+const ROOM_TYPES_WITH_ROOM_COUNTS = new Set([
+  'whole_house',
+  'mini_apartment',
+  'serviced_apartment',
+]);
 
 interface StagedImage {
   file: File;
@@ -91,19 +86,21 @@ export function NewListingForm({
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     trigger,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateRoomFormInput, unknown, CreateRoomFormOutput>({
     resolver: zodResolver(createRoomSchema),
   });
 
-  const roomType = watch('roomType');
-  const city = watch('city');
-  const district = watch('district');
-  const priceValue = Number(watch('price'));
-  const areaValue = Number(watch('area'));
+  const [roomType, city, district, price, area, title] = useWatch({
+    control,
+    name: ['roomType', 'city', 'district', 'price', 'area', 'title'],
+  });
+  const priceValue = Number(price);
+  const areaValue = Number(area);
+  const showRoomCounts = ROOM_TYPES_WITH_ROOM_COUNTS.has(roomType);
 
   const amenityGroups = AMENITY_TYPE_ORDER.map((type) => ({
     type,
@@ -114,6 +111,14 @@ export function NewListingForm({
     setSelectedAmenityIds((prev) =>
       prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
+  };
+
+  const selectRoomType = (value: CreateRoomFormInput['roomType']) => {
+    setValue('roomType', value, { shouldValidate: true });
+    if (!ROOM_TYPES_WITH_ROOM_COUNTS.has(value)) {
+      setValue('bedrooms', undefined);
+      setValue('bathrooms', undefined);
+    }
   };
 
   const handleFiles = (fileList: FileList | null) => {
@@ -217,7 +222,7 @@ export function NewListingForm({
     <form
       onSubmit={onSubmit}
       noValidate
-      className="space-y-8"
+      className="space-y-6 pb-20 sm:pb-0"
       onKeyDown={(e) => {
         if (e.key !== 'Enter') return;
         // Never let Enter implicitly submit the wizard — e.g. pressing it on
@@ -231,9 +236,17 @@ export function NewListingForm({
     >
       <Stepper current={step} onStepClick={(i) => i <= step && setStep(i)} />
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-8">
-        {step === 0 && (
-          <div className="space-y-4">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <p className="hidden text-xs font-semibold uppercase tracking-wide text-brand-700 sm:block">
+              Bước {step + 1} / {STEPS.length}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-zinc-950">{STEPS[step]}</h2>
+          </div>
+
+          {step === 0 && (
+          <div className="space-y-5">
             <Field
               id="title"
               label="Tiêu đề tin đăng"
@@ -252,7 +265,7 @@ export function NewListingForm({
                       key={type.value}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => setValue('roomType', type.value, { shouldValidate: true })}
+                      onClick={() => selectRoomType(type.value)}
                       className={cn(
                         'rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2',
                         active
@@ -268,6 +281,26 @@ export function NewListingForm({
               {errors.roomType && (
                 <p className="mt-1 text-sm text-danger-600">{errors.roomType.message}</p>
               )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <CurrencyField
+                control={control}
+                name="price"
+                id="price"
+                label="Giá thuê mỗi tháng"
+                placeholder="2.500.000"
+                error={errors.price?.message}
+              />
+              <Field
+                id="area"
+                label="Diện tích (m²)"
+                type="number"
+                inputMode="decimal"
+                placeholder="20"
+                error={errors.area?.message}
+                {...register('area')}
+              />
             </div>
 
             <div>
@@ -286,67 +319,11 @@ export function NewListingForm({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Field
-                id="price"
-                label="Giá thuê (đ/tháng)"
-                type="number"
-                inputMode="numeric"
-                placeholder="2500000"
-                error={errors.price?.message}
-                {...register('price')}
-              />
-              <Field
-                id="deposit"
-                label="Tiền cọc (đ)"
-                type="number"
-                inputMode="numeric"
-                placeholder="Không bắt buộc"
-                error={errors.deposit?.message}
-                {...register('deposit')}
-              />
-              <Field
-                id="area"
-                label="Diện tích (m²)"
-                type="number"
-                inputMode="decimal"
-                placeholder="20"
-                error={errors.area?.message}
-                {...register('area')}
-              />
-              <Field
-                id="maxOccupants"
-                label="Số người tối đa"
-                type="number"
-                inputMode="numeric"
-                placeholder="Không bắt buộc"
-                error={errors.maxOccupants?.message}
-                {...register('maxOccupants')}
-              />
-              <Field
-                id="bedrooms"
-                label="Phòng ngủ"
-                type="number"
-                inputMode="numeric"
-                placeholder="Không bắt buộc"
-                error={errors.bedrooms?.message}
-                {...register('bedrooms')}
-              />
-              <Field
-                id="bathrooms"
-                label="Phòng tắm"
-                type="number"
-                inputMode="numeric"
-                placeholder="Không bắt buộc"
-                error={errors.bathrooms?.message}
-                {...register('bathrooms')}
-              />
-            </div>
           </div>
         )}
 
         {step === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <label className="mb-1 block text-sm font-medium">Tỉnh, thành phố</label>
               <Select
@@ -369,7 +346,7 @@ export function NewListingForm({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field
                 id="district"
                 label="Quận, huyện"
@@ -397,7 +374,51 @@ export function NewListingForm({
         )}
 
         {step === 2 && (
-          <div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <CurrencyField
+                control={control}
+                name="deposit"
+                id="deposit"
+                label="Tiền cọc"
+                placeholder="Không bắt buộc"
+                error={errors.deposit?.message}
+              />
+              <Field
+                id="maxOccupants"
+                label="Số người tối đa"
+                type="number"
+                inputMode="numeric"
+                placeholder="Không bắt buộc"
+                error={errors.maxOccupants?.message}
+                {...register('maxOccupants')}
+              />
+              {showRoomCounts ? (
+                <>
+                  <Field
+                    id="bedrooms"
+                    label="Phòng ngủ"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Không bắt buộc"
+                    error={errors.bedrooms?.message}
+                    {...register('bedrooms')}
+                  />
+                  <Field
+                    id="bathrooms"
+                    label="Phòng tắm"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Không bắt buộc"
+                    error={errors.bathrooms?.message}
+                    {...register('bathrooms')}
+                  />
+                </>
+              ) : null}
+            </div>
+
+            <div className="border-t border-zinc-200 pt-5">
+              <h3 className="mb-3 text-sm font-semibold text-zinc-900">Tiện ích</h3>
             {amenityGroups.length > 0 ? (
               <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                 {amenityGroups.map((group) => (
@@ -428,6 +449,7 @@ export function NewListingForm({
             ) : (
               <p className="text-sm text-zinc-500">Chưa có tiện ích nào để chọn.</p>
             )}
+            </div>
           </div>
         )}
 
@@ -489,10 +511,10 @@ export function NewListingForm({
               </p>
             </div>
 
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:hidden">
               <h3 className="mb-2 text-sm font-semibold text-zinc-900">Xem lại thông tin</h3>
               <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-                <ReviewRow label="Tiêu đề" value={watch('title') || '—'} />
+                <ReviewRow label="Tiêu đề" value={title || '—'} />
                 <ReviewRow
                   label="Loại hình"
                   value={roomType ? ROOM_TYPE_LABELS[roomType] : '—'}
@@ -514,9 +536,22 @@ export function NewListingForm({
             </div>
           </div>
         )}
+        </div>
+
+        <ListingPreview
+          step={step}
+          title={title}
+          roomType={roomType}
+          price={priceValue}
+          area={areaValue}
+          city={city}
+          district={district}
+          amenityCount={selectedAmenityIds.length}
+          imageCount={images.length}
+        />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t border-zinc-200 bg-white/95 px-4 py-3 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:shadow-none">
         {step > 0 ? (
           <Button type="button" variant="outline" onClick={goBack}>
             <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -554,6 +589,140 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CurrencyField({
+  control,
+  name,
+  id,
+  label,
+  placeholder,
+  error,
+}: {
+  control: Control<CreateRoomFormInput, unknown, CreateRoomFormOutput>;
+  name: 'price' | 'deposit';
+  id: string;
+  label: string;
+  placeholder: string;
+  error?: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div>
+          <label htmlFor={id} className="mb-1 block text-sm font-medium">
+            {label}
+          </label>
+          <div className="relative">
+            <input
+              id={id}
+              ref={field.ref}
+              name={field.name}
+              inputMode="numeric"
+              autoComplete="off"
+              value={formatCurrencyInput(field.value)}
+              onBlur={field.onBlur}
+              onChange={(event) => {
+                const digits = event.target.value.replace(/\D/g, '');
+                field.onChange(digits === '' ? '' : Number(digits));
+              }}
+              placeholder={placeholder}
+              aria-invalid={!!error || undefined}
+              aria-describedby={error ? `${id}-error` : `${id}-suffix`}
+              className={cn(
+                'h-10 w-full rounded-md border bg-white px-3 pr-10 text-sm transition-colors placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-offset-1',
+                error
+                  ? 'border-danger-600 focus:ring-danger-600'
+                  : 'border-zinc-300 focus:border-brand-600 focus:ring-brand-600',
+              )}
+            />
+            <span
+              id={`${id}-suffix`}
+              className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500"
+            >
+              ₫
+            </span>
+          </div>
+          {error ? (
+            <p id={`${id}-error`} className="mt-1 text-sm text-danger-600">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      )}
+    />
+  );
+}
+
+function formatCurrencyInput(value: unknown) {
+  if (value === '' || value === undefined || value === null) return '';
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue) || numberValue < 0) return '';
+  return new Intl.NumberFormat('vi-VN').format(numberValue);
+}
+
+function ListingPreview({
+  step,
+  title,
+  roomType,
+  price,
+  area,
+  city,
+  district,
+  amenityCount,
+  imageCount,
+}: {
+  step: number;
+  title?: string;
+  roomType?: CreateRoomFormInput['roomType'];
+  price: number;
+  area: number;
+  city?: string;
+  district?: string;
+  amenityCount: number;
+  imageCount: number;
+}) {
+  return (
+    <aside className="sticky top-24 hidden space-y-4 lg:block">
+      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Xem trước tin</p>
+        <h3 className="mt-2 line-clamp-2 text-lg font-semibold text-zinc-950">
+          {title || 'Tiêu đề tin đăng của bạn'}
+        </h3>
+        <p className="mt-1 text-sm text-zinc-500">
+          {roomType ? ROOM_TYPE_LABELS[roomType] : 'Chưa chọn loại hình'}
+        </p>
+        <p className="mt-4 text-xl font-semibold text-brand-700">
+          {price > 0 ? `${formatPrice(price)}/tháng` : 'Chưa nhập giá'}
+        </p>
+        <dl className="mt-4 space-y-3 border-t border-zinc-200 pt-4 text-sm">
+          <ReviewRow label="Diện tích" value={area > 0 ? `${area} m²` : '—'} />
+          <ReviewRow
+            label="Vị trí"
+            value={[district, city].filter(Boolean).join(', ') || '—'}
+          />
+          <ReviewRow label="Tiện ích" value={`${amenityCount} mục`} />
+          <ReviewRow label="Hình ảnh" value={`${imageCount} ảnh`} />
+        </dl>
+      </div>
+      <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+        <p className="text-sm font-medium text-brand-900">
+          Đang hoàn thành bước {step + 1}/{STEPS.length}
+        </p>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+          <div
+            className="h-full rounded-full bg-brand-600 transition-all"
+            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+        <p className="mt-3 text-xs leading-5 text-brand-800">
+          Thông tin rõ ràng và ảnh thật giúp tin được duyệt nhanh hơn.
+        </p>
+      </div>
+    </aside>
+  );
+}
+
 function Stepper({
   current,
   onStepClick,
@@ -562,13 +731,32 @@ function Stepper({
   onStepClick: (index: number) => void;
 }) {
   return (
-    <div className="relative">
-      <div className="absolute left-5 right-5 top-5 h-0.5 bg-zinc-200" aria-hidden />
-      <ol className="relative flex items-start justify-between">
+    <>
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+              Bước {current + 1}/{STEPS.length}
+            </p>
+            <p className="mt-1 text-sm font-medium text-zinc-900">{STEPS[current]}</p>
+          </div>
+          <span className="text-sm text-zinc-500">{Math.round(((current + 1) / STEPS.length) * 100)}%</span>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+          <div
+            className="h-full rounded-full bg-brand-600 transition-all"
+            style={{ width: `${((current + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="relative hidden px-5 sm:block">
+        <div className="absolute left-10 right-10 top-5 h-0.5 bg-zinc-200" aria-hidden />
+        <ol className="relative grid grid-cols-4">
         {STEPS.map((label, i) => {
           const state = i < current ? 'done' : i === current ? 'current' : 'upcoming';
           return (
-            <li key={label} className="flex flex-col items-center gap-2">
+            <li key={label} className="flex min-w-0 flex-col items-center gap-2 px-2 text-center">
               <button
                 type="button"
                 onClick={() => onStepClick(i)}
@@ -585,7 +773,7 @@ function Stepper({
               </button>
               <span
                 className={cn(
-                  'text-sm font-medium',
+                  'text-xs font-medium md:text-sm',
                   state === 'current'
                     ? 'text-brand-700'
                     : state === 'done'
@@ -598,7 +786,8 @@ function Stepper({
             </li>
           );
         })}
-      </ol>
-    </div>
+        </ol>
+      </div>
+    </>
   );
 }
