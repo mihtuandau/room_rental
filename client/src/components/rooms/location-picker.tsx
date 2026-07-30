@@ -1,7 +1,7 @@
 'use client';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MlMap, Marker } from 'maplibre-gl';
 import { LocateFixed, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,13 +32,15 @@ function isValidCoordinates({ latitude, longitude }: Coordinates) {
 }
 
 export function LocationPicker({
-  addressQuery,
+  addressQueries,
+  autoSearch = false,
   latitude,
   longitude,
   onChange,
   error,
 }: {
-  addressQuery: string;
+  addressQueries: string[];
+  autoSearch?: boolean;
   latitude?: number;
   longitude?: number;
   onChange: (coordinates: Coordinates) => void;
@@ -48,6 +50,7 @@ export function LocationPicker({
   const mapRef = useRef<MlMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const onChangeRef = useRef(onChange);
+  const searchAbortRef = useRef<AbortController | null>(null);
   const [ready, setReady] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -56,6 +59,7 @@ export function LocationPicker({
     latitude != null &&
     longitude != null &&
     isValidCoordinates({ latitude, longitude });
+  const searchQueriesKey = addressQueries.join('\n');
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -94,6 +98,7 @@ export function LocationPicker({
 
     return () => {
       cancelled = true;
+      searchAbortRef.current?.abort();
       markerRef.current?.remove();
       markerRef.current = null;
       mapRef.current?.remove();
@@ -106,7 +111,12 @@ export function LocationPicker({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || !hasCoordinates) return;
+    if (!hasCoordinates) {
+      markerRef.current?.remove();
+      markerRef.current = null;
+      return;
+    }
+    if (!map || !ready) return;
 
     let cancelled = false;
     void import('maplibre-gl').then(({ Marker }) => {
@@ -136,34 +146,58 @@ export function LocationPicker({
     };
   }, [hasCoordinates, latitude, longitude, ready]);
 
-  const searchAddress = async () => {
-    const query = addressQuery.trim();
-    if (query.length < 3) {
+  const searchAddress = useCallback(async (source: 'auto' | 'manual') => {
+    const queries = searchQueriesKey
+      .split('\n')
+      .map((query) => query.trim())
+      .filter(Boolean);
+    if (queries.length === 0) {
       setStatus('Nhập địa chỉ trước khi tìm vị trí trên bản đồ.');
       return;
     }
 
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     setIsSearching(true);
-    setStatus(null);
+    setStatus(source === 'auto' ? 'Đang tự động tìm vị trí…' : null);
     try {
-      const params = new URLSearchParams({
-        format: 'jsonv2',
-        countrycodes: 'vn',
-        limit: '1',
-        q: query,
-      });
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params}`,
-        {
-          headers: {
-            Accept: 'application/json',
-            'Accept-Language': 'vi',
-          },
-        },
-      );
-      if (!response.ok) throw new Error('Geocoding request failed');
+      let result: GeocodingResult | undefined;
+      let matchedQueryIndex = -1;
 
-      const [result] = (await response.json()) as GeocodingResult[];
+      for (let index = 0; index < queries.length; index += 1) {
+        if (controller.signal.aborted) return;
+        if (index > 0) {
+          // Respect the public Nominatim limit while trying a broader fallback.
+          await new Promise((resolve) => setTimeout(resolve, 1_100));
+        }
+        if (controller.signal.aborted) return;
+
+        const params = new URLSearchParams({
+          format: 'jsonv2',
+          countrycodes: 'vn',
+          limit: '1',
+          q: queries[index],
+        });
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?${params}`,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Accept-Language': 'vi',
+            },
+            signal: controller.signal,
+          },
+        );
+        if (!response.ok) throw new Error('Geocoding request failed');
+
+        [result] = (await response.json()) as GeocodingResult[];
+        if (result) {
+          matchedQueryIndex = index;
+          break;
+        }
+      }
+
       if (!result) {
         setStatus(
           'Không tìm thấy địa chỉ. Bạn có thể phóng to bản đồ và chạm để đặt ghim.',
@@ -179,20 +213,36 @@ export function LocationPicker({
         throw new Error('Invalid geocoding coordinates');
       }
 
-      onChange(coordinates);
+      onChangeRef.current(coordinates);
       mapRef.current?.flyTo({
         center: [coordinates.longitude, coordinates.latitude],
         zoom: 16,
       });
-      setStatus(`Đã tìm thấy: ${result.display_name}`);
-    } catch {
+      setStatus(
+        matchedQueryIndex === 0
+          ? `Đã tự động ghim: ${result.display_name}`
+          : `Đã ghim theo khu vực gần nhất: ${result.display_name}. Hãy kéo ghim để chỉnh chính xác.`,
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
       setStatus(
         'Chưa thể tìm địa chỉ lúc này. Bạn vẫn có thể chạm trực tiếp lên bản đồ để đặt ghim.',
       );
     } finally {
-      setIsSearching(false);
+      if (searchAbortRef.current === controller) {
+        setIsSearching(false);
+      }
     }
-  };
+  }, [searchQueriesKey]);
+
+  useEffect(() => {
+    if (!autoSearch || hasCoordinates || searchQueriesKey.length < 3) return;
+
+    const timer = window.setTimeout(() => {
+      void searchAddress('auto');
+    }, 1_200);
+    return () => window.clearTimeout(timer);
+  }, [autoSearch, hasCoordinates, searchAddress, searchQueriesKey]);
 
   return (
     <div className="space-y-3">
@@ -208,7 +258,7 @@ export function LocationPicker({
         <Button
           type="button"
           variant="outline"
-          onClick={searchAddress}
+          onClick={() => void searchAddress('manual')}
           disabled={isSearching}
         >
           <Search className="h-4 w-4" aria-hidden />

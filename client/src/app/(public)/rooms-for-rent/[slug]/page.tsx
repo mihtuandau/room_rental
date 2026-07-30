@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { RoomGrid } from '@/components/rooms/room-card';
 import { AREA_LANDINGS, findAreaLanding } from '@/lib/constants';
-import { buildSearchQuery, type RoomSearchResult } from '@/features/rooms/api';
-import { PAGE_SIZE } from '@/features/rooms/search-params';
-import { serverFetch } from '@/lib/server-api';
-import { cn } from '@/lib/utils';
+import { AreaPagination } from './_components/area-pagination';
+import {
+  buildAreaMetadata,
+  fetchAreaRooms,
+} from './_lib/area-landing';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -24,36 +25,7 @@ export async function generateMetadata({
   if (!area) return {};
 
   const page = Math.max(1, Number((await searchParams).page) || 1);
-  const pageSuffix = page > 1 ? ` — trang ${page}` : '';
-  const canonical = `/rooms-for-rent/${area.slug}${page > 1 ? `?page=${page}` : ''}`;
-  const title = `Phòng trọ ${area.label}${pageSuffix}`;
-  const description = `Tìm phòng trọ, nhà nguyên căn, chung cư mini tại ${area.label}. Tin đăng được kiểm duyệt trước khi hiển thị và cập nhật mỗi ngày.`;
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      locale: 'vi_VN',
-      siteName: 'Trọ Ơi',
-      url: canonical,
-      images: [
-        {
-          url: '/banner.png',
-          alt: `Tìm phòng trọ tại ${area.label} trên Trọ Ơi`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: ['/banner.png'],
-    },
-  };
+  return buildAreaMetadata(area, page);
 }
 
 export default async function AreaLandingPage({ params, searchParams }: Props) {
@@ -61,18 +33,7 @@ export default async function AreaLandingPage({ params, searchParams }: Props) {
   if (!area) notFound();
 
   const page = Math.max(1, Number((await searchParams).page) || 1);
-  const filters = {
-    city: area.city,
-    district: area.district,
-    sort: 'newest' as const,
-    page,
-    pageSize: PAGE_SIZE,
-  };
-
-  const data = await serverFetch<RoomSearchResult>(
-    `/rooms?${buildSearchQuery(filters)}`,
-    { revalidate: 60 },
-  ).catch(() => null);
+  const data = await fetchAreaRooms(area, page);
 
   // The full interactive search (price/area/amenities/map) — this landing
   // page itself stays a simple, fast-indexing list for the "quận X" keyword.
@@ -126,53 +87,6 @@ export default async function AreaLandingPage({ params, searchParams }: Props) {
         </Button>
       </div>
     </div>
-  );
-}
-
-/** Plain Link-based pager (no client state needed — page is a query param). */
-function AreaPagination({
-  slug,
-  page,
-  total,
-}: {
-  slug: string;
-  page: number;
-  total: number;
-}) {
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  if (totalPages <= 1) return null;
-
-  const pages = new Set<number>([1, totalPages, page, page - 1, page + 1]);
-  const visible = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
-
-  return (
-    <nav
-      aria-label="Phân trang"
-      className="mt-8 flex items-center justify-center gap-1.5"
-    >
-      {visible.map((p, i) => {
-        const prev = visible[i - 1];
-        const gap = prev !== undefined && p - prev > 1;
-        return (
-          <span key={p} className="flex items-center gap-1.5">
-            {gap && <span className="px-1 text-sm text-zinc-400">…</span>}
-            <Link
-              href={`/rooms-for-rent/${slug}${p > 1 ? `?page=${p}` : ''}`}
-              aria-current={p === page ? 'page' : undefined}
-              className={cn(
-                'inline-flex h-10 w-10 items-center justify-center rounded-md border text-sm tabular-nums transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2',
-                p === page
-                  ? 'border-brand-600 bg-brand-600 font-medium text-white'
-                  : 'border-zinc-200 bg-white hover:bg-zinc-50',
-              )}
-            >
-              {p}
-            </Link>
-          </span>
-        );
-      })}
-    </nav>
   );
 }
 
