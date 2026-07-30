@@ -46,6 +46,18 @@ export const createRoomSchema = z.object({
   district: z.string().min(1, 'Nhập quận, huyện.'),
   ward: z.string().optional().or(z.literal('')),
   address: z.string().optional().or(z.literal('')),
+  latitude: numberField(
+    z
+      .number({ message: 'Chọn vị trí trên bản đồ.' })
+      .min(-90, 'Vĩ độ không hợp lệ.')
+      .max(90, 'Vĩ độ không hợp lệ.'),
+  ),
+  longitude: numberField(
+    z
+      .number({ message: 'Chọn vị trí trên bản đồ.' })
+      .min(-180, 'Kinh độ không hợp lệ.')
+      .max(180, 'Kinh độ không hợp lệ.'),
+  ),
 });
 
 // react-hook-form needs both sides: the raw shape fields actually hold before

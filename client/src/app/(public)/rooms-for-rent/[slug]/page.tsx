@@ -16,16 +16,43 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const area = findAreaLanding((await params).slug);
   if (!area) return {};
 
-  const title = `Phòng trọ ${area.label} — tin đã xác minh`;
+  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const pageSuffix = page > 1 ? ` — trang ${page}` : '';
+  const canonical = `/rooms-for-rent/${area.slug}${page > 1 ? `?page=${page}` : ''}`;
+  const title = `Phòng trọ ${area.label}${pageSuffix}`;
+  const description = `Tìm phòng trọ, nhà nguyên căn, chung cư mini tại ${area.label}. Tin đăng được kiểm duyệt trước khi hiển thị và cập nhật mỗi ngày.`;
+
   return {
     title,
-    description: `Tìm phòng trọ, nhà nguyên căn, chung cư mini tại ${area.label}. Mọi tin đăng đều qua kiểm duyệt trước khi hiển thị, cập nhật mỗi ngày.`,
-    alternates: { canonical: `/rooms-for-rent/${area.slug}` },
-    openGraph: { title, type: 'website' },
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: 'vi_VN',
+      siteName: 'Trọ Ơi',
+      url: canonical,
+      images: [
+        {
+          url: '/banner.png',
+          alt: `Tìm phòng trọ tại ${area.label} trên Trọ Ơi`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/banner.png'],
+    },
   };
 }
 

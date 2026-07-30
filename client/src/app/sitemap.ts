@@ -1,7 +1,10 @@
 import type { MetadataRoute } from 'next';
 import { serverFetch } from '@/lib/server-api';
+import { AREA_LANDINGS } from '@/lib/constants';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000';
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000'
+).replace(/\/+$/, '');
 const PAGE_SIZE = 100;
 
 interface SitemapRoom {
@@ -34,7 +37,10 @@ async function getActiveRooms(): Promise<SitemapRoom[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const rooms = await getActiveRooms();
+  // A frontend deploy must not fail just because the API is temporarily
+  // unavailable during build. Static routes still ship, and room URLs return
+  // on the next revalidation once the backend is reachable again.
+  const rooms = await getActiveRooms().catch(() => []);
 
   return [
     {
@@ -43,6 +49,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 1,
     },
+    {
+      url: `${SITE_URL}/privacy`,
+      lastModified: new Date('2026-07-30'),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    ...AREA_LANDINGS.map((area) => ({
+      url: `${SITE_URL}/rooms-for-rent/${area.slug}`,
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    })),
     ...rooms.map((room) => ({
       url: `${SITE_URL}/room/${room.slug}`,
       lastModified: new Date(room.updatedAt),

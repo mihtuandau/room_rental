@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BedDouble, Heart, MapPin, Ruler } from 'lucide-react';
@@ -32,18 +33,21 @@ export interface RoomCardItem {
   images: { url: string }[];
 }
 
-export const PLACEHOLDER_IMAGE = 'https://placehold.co/400x300?text=Tro+Oi';
+export const PLACEHOLDER_IMAGE = '/room1.jpg';
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // "Mới": posted within the last 3 days
 
 export function RoomCard({
   room,
   active = false,
+  priority = false,
   onActivate,
   onDeactivate,
 }: {
   room: RoomCardItem;
   /** Highlighted because its map marker is hovered (or vice-versa). */
   active?: boolean;
+  /** Preload only the first above-the-fold card to improve its LCP. */
+  priority?: boolean;
   onActivate?: () => void;
   onDeactivate?: () => void;
 }) {
@@ -78,11 +82,13 @@ export function RoomCard({
       )}
     >
       <div className="relative aspect-[4/3]">
-        {/* eslint-disable-next-line @next/next/no-img-element -- swap to next/image once remote hosts are configured */}
-        <img
+        <Image
           src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
           alt={room.title}
-          className="h-full w-full object-cover"
+          fill
+          priority={priority}
+          sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+          className="object-cover"
         />
 
         <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
@@ -169,10 +175,11 @@ export function RoomGrid({
         className,
       )}
     >
-      {rooms.map((room) => (
+      {rooms.map((room, index) => (
         <RoomCard
           key={room.id}
           room={room}
+          priority={index === 0}
           active={activeId === room.id}
           onActivate={onActivate ? () => onActivate(room.id) : undefined}
           onDeactivate={onActivate ? () => onActivate(null) : undefined}

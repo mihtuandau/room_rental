@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 import { makeQueryClient } from '@/lib/query-client';
@@ -18,18 +17,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-      <QueryClientProvider client={queryClient}>
-        <NuqsAdapter>
-          <ThemeBootstrap />
-          <AuthBootstrap />
-          {children}
-          <Toaster position="top-center" richColors theme={resolvedTheme} />
-          {process.env.NODE_ENV === 'development' && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-        </NuqsAdapter>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <NuqsAdapter>
+        <ThemeBootstrap />
+        <AuthBootstrap />
+        {children}
+        <Toaster position="top-center" richColors theme={resolvedTheme} />
+        {process.env.NODE_ENV === 'development' && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </NuqsAdapter>
+    </QueryClientProvider>
   );
 }

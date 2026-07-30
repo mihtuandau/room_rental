@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  Copy,
   Download,
   FilterX,
   LockKeyhole,
@@ -308,6 +309,9 @@ export function AdminUsersView() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className={adminTableHeadClassName}>
                 <tr>
+                  <th className="hidden px-4 py-3 lg:table-cell">
+                    Mã người dùng
+                  </th>
                   <th className="px-4 py-3 sm:px-5">Thông tin người dùng</th>
                   <th className="px-4 py-3">Liên hệ</th>
                   <th className="px-4 py-3">Tài khoản & tin đăng</th>
@@ -402,11 +406,29 @@ function UserRow({
 }) {
   return (
     <tr className={adminTableRowClassName}>
+      <td className="hidden px-4 py-4 lg:table-cell">
+        <div className="flex items-center gap-2">
+          <code
+            className="text-xs text-zinc-600"
+            title={user.id}
+          >
+            …{user.id.slice(-6)}
+          </code>
+          <button
+            type="button"
+            aria-label={`Sao chép mã người dùng của ${user.fullName || "tài khoản này"}`}
+            title="Sao chép mã đầy đủ"
+            onClick={() => void copyUserId(user.id)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          >
+            <Copy className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      </td>
       <td className="px-4 py-4 sm:px-5">
         <p className="font-medium text-zinc-900">
           {user.fullName || "Chưa cập nhật tên"}
         </p>
-        <p className="mt-1 text-xs text-zinc-500">ID: …{user.id.slice(-6)}</p>
       </td>
       <td className="px-4 py-4 text-zinc-600">
         {user.phone || "Chưa có số điện thoại"}
@@ -462,6 +484,15 @@ function UserRow({
       </td>
     </tr>
   );
+}
+
+async function copyUserId(userId: string) {
+  try {
+    await navigator.clipboard.writeText(userId);
+    toast.success("Đã sao chép mã người dùng.");
+  } catch {
+    toast.error("Không thể sao chép mã. Hãy thử lại.");
+  }
 }
 
 function AccountActivity({ user }: { user: AdminUser }) {
