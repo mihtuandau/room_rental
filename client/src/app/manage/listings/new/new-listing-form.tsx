@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState, type FormEventHandler } from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,6 +39,7 @@ import {
 } from '@/features/rooms/schemas';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
+import { buildLocationSearchQueries } from '@/features/locations/geocoding';
 
 const AMENITY_TYPE_ORDER: AmenityType[] = ['basic', 'utility', 'security', 'nearby'];
 
@@ -81,8 +82,8 @@ export function NewListingForm({
   const [step, setStep] = useState(0);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([]);
   const [images, setImages] = useState<StagedImage[]>([]);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -128,9 +129,15 @@ export function NewListingForm({
   const longitudeValue =
     typeof longitude === 'number' ? longitude : undefined;
   const showRoomCounts = ROOM_TYPES_WITH_ROOM_COUNTS.has(roomType);
-  const addressQuery = [address, ward, district, city, 'Việt Nam']
-    .filter(Boolean)
-    .join(', ');
+  const addressQueries = buildLocationSearchQueries({
+    address,
+    ward,
+    district,
+    city,
+  });
+  const canAutoSearchLocation = Boolean(
+    city && district && (ward || address),
+  );
 
   const amenityGroups = AMENITY_TYPE_ORDER.map((type) => ({
     type,
@@ -162,13 +169,21 @@ export function NewListingForm({
 
     // Validate before staging — a rejected file after upload wastes the user's data.
     const tooBig = files.find((f) => f.size > MAX_IMAGE_BYTES);
-    if (tooBig) return toast.error(`"${tooBig.name}" vượt quá 5MB.`);
+    if (tooBig) {
+      setImageError(`Ảnh "${tooBig.name}" vượt quá 5MB. Chọn ảnh nhỏ hơn nhé.`);
+      return;
+    }
     const badType = files.find((f) => !ACCEPTED_IMAGE_TYPES.includes(f.type));
-    if (badType) return toast.error('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.');
+    if (badType) {
+      setImageError('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.');
+      return;
+    }
     if (images.length + files.length > MAX_IMAGES_PER_ROOM) {
-      return toast.error(`Mỗi tin chỉ đăng tối đa ${MAX_IMAGES_PER_ROOM} ảnh.`);
+      setImageError(`Mỗi tin chỉ đăng tối đa ${MAX_IMAGES_PER_ROOM} ảnh.`);
+      return;
     }
 
+    setImageError(null);
     setImages((prev) => [
       ...prev,
       ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
@@ -252,12 +267,22 @@ export function NewListingForm({
     }
   });
 
+  const onFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+    if (images.length === 0) {
+      event.preventDefault();
+      setImageError('Thêm ít nhất một ảnh để người thuê có thể xem phòng trước khi đăng tin.');
+      return;
+    }
+
+    void onSubmit(event);
+  };
+
   const busy = isSubmitting || isUploadingImages;
   const isLastStep = step === STEPS.length - 1;
 
   return (
     <form
-      onSubmit={onSubmit}
+      onSubmit={onFormSubmit}
       noValidate
       className="space-y-6 pb-20 sm:pb-0"
       onKeyDown={(e) => {
@@ -413,7 +438,8 @@ export function NewListingForm({
 
             <div className="border-t border-zinc-200 pt-5">
               <LocationPicker
-                addressQuery={addressQuery}
+                addressQueries={addressQueries}
+                autoSearch={canAutoSearchLocation}
                 latitude={latitudeValue}
                 longitude={longitudeValue}
                 onChange={(coordinates) => {
@@ -546,30 +572,36 @@ export function NewListingForm({
                 ))}
 
                 {images.length < MAX_IMAGES_PER_ROOM && (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-zinc-400 transition-colors hover:border-brand-600 hover:text-brand-600"
+                  <label
+                    className="relative flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-zinc-500 transition-colors hover:border-brand-600 hover:text-brand-600 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600 focus-within:ring-offset-2"
                   >
+                    <input
+                      type="file"
+                      accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                      multiple
+                      aria-label="Thêm ảnh phòng"
+                      aria-describedby={imageError ? 'listing-images-error' : 'listing-images-help'}
+                      aria-invalid={Boolean(imageError)}
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      onChange={(e) => {
+                        handleFiles(e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
                     <ImagePlus className="h-5 w-5" aria-hidden />
                     <span className="text-xs">Thêm ảnh</span>
-                  </button>
+                  </label>
                 )}
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                multiple
-                className="sr-only"
-                onChange={(e) => {
-                  handleFiles(e.target.files);
-                  e.target.value = '';
-                }}
-              />
-              <p className="text-xs text-zinc-500">
-                Ảnh đầu tiên sẽ là ảnh bìa. Tối đa {MAX_IMAGES_PER_ROOM} ảnh, mỗi ảnh dưới 5MB.
+              <p id="listing-images-help" className="text-xs text-zinc-500">
+                Cần ít nhất 1 ảnh. Ảnh đầu tiên sẽ là ảnh bìa. Tối đa {MAX_IMAGES_PER_ROOM} ảnh,
+                mỗi ảnh dưới 5MB.
               </p>
+              {imageError && (
+                <p id="listing-images-error" role="alert" className="text-sm text-danger-600">
+                  {imageError}
+                </p>
+              )}
             </div>
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 lg:hidden">
@@ -623,7 +655,11 @@ export function NewListingForm({
         )}
 
         {isLastStep ? (
-          <Button type="submit" disabled={busy}>
+          <Button
+            type="submit"
+            disabled={busy || images.length === 0}
+            aria-describedby={imageError ? 'listing-images-error' : 'listing-images-help'}
+          >
             {isUploadingImages
               ? 'Đang tải ảnh lên…'
               : isSubmitting

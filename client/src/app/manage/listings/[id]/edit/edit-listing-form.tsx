@@ -57,6 +57,7 @@ import {
 } from '@/features/rooms/schemas';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
+import { buildLocationSearchQueries } from '@/features/locations/geocoding';
 
 const AMENITY_TYPE_ORDER: AmenityType[] = ['basic', 'utility', 'security', 'nearby'];
 
@@ -124,9 +125,15 @@ export function EditListingForm({
     typeof latitude === 'number' ? latitude : undefined;
   const longitudeValue =
     typeof longitude === 'number' ? longitude : undefined;
-  const addressQuery = [address, ward, district, city, 'Việt Nam']
-    .filter(Boolean)
-    .join(', ');
+  const addressQueries = buildLocationSearchQueries({
+    address,
+    ward,
+    district,
+    city,
+  });
+  const canAutoSearchLocation = Boolean(
+    city && district && (ward || address),
+  );
 
   const amenityGroups = AMENITY_TYPE_ORDER.map((type) => ({
     type,
@@ -450,7 +457,8 @@ export function EditListingForm({
 
             <div className="border-t border-zinc-200 pt-5">
               <LocationPicker
-                addressQuery={addressQuery}
+                addressQueries={addressQueries}
+                autoSearch={canAutoSearchLocation}
                 latitude={latitudeValue}
                 longitude={longitudeValue}
                 onChange={(coordinates) => {
