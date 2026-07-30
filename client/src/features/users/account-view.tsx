@@ -18,7 +18,7 @@ import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/constants';
 
 const MEMBER_SINCE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
 
-export function AccountView() {
+export function AccountView({ showLogout = true }: { showLogout?: boolean }) {
   const { data: profile, isPending, isError, refetch } = useProfile();
 
   if (isPending) return <AccountSkeleton />;
@@ -52,7 +52,7 @@ export function AccountView() {
         zaloUrl={profile.zaloUrl}
       />
 
-      <LogoutButton />
+      {showLogout ? <LogoutButton /> : null}
     </div>
   );
 }

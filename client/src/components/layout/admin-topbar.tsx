@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  UserCog,
   UserRound,
 } from "lucide-react";
 import { useState } from "react";
@@ -21,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { AdminNavLinks } from "./admin-navigation";
+import { AdminBreadcrumb, AdminNavLinks } from "./admin-navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,9 +61,11 @@ export function AdminTopbar() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex-1" />
+      <div className="min-w-0 flex-1">
+        <AdminBreadcrumb />
+      </div>
 
-      <div className="flex items-center gap-1">
+      <div className="ml-3 flex items-center gap-1">
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -99,6 +102,10 @@ export function AdminTopbar() {
                 Quản trị viên
               </p>
             </div>
+            <DropdownMenuItem onSelect={() => router.push("/admin/account")}>
+              <UserCog className="h-4 w-4" aria-hidden />
+              Tài khoản cá nhân
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => router.push("/")}>
               <House className="h-4 w-4" aria-hidden />
               Xem trang chủ

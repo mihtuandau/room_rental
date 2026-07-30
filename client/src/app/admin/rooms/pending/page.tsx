@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { PendingRoomsView } from './pending-rooms-view';
 
-export const metadata: Metadata = { title: 'Duyệt tin | Trọ Ơi Admin' };
+export const metadata: Metadata = {
+  title: 'Duyệt tin',
+  robots: { index: false, follow: false },
+};
 
 export default function PendingRoomsPage() {
   return (

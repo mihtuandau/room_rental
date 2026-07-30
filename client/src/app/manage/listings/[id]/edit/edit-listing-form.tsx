@@ -10,6 +10,7 @@ import { Banknote, Eye, ImagePlus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { LocationPicker } from '@/components/rooms/location-picker';
 import {
   Select,
   SelectContent,
@@ -96,6 +97,8 @@ export function EditListingForm({
     district: room.district,
     ward: room.ward ?? '',
     address: room.address ?? '',
+    latitude: room.latitude ?? undefined,
+    longitude: room.longitude ?? undefined,
   };
 
   const {
@@ -112,6 +115,18 @@ export function EditListingForm({
 
   const roomType = watch('roomType');
   const city = watch('city');
+  const district = watch('district');
+  const ward = watch('ward');
+  const address = watch('address');
+  const latitude = watch('latitude');
+  const longitude = watch('longitude');
+  const latitudeValue =
+    typeof latitude === 'number' ? latitude : undefined;
+  const longitudeValue =
+    typeof longitude === 'number' ? longitude : undefined;
+  const addressQuery = [address, ward, district, city, 'Việt Nam']
+    .filter(Boolean)
+    .join(', ');
 
   const amenityGroups = AMENITY_TYPE_ORDER.map((type) => ({
     type,
@@ -122,6 +137,11 @@ export function EditListingForm({
     setSelectedAmenityIds((prev) =>
       prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
+  };
+
+  const clearCoordinates = () => {
+    setValue('latitude', undefined, { shouldDirty: true });
+    setValue('longitude', undefined, { shouldDirty: true });
   };
 
   const handleDiscard = () => {
@@ -178,6 +198,8 @@ export function EditListingForm({
         district: values.district,
         ward: values.ward || undefined,
         address: values.address || undefined,
+        latitude: values.latitude,
+        longitude: values.longitude,
       });
 
       await setRoomAmenities.mutateAsync({
@@ -380,7 +402,10 @@ export function EditListingForm({
               <label className="mb-1 block text-sm font-medium">Tỉnh, thành phố</label>
               <Select
                 value={city || undefined}
-                onValueChange={(v) => setValue('city', v, { shouldValidate: true })}
+                onValueChange={(v) => {
+                  setValue('city', v, { shouldValidate: true });
+                  clearCoordinates();
+                }}
               >
                 <SelectTrigger aria-label="Tỉnh, thành phố">
                   <SelectValue placeholder="Chọn tỉnh, thành phố" />
@@ -404,14 +429,14 @@ export function EditListingForm({
                 label="Quận, huyện"
                 placeholder="Quận 7"
                 error={errors.district?.message}
-                {...register('district')}
+                {...register('district', { onChange: clearCoordinates })}
               />
               <Field
                 id="ward"
                 label="Phường, xã"
                 placeholder="Không bắt buộc"
                 error={errors.ward?.message}
-                {...register('ward')}
+                {...register('ward', { onChange: clearCoordinates })}
               />
             </div>
 
@@ -420,8 +445,29 @@ export function EditListingForm({
               label="Địa chỉ cụ thể"
               placeholder="Số nhà, tên đường (không bắt buộc)"
               error={errors.address?.message}
-              {...register('address')}
+              {...register('address', { onChange: clearCoordinates })}
             />
+
+            <div className="border-t border-zinc-200 pt-5">
+              <LocationPicker
+                addressQuery={addressQuery}
+                latitude={latitudeValue}
+                longitude={longitudeValue}
+                onChange={(coordinates) => {
+                  setValue('latitude', coordinates.latitude, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  setValue('longitude', coordinates.longitude, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                error={
+                  errors.latitude?.message ?? errors.longitude?.message
+                }
+              />
+            </div>
           </section>
 
           {amenityGroups.length > 0 && (

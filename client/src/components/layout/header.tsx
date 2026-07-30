@@ -167,7 +167,7 @@ export function Header() {
                   </p>
                   <p className="mt-0.5 text-xs text-zinc-500">Quản lý thông tin và tin đăng</p>
                 </div>
-                <DropdownMenuItem onSelect={() => router.push('/manage/account')}>
+                <DropdownMenuItem onSelect={() => router.push('/account')}>
                   <UserRound className="h-4 w-4" aria-hidden />
                   Tài khoản
                 </DropdownMenuItem>

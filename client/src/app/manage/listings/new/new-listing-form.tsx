@@ -9,6 +9,7 @@ import { Check, ChevronLeft, ChevronRight, ImagePlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { LocationPicker } from '@/components/rooms/location-picker';
 import {
   Select,
   SelectContent,
@@ -50,7 +51,7 @@ const STEPS = [
 
 const STEP_FIELDS: (keyof CreateRoomFormInput)[][] = [
   ['title', 'roomType', 'price', 'area', 'description'],
-  ['city', 'district', 'ward', 'address'],
+  ['city', 'district', 'ward', 'address', 'latitude', 'longitude'],
   ['deposit', 'maxOccupants', 'bedrooms', 'bathrooms'],
   [],
 ];
@@ -94,13 +95,42 @@ export function NewListingForm({
     resolver: zodResolver(createRoomSchema),
   });
 
-  const [roomType, city, district, price, area, title] = useWatch({
+  const [
+    roomType,
+    city,
+    district,
+    ward,
+    address,
+    latitude,
+    longitude,
+    price,
+    area,
+    title,
+  ] = useWatch({
     control,
-    name: ['roomType', 'city', 'district', 'price', 'area', 'title'],
+    name: [
+      'roomType',
+      'city',
+      'district',
+      'ward',
+      'address',
+      'latitude',
+      'longitude',
+      'price',
+      'area',
+      'title',
+    ],
   });
   const priceValue = Number(price);
   const areaValue = Number(area);
+  const latitudeValue =
+    typeof latitude === 'number' ? latitude : undefined;
+  const longitudeValue =
+    typeof longitude === 'number' ? longitude : undefined;
   const showRoomCounts = ROOM_TYPES_WITH_ROOM_COUNTS.has(roomType);
+  const addressQuery = [address, ward, district, city, 'Việt Nam']
+    .filter(Boolean)
+    .join(', ');
 
   const amenityGroups = AMENITY_TYPE_ORDER.map((type) => ({
     type,
@@ -119,6 +149,11 @@ export function NewListingForm({
       setValue('bedrooms', undefined);
       setValue('bathrooms', undefined);
     }
+  };
+
+  const clearCoordinates = () => {
+    setValue('latitude', undefined, { shouldDirty: true });
+    setValue('longitude', undefined, { shouldDirty: true });
   };
 
   const handleFiles = (fileList: FileList | null) => {
@@ -170,6 +205,8 @@ export function NewListingForm({
         district: values.district,
         ward: values.ward || undefined,
         address: values.address || undefined,
+        latitude: values.latitude,
+        longitude: values.longitude,
       });
 
       if (images.length > 0) {
@@ -328,7 +365,10 @@ export function NewListingForm({
               <label className="mb-1 block text-sm font-medium">Tỉnh, thành phố</label>
               <Select
                 value={city || undefined}
-                onValueChange={(v) => setValue('city', v, { shouldValidate: true })}
+                onValueChange={(v) => {
+                  setValue('city', v, { shouldValidate: true });
+                  clearCoordinates();
+                }}
               >
                 <SelectTrigger aria-label="Tỉnh, thành phố">
                   <SelectValue placeholder="Chọn tỉnh, thành phố" />
@@ -352,14 +392,14 @@ export function NewListingForm({
                 label="Quận, huyện"
                 placeholder="Quận 7"
                 error={errors.district?.message}
-                {...register('district')}
+                {...register('district', { onChange: clearCoordinates })}
               />
               <Field
                 id="ward"
                 label="Phường, xã"
                 placeholder="Không bắt buộc"
                 error={errors.ward?.message}
-                {...register('ward')}
+                {...register('ward', { onChange: clearCoordinates })}
               />
             </div>
 
@@ -368,8 +408,29 @@ export function NewListingForm({
               label="Địa chỉ cụ thể"
               placeholder="Số nhà, tên đường (không bắt buộc)"
               error={errors.address?.message}
-              {...register('address')}
+              {...register('address', { onChange: clearCoordinates })}
             />
+
+            <div className="border-t border-zinc-200 pt-5">
+              <LocationPicker
+                addressQuery={addressQuery}
+                latitude={latitudeValue}
+                longitude={longitudeValue}
+                onChange={(coordinates) => {
+                  setValue('latitude', coordinates.latitude, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  setValue('longitude', coordinates.longitude, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                error={
+                  errors.latitude?.message ?? errors.longitude?.message
+                }
+              />
+            </div>
           </div>
         )}
 

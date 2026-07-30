@@ -62,10 +62,16 @@ export function Footer() {
         ))}
       </div>
 
-      <div>
-        <p className="mx-auto w-full max-w-7xl px-4 py-4 text-xs text-zinc-500 sm:px-6">
-          © {new Date().getFullYear()} Trọ Ơi
-        </p>
+      <div className="border-t border-zinc-100">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p>© {new Date().getFullYear()} Trọ Ơi</p>
+          <Link
+            href="/privacy"
+            className="w-fit rounded-md transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          >
+            Chính sách quyền riêng tư
+          </Link>
+        </div>
       </div>
     </footer>
   );

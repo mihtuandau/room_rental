@@ -3,7 +3,12 @@ import { notFound } from 'next/navigation';
 import { Bath, BedDouble, Check, MapPin, Ruler, Users, Wallet } from 'lucide-react';
 import { serverFetch } from '@/lib/server-api';
 import { formatPrice, formatPriceShort } from '@/lib/utils';
-import { AMENITY_TYPE_LABELS, ROOM_TYPE_LABELS, type AmenityType } from '@/lib/constants';
+import {
+  AMENITY_TYPE_LABELS,
+  ROOM_TYPE_LABELS,
+  type AmenityType,
+  type RoomType,
+} from '@/lib/constants';
 import type { RoomDetail } from '@/features/rooms/api';
 import { BackButton } from '@/components/ui/back-button';
 import { RoomGallery } from '@/components/rooms/room-gallery';
@@ -15,6 +20,33 @@ import { ReportDialog } from '@/components/rooms/report-dialog';
 type Props = { params: Promise<{ slug: string }> };
 
 const AMENITY_TYPE_ORDER: AmenityType[] = ['basic', 'utility', 'security', 'nearby'];
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000'
+).replace(/\/+$/, '');
+
+const SCHEMA_ROOM_TYPES: Record<RoomType, 'Room' | 'House' | 'Apartment'> = {
+  boarding_house: 'Room',
+  whole_house: 'House',
+  mini_apartment: 'Apartment',
+  serviced_apartment: 'Apartment',
+  shared_room: 'Room',
+};
+
+function truncateSeoText(value: string, maxLength: number) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+
+  const shortened = normalized.slice(0, maxLength - 1);
+  const lastSpace = shortened.lastIndexOf(' ');
+  return `${shortened.slice(0, lastSpace > 0 ? lastSpace : undefined).trim()}…`;
+}
+
+function buildSeoDescription(room: RoomDetail, where: string) {
+  const summary = `${ROOM_TYPE_LABELS[room.roomType]} tại ${where}, giá ${formatPrice(room.price)}/tháng.`;
+  const details = room.description?.trim() ?? '';
+  const trust = 'Tin đăng đã được kiểm duyệt trên Trọ Ơi.';
+  return truncateSeoText(`${summary} ${details} ${trust}`, 155);
+}
 
 // public route is /room/<slug>, the API path is /rooms/<slug>
 async function getRoom(slug: string): Promise<RoomDetail | null> {
@@ -28,17 +60,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!room) return {};
 
   const where = [room.district, room.city].filter(Boolean).join(', ');
+  const canonical = `/room/${room.slug}`;
+  const title = truncateSeoText(
+    `${room.title} — ${formatPriceShort(room.price)}, ${where}`,
+    58,
+  );
+  const description = buildSeoDescription(room, where);
+  const images = room.images.length
+    ? room.images.map((image) => ({
+        url: image.url,
+        alt: room.title,
+      }))
+    : [{ url: '/banner.png', alt: 'Trọ Ơi — tìm phòng trọ đã xác minh' }];
+
   return {
-    title: `${room.title} — ${formatPriceShort(room.price)}/tháng, ${where}`,
-    description:
-      room.description?.slice(0, 155) ??
-      `${ROOM_TYPE_LABELS[room.roomType]} tại ${where}, tin đã kiểm duyệt trên Trọ Ơi.`,
-    alternates: { canonical: `/room/${room.slug}` },
+    title,
+    description,
+    alternates: { canonical },
     openGraph: {
-      title: room.title,
-      description: room.description?.slice(0, 155),
-      images: room.images[0] ? [room.images[0].url] : [],
+      title,
+      description,
+      url: canonical,
+      images,
       type: 'website',
+      locale: 'vi_VN',
+      siteName: 'Trọ Ơi',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: images.map((image) => image.url),
     },
   };
 }
@@ -47,11 +99,15 @@ export default async function RoomDetailPage({ params }: Props) {
   const room = await getRoom((await params).slug);
   if (!room) notFound();
 
+  const roomUrl = `${SITE_URL}/room/${room.slug}`;
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Apartment',
+    '@type': SCHEMA_ROOM_TYPES[room.roomType],
     name: room.title,
     description: room.description ?? undefined,
+    url: roomUrl,
+    mainEntityOfPage: roomUrl,
+    image: room.images.map((image) => image.url),
     numberOfRooms: room.bedrooms ?? undefined,
     floorSize: room.area
       ? { '@type': 'QuantitativeValue', value: room.area, unitCode: 'MTK' }
@@ -62,6 +118,12 @@ export default async function RoomDetailPage({ params }: Props) {
       addressLocality: room.district,
       addressRegion: room.city,
       addressCountry: 'VN',
+    },
+    offers: {
+      '@type': 'Offer',
+      price: room.price,
+      priceCurrency: 'VND',
+      url: roomUrl,
     },
     ...(room.latitude != null && room.longitude != null
       ? {
@@ -104,7 +166,9 @@ export default async function RoomDetailPage({ params }: Props) {
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
 
       <div className="flex items-center justify-between gap-4">

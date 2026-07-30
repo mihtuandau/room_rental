@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
@@ -89,13 +90,19 @@ export class CreateRoomDto {
   @IsString()
   address?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, minimum: -90, maximum: 90 })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @Min(-90)
+  @Max(90)
   latitude?: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, minimum: -180, maximum: 180 })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @Min(-180)
+  @Max(180)
   longitude?: number;
 }

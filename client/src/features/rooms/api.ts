@@ -201,6 +201,8 @@ export interface MyRoomDetail {
   district: string;
   ward: string | null;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   status: RoomStatus;
   updatedAt: string;
   images: RoomImage[];
