@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { SESSION_COOKIE } from '@/lib/auth-cookies';
 
 const API_URL = process.env.API_URL!;
+
+function revalidateRoomImagePages(method: string, path: string[], ok: boolean) {
+  if (!ok || !['POST', 'PATCH', 'DELETE'].includes(method)) return;
+  if (!/^rooms\/\d+\/images(?:\/|$)/.test(path.join('/'))) return;
+
+  revalidatePath('/');
+  revalidatePath('/room/[slug]', 'page');
+  revalidatePath('/rooms-for-rent/[slug]', 'page');
+}
 
 async function forward(req: NextRequest, path: string[]) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -19,6 +29,7 @@ async function forward(req: NextRequest, path: string[]) {
       signal: AbortSignal.timeout(15_000),
     });
 
+    revalidateRoomImagePages(req.method, path, beRes.ok);
     if (beRes.status === 204) return new NextResponse(null, { status: 204 });
     const data = await beRes.json().catch(() => null);
     return NextResponse.json(data, { status: beRes.status });

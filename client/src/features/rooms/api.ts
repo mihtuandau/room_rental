@@ -185,6 +185,12 @@ export function deleteRoomImage(roomId: number, imageId: string) {
   });
 }
 
+export function setRoomCoverImage(roomId: number, imageId: string) {
+  return apiRequest<RoomImage>(`/rooms/${roomId}/images/${imageId}/cover`, {
+    method: 'PATCH',
+  });
+}
+
 /** Full detail of one of the caller's own listings, any status — GET /rooms/mine/:id, powers the edit form. */
 export interface MyRoomDetail {
   id: number;

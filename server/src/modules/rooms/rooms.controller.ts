@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RoomsService } from './rooms.service';
@@ -108,6 +113,19 @@ export class RoomsController {
     @Body() dto: ConfirmImageDto,
   ) {
     return this.roomsService.addImage(userId, Number(id), dto);
+  }
+
+  @Patch(':id/images/:imageId/cover')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Set one of your room images as the cover image' })
+  @ApiOkResponse({ description: 'The selected image is now the room cover' })
+  setCoverImage(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.roomsService.setCoverImage(userId, Number(id), imageId);
   }
 
   @Put(':id/amenities')

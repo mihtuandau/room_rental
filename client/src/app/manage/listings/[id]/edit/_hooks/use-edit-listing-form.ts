@@ -13,6 +13,7 @@ import {
   roomKeys,
   useDeleteRoom,
   useDeleteRoomImage,
+  useSetRoomCoverImage,
   useSetRoomAmenities,
   useUpdateRoom,
 } from '@/features/rooms/hooks';
@@ -47,6 +48,7 @@ export function useEditListingForm(
   const setRoomAmenities = useSetRoomAmenities();
   const deleteRoom = useDeleteRoom();
   const deleteImage = useDeleteRoomImage(room.id);
+  const setCoverImage = useSetRoomCoverImage(room.id);
   const initialAmenityIds = room.amenities.map((amenity) => amenity.id);
   const [selectedAmenityIds, setSelectedAmenityIds] =
     useState(initialAmenityIds);
@@ -154,7 +156,7 @@ export function useEditListingForm(
         );
       }
       await queryClient.invalidateQueries({
-        queryKey: roomKeys.mineDetail(room.id),
+        queryKey: roomKeys.all,
       });
     } catch {
       toast.error('Tải ảnh lên thất bại, thử lại nhé.');
@@ -166,6 +168,14 @@ export function useEditListingForm(
   function removeImage(imageId: string) {
     deleteImage.mutate(imageId, {
       onError: () => toast.error('Không xoá được ảnh, thử lại nhé.'),
+    });
+  }
+
+  function makeCoverImage(imageId: string) {
+    setCoverImage.mutate(imageId, {
+      onSuccess: () => toast.success('Đã đặt làm ảnh bìa.'),
+      onError: () =>
+        toast.error('Không đặt được ảnh bìa. Bạn thử lại nhé.'),
     });
   }
 
@@ -223,13 +233,20 @@ export function useEditListingForm(
     selectedAmenityIds,
     isUploadingImage,
     isDeletingImage: deleteImage.isPending,
+    isSettingCoverImage: setCoverImage.isPending,
+    settingCoverImageId: setCoverImage.variables,
     isDeletingRoom: deleteRoom.isPending,
-    busy: isSubmitting || isUploadingImage,
+    busy:
+      isSubmitting ||
+      isUploadingImage ||
+      deleteImage.isPending ||
+      setCoverImage.isPending,
     clearCoordinates,
     toggleAmenity,
     discardChanges,
     uploadImages,
     removeImage,
+    makeCoverImage,
     submit,
     removeListing,
   };

@@ -22,8 +22,18 @@ const OWNER_PUBLIC_SELECT = {
 } as const;
 
 const COVER_IMAGE_INCLUDE = {
-  images: { where: { isCover: true }, take: 1 },
+  images: {
+    where: { isCover: true },
+    orderBy: { createdAt: 'asc' as const },
+    take: 1,
+  },
 } as const;
+
+const ROOM_IMAGE_ORDER = [
+  { isCover: 'desc' as const },
+  { position: 'asc' as const },
+  { createdAt: 'asc' as const },
+];
 
 const MAX_IMAGES_PER_ROOM = 10;
 
@@ -149,7 +159,7 @@ export class RoomsService {
     const room = await this.prisma.room.findFirst({
       where: { slug, status: 'active', deletedAt: null },
       include: {
-        images: true,
+        images: { orderBy: ROOM_IMAGE_ORDER },
         owner: { select: OWNER_PUBLIC_SELECT },
         amenities: { include: { amenity: true } },
       },
@@ -184,7 +194,7 @@ export class RoomsService {
     const full = await this.prisma.room.findUniqueOrThrow({
       where: { id: room.id },
       include: {
-        images: { orderBy: { position: 'asc' } },
+        images: { orderBy: ROOM_IMAGE_ORDER },
         amenities: { include: { amenity: true } },
       },
     });
@@ -211,16 +221,22 @@ export class RoomsService {
   // persists the resulting key/URL after the fact, and enforces "at most one cover image".
   async addImage(userId: string, roomId: number, dto: ConfirmImageDto) {
     const room = await this.findOwned(userId, roomId);
-    const isCover = dto.isCover ?? false;
-
-    const imageCount = await this.prisma.roomImage.count({
-      where: { roomId: room.id },
-    });
+    const [imageCount, currentCover] = await Promise.all([
+      this.prisma.roomImage.count({
+        where: { roomId: room.id },
+      }),
+      this.prisma.roomImage.findFirst({
+        where: { roomId: room.id, isCover: true },
+      }),
+    ]);
     if (imageCount >= MAX_IMAGES_PER_ROOM) {
       throw new BadRequestException(
         `A listing can have at most ${MAX_IMAGES_PER_ROOM} images.`,
       );
     }
+    // Repair legacy cover-less listings as soon as another image is attached.
+    // A listing with images should always have exactly one public thumbnail.
+    const isCover = dto.isCover === true || currentCover === null;
 
     return this.prisma.$transaction(async (tx) => {
       if (isCover) {
@@ -230,7 +246,35 @@ export class RoomsService {
         });
       }
       return tx.roomImage.create({
-        data: { roomId: room.id, key: dto.key, url: dto.url, isCover },
+        data: {
+          roomId: room.id,
+          key: dto.key,
+          url: dto.url,
+          isCover,
+          position: imageCount,
+        },
+      });
+    });
+  }
+
+  async setCoverImage(userId: string, roomId: number, imageId: string) {
+    const room = await this.findOwned(userId, roomId);
+    const image = await this.prisma.roomImage.findUnique({
+      where: { id: imageId },
+    });
+    if (!image || image.roomId !== room.id) {
+      throw new NotFoundException('Image not found.');
+    }
+    if (image.isCover) return image;
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.roomImage.updateMany({
+        where: { roomId: room.id, isCover: true },
+        data: { isCover: false },
+      });
+      return tx.roomImage.update({
+        where: { id: image.id },
+        data: { isCover: true },
       });
     });
   }
@@ -256,7 +300,25 @@ export class RoomsService {
     if (!image || image.roomId !== room.id)
       throw new NotFoundException('Image not found.');
 
-    await this.prisma.roomImage.delete({ where: { id: imageId } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.roomImage.delete({ where: { id: imageId } });
+
+      if (image.isCover) {
+        const nextCover = await tx.roomImage.findFirst({
+          where: { roomId: room.id },
+          orderBy: [
+            { position: 'asc' },
+            { createdAt: 'asc' },
+          ],
+        });
+        if (nextCover) {
+          await tx.roomImage.update({
+            where: { id: nextCover.id },
+            data: { isCover: true },
+          });
+        }
+      }
+    });
     await this.cloudinaryService.destroyAsset(image.key); // key stores the Cloudinary public_id
     return { success: true };
   }
