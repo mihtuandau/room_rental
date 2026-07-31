@@ -1,33 +1,105 @@
 import type { Metadata } from 'next';
-import { HydrationBoundary } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { createLoader } from 'nuqs/server';
 import { CategorySection } from '@/components/home/category-section';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
 import { LandlordCta } from '@/components/home/landlord-cta';
 import { SearchView } from '@/components/search/search-view';
+import type { Amenity } from '@/features/amenities/api';
+import { fetchProvinces } from '@/features/locations/api';
+import { buildSearchQuery, type RoomSearchResult } from '@/features/rooms/api';
+import { roomKeys } from '@/features/rooms/hooks';
 import {
-  buildHomeMetadata,
-  prepareHomePage,
-  type PublicSearchParams,
-} from './_lib/home-page';
+  isSearchExpanded,
+  searchParsers,
+  toSearchParams,
+} from '@/features/rooms/search-params';
+import { ROOM_TYPE_LABELS } from '@/lib/constants';
+import { makeQueryClient } from '@/lib/query-client';
+import { serverFetch } from '@/lib/server-api';
 
+type PublicSearchParams = Record<
+  string,
+  string | string[] | undefined
+>;
 type Props = { searchParams: Promise<PublicSearchParams> };
+
+const loadSearchParams = createLoader(searchParsers);
 
 export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
-  return buildHomeMetadata(await searchParams);
+  const parsed = await loadSearchParams(await searchParams);
+  const hasSearchState =
+    isSearchExpanded(parsed) ||
+    parsed.page > 1 ||
+    parsed.sort !== 'newest';
+  const roomType = parsed.roomType
+    ? ROOM_TYPE_LABELS[parsed.roomType]
+    : 'Phòng cho thuê';
+  const location = parsed.ward || parsed.city;
+  const title = hasSearchState
+    ? `${roomType}${location ? ` tại ${location}` : ''} — kết quả tìm kiếm`
+    : 'Tìm phòng trọ, nhà nguyên căn đã xác minh';
+  const description = hasSearchState
+    ? `Khám phá ${roomType.toLocaleLowerCase('vi-VN')}${location ? ` tại ${location}` : ''} trên Trọ Ơi. Lọc theo giá, diện tích và tiện ích để tìm nơi ở phù hợp.`
+    : 'Tìm phòng trọ, nhà nguyên căn và chung cư mini trên Trọ Ơi. Tin đăng được kiểm duyệt, thông tin rõ ràng và cập nhật mỗi ngày.';
+
+  return {
+    title,
+    description,
+    alternates: { canonical: '/' },
+    robots: hasSearchState
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: 'vi_VN',
+      siteName: 'Trọ Ơi',
+      url: '/',
+      images: [
+        {
+          url: '/banner.png',
+          alt: 'Trọ Ơi — tìm phòng trọ đã xác minh',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/banner.png'],
+    },
+  };
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { dehydratedState, amenities, provinces } = await prepareHomePage(
-    await searchParams,
-  );
+  const parsed = await loadSearchParams(await searchParams);
+  const filters = toSearchParams(parsed);
+  const queryClient = makeQueryClient();
+  const roomsPromise = queryClient.prefetchQuery({
+    queryKey: roomKeys.search(filters),
+    queryFn: () =>
+      serverFetch<RoomSearchResult>(
+        `/rooms?${buildSearchQuery(filters)}`,
+        { revalidate: 60 },
+      ),
+  });
+  const [, amenities, provinces] = await Promise.all([
+    roomsPromise,
+    serverFetch<Amenity[]>('/amenities', { revalidate: 3600 }).catch(
+      () => [],
+    ),
+    fetchProvinces(),
+  ]);
 
   return (
     <>
       <HomeHero provinces={provinces} />
-      <HydrationBoundary state={dehydratedState}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
         <SearchView
           amenities={amenities}
           provinces={provinces}

@@ -5,12 +5,12 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { RoomGrid } from '@/components/rooms/room-card';
+import { buildSearchQuery, type RoomSearchResult } from '@/features/rooms/api';
+import { PAGE_SIZE } from '@/features/rooms/search-params';
 import { AREA_LANDINGS, findAreaLanding } from '@/lib/constants';
+import { buildAreaMetadata } from '@/lib/seo/area-landing';
+import { serverFetch } from '@/lib/server-api';
 import { AreaPagination } from './_components/area-pagination';
-import {
-  buildAreaMetadata,
-  fetchAreaRooms,
-} from './_lib/area-landing';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -33,7 +33,16 @@ export default async function AreaLandingPage({ params, searchParams }: Props) {
   if (!area) notFound();
 
   const page = Math.max(1, Number((await searchParams).page) || 1);
-  const data = await fetchAreaRooms(area, page);
+  const query = buildSearchQuery({
+    city: area.city,
+    district: area.district,
+    sort: 'newest',
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  const data = await serverFetch<RoomSearchResult>(`/rooms?${query}`, {
+    revalidate: 60,
+  }).catch(() => null);
 
   // The full interactive search (price/area/amenities/map) — this landing
   // page itself stays a simple, fast-indexing list for the "quận X" keyword.
