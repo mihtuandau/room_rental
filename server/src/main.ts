@@ -29,21 +29,25 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const config = new DocumentBuilder()
-    .setTitle('Trọ Ơi API')
-    .setDescription('API for the room rental platform')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addCookieAuth('refresh_token')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Trọ Ơi API')
+      .setDescription('API for the room rental platform')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addCookieAuth('refresh_token')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+  }
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
   // Nest's own "successfully started" line says nothing about where it is
   // listening, which reads like a hang. Print the URLs explicitly.
   Logger.log(`API sẵn sàng: http://localhost:${port}`, 'Bootstrap');
-  Logger.log(`Swagger: http://localhost:${port}/docs`, 'Bootstrap');
+  if (process.env.NODE_ENV !== 'production') {
+    Logger.log(`Swagger: http://localhost:${port}/docs`, 'Bootstrap');
+  }
 }
 void bootstrap();

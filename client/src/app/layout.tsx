@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
+import Script from 'next/script';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
 
@@ -7,19 +9,6 @@ const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'vietnamese'],
 });
-
-const themeScript = `
-(() => {
-  try {
-    const stored = JSON.parse(localStorage.getItem('tro-oi-theme') || 'null');
-    const preference = stored?.state?.preference || 'system';
-    const dark = preference === 'dark' ||
-      (preference === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.classList.toggle('dark', dark);
-    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-  } catch {}
-})();
-`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -60,9 +49,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html
       lang="vi"
@@ -70,7 +61,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script
+          src="/theme-init.js"
+          strategy="beforeInteractive"
+          nonce={nonce}
+        />
       </head>
       <body className="flex min-h-full flex-col antialiased">
         <AppProviders>{children}</AppProviders>

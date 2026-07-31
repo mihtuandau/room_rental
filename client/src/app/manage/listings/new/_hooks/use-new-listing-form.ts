@@ -204,6 +204,7 @@ export function useNewListingForm(amenities: Amenity[]) {
         const uploaded = await uploadToCloudinary(
           images[index].file,
           'room-image',
+          room.id,
         );
         await confirmRoomImage(room.id, uploaded, index === 0);
       }

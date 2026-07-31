@@ -5,6 +5,7 @@ import { RoomContactCard } from '@/components/rooms/room-contact-card';
 import { RoomGallery } from '@/components/rooms/room-gallery';
 import { RoomLocationMap } from '@/components/rooms/room-location-map';
 import { RoomTitleActions } from '@/components/rooms/room-title-actions';
+import { RoomViewTracker } from '@/components/rooms/room-view-tracker';
 import type { RoomDetail } from '@/features/rooms/api';
 import { ROOM_TYPE_LABELS } from '@/lib/constants';
 import { formatPrice } from '@/lib/utils';
@@ -21,6 +22,7 @@ export function RoomDetailContent({ room }: { room: RoomDetail }) {
 
   return (
     <>
+      <RoomViewTracker roomId={room.id} />
       <div className="flex items-center justify-between gap-4">
         <BackButton label="Quay lại kết quả tìm kiếm" />
         <RoomTitleActions roomId={room.id} roomSlug={room.slug} />

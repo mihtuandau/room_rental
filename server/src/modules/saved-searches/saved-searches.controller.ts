@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SavedSearchesService } from './saved-searches.service';
@@ -27,6 +28,7 @@ export class SavedSearchesController {
   }
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary:
       'Save a search so matching new listings trigger a notification later',

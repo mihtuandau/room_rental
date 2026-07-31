@@ -4,7 +4,9 @@ interface UploadSignature {
   cloudName: string;
   apiKey: string;
   timestamp: number;
-  folder: string;
+  publicId: string;
+  overwrite: false;
+  allowedFormats: string;
   signature: string;
   uploadUrl: string;
 }
@@ -14,16 +16,24 @@ interface CloudinaryResult {
   secure_url: string;
 }
 
-function getSignature(kind: 'room-image' | 'avatar') {
-  return apiRequest<UploadSignature>(`/storage/presign/${kind}`, { method: 'POST' });
+function getSignature(kind: 'room-image' | 'avatar', roomId?: number) {
+  const path =
+    kind === 'room-image'
+      ? `/storage/presign/room-image/${roomId}`
+      : '/storage/presign/avatar';
+  return apiRequest<UploadSignature>(path, { method: 'POST' });
 }
 
 /** Uploads one file directly to Cloudinary (never through our backend) and returns its identifiers. */
 export async function uploadToCloudinary(
   file: File,
   kind: 'room-image' | 'avatar' = 'room-image',
+  roomId?: number,
 ): Promise<CloudinaryResult> {
-  const sig = await getSignature(kind);
+  if (kind === 'room-image' && roomId == null) {
+    throw new Error('Thiếu mã tin đăng để tải ảnh.');
+  }
+  const sig = await getSignature(kind, roomId);
 
   // Every signed param must be sent back exactly as received, or Cloudinary
   // rejects the signature.
@@ -31,7 +41,9 @@ export async function uploadToCloudinary(
   form.append('file', file);
   form.append('api_key', sig.apiKey);
   form.append('timestamp', String(sig.timestamp));
-  form.append('folder', sig.folder);
+  form.append('public_id', sig.publicId);
+  form.append('overwrite', String(sig.overwrite));
+  form.append('allowed_formats', sig.allowedFormats);
   form.append('signature', sig.signature);
 
   // No Authorization header, no credentials — this is a third-party request.

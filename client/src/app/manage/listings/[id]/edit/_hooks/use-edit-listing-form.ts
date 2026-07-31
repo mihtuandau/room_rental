@@ -148,6 +148,7 @@ export function useEditListingForm(
         const uploaded = await uploadToCloudinary(
           files[index],
           'room-image',
+          room.id,
         );
         await confirmRoomImage(
           room.id,

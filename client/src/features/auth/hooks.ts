@@ -10,6 +10,7 @@ import {
   logout,
   sendResetOtp,
   resetPassword,
+  sendRegisterOtp,
 } from './api';
 
 /**
@@ -33,6 +34,10 @@ export function useLogin() {
 // No token to store — registration doesn't sign the user in; they go to /login.
 export function useRegister() {
   return useMutation({ mutationFn: register });
+}
+
+export function useSendRegisterOtp() {
+  return useMutation({ mutationFn: sendRegisterOtp });
 }
 
 export function useGoogleLogin() {

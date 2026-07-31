@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { Prisma } from '../../../generated/prisma/client';
 import { uniqueSlug } from '@/common/utils/slugify';
@@ -12,6 +13,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
 import { ConfirmImageDto } from './dto/confirm-image.dto';
+import { ROOM_IMAGE_MAX_COUNT } from '../storage/storage.constants';
 
 // Public listing detail must not expose contact fields. Phone/Zalo are returned
 // only by ContactLogsService after authentication, rate limiting, and logging.
@@ -35,8 +37,6 @@ const ROOM_IMAGE_ORDER = [
   { createdAt: 'asc' as const },
 ];
 
-const MAX_IMAGES_PER_ROOM = 10;
-
 @Injectable()
 export class RoomsService {
   constructor(
@@ -50,11 +50,20 @@ export class RoomsService {
     // collect one before the listing can exist.
     const owner = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { phone: true, contactPhone: true },
+      select: {
+        phone: true,
+        contactPhone: true,
+        isPhoneVerified: true,
+      },
     });
     if (!owner.contactPhone && !owner.phone) {
       throw new BadRequestException(
         'Add a contact phone number to your profile before posting a listing.',
+      );
+    }
+    if (owner.phone && !owner.isPhoneVerified) {
+      throw new BadRequestException(
+        'Verify your phone number before posting a listing.',
       );
     }
 
@@ -166,16 +175,48 @@ export class RoomsService {
     });
     if (!room) throw new NotFoundException('Listing not found.');
 
-    await this.prisma.room.update({
-      where: { id: room.id },
-      data: { viewCount: { increment: 1 } },
-    });
     return {
       ...room,
-      viewCount: room.viewCount + 1,
       // flatten the join rows — the client only cares about the amenities themselves
       amenities: room.amenities.map((ra) => ra.amenity),
     };
+  }
+
+  async recordView(roomId: number, visitorId: string) {
+    const room = await this.prisma.room.findFirst({
+      where: { id: roomId, status: 'active', deletedAt: null },
+      select: { id: true },
+    });
+    if (!room) throw new NotFoundException('Listing not found.');
+
+    const day = new Date().toISOString().slice(0, 10);
+    const visitorHash = createHash('sha256').update(visitorId).digest('hex');
+    const dedupeKey = createHash('sha256')
+      .update(`${roomId}:${visitorHash}:${day}`)
+      .digest('hex');
+
+    try {
+      await this.prisma.$transaction([
+        this.prisma.roomView.create({
+          data: { roomId, ipHash: visitorHash, dedupeKey },
+        }),
+        this.prisma.room.update({
+          where: { id: roomId },
+          data: { viewCount: { increment: 1 } },
+        }),
+      ]);
+      return { recorded: true };
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return { recorded: false };
+      }
+      throw error;
+    }
   }
 
   async findMine(userId: string) {
@@ -221,6 +262,11 @@ export class RoomsService {
   // persists the resulting key/URL after the fact, and enforces "at most one cover image".
   async addImage(userId: string, roomId: number, dto: ConfirmImageDto) {
     const room = await this.findOwned(userId, roomId);
+    const image = await this.cloudinaryService.verifyRoomImage(
+      dto.key,
+      userId,
+      room.id,
+    );
     const [imageCount, currentCover] = await Promise.all([
       this.prisma.roomImage.count({
         where: { roomId: room.id },
@@ -229,10 +275,16 @@ export class RoomsService {
         where: { roomId: room.id, isCover: true },
       }),
     ]);
-    if (imageCount >= MAX_IMAGES_PER_ROOM) {
+    if (imageCount >= ROOM_IMAGE_MAX_COUNT) {
       throw new BadRequestException(
-        `A listing can have at most ${MAX_IMAGES_PER_ROOM} images.`,
+        `A listing can have at most ${ROOM_IMAGE_MAX_COUNT} images.`,
       );
+    }
+    const duplicate = await this.prisma.roomImage.findFirst({
+      where: { key: image.key },
+    });
+    if (duplicate) {
+      throw new BadRequestException('This image has already been attached.');
     }
     // Repair legacy cover-less listings as soon as another image is attached.
     // A listing with images should always have exactly one public thumbnail.
@@ -248,8 +300,8 @@ export class RoomsService {
       return tx.roomImage.create({
         data: {
           roomId: room.id,
-          key: dto.key,
-          url: dto.url,
+          key: image.key,
+          url: image.url,
           isCover,
           position: imageCount,
         },
@@ -319,7 +371,19 @@ export class RoomsService {
         }
       }
     });
-    await this.cloudinaryService.destroyAsset(image.key); // key stores the Cloudinary public_id
+    if (
+      this.cloudinaryService.isOwnedRoomImagePublicId(
+        image.key,
+        userId,
+        room.id,
+      )
+    ) {
+      await this.cloudinaryService.destroyAsset(image.key);
+    } else {
+      // Legacy rows predate owner-scoped public IDs. Deleting their DB record is
+      // safe, but destroying an unscoped key could delete another listing's asset.
+      this.cloudinaryService.warnLegacyAssetNotDestroyed(image.key, room.id);
+    }
     return { success: true };
   }
 

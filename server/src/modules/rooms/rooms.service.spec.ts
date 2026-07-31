@@ -3,6 +3,38 @@ import { CloudinaryService } from '../storage/cloudinary.service';
 import { RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
+  describe('create', () => {
+    it('rejects a password account whose phone has not been verified', async () => {
+      const prisma = {
+        user: {
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            phone: '0912345678',
+            contactPhone: null,
+            isPhoneVerified: false,
+          }),
+        },
+        room: { create: jest.fn() },
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      await expect(
+        service.create('user-1', {
+          title: 'Phòng trọ an toàn gần trường',
+          roomType: 'boarding_house',
+          price: 2_500_000,
+          city: 'Đà Nẵng',
+          district: 'Hải Châu',
+        }),
+      ).rejects.toThrow(
+        'Verify your phone number before posting a listing.',
+      );
+      expect(prisma.room.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('findActiveBySlug', () => {
     it('does not select owner contact details for the public response', async () => {
       const room = {
@@ -135,13 +167,97 @@ describe('RoomsService', () => {
     });
   });
 
+  describe('addImage', () => {
+    it('stores only metadata verified by Cloudinary for an owned room', async () => {
+      const room = { id: 42, ownerId: 'owner-1', deletedAt: null };
+      const verified = {
+        key: 'rooms/owner-1/42/safe-image',
+        url: 'https://res.cloudinary.com/demo/image/upload/safe-image.jpg',
+      };
+      const created = { id: 'image-1', roomId: room.id, ...verified };
+      const tx = {
+        roomImage: {
+          updateMany: jest.fn(),
+          create: jest.fn().mockResolvedValue(created),
+        },
+      };
+      const prisma = {
+        room: { findUnique: jest.fn().mockResolvedValue(room) },
+        roomImage: {
+          count: jest.fn().mockResolvedValue(0),
+          findFirst: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(null),
+        },
+        $transaction: jest.fn(
+          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        ),
+      };
+      const cloudinary = {
+        verifyRoomImage: jest.fn().mockResolvedValue(verified),
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        cloudinary as unknown as CloudinaryService,
+      );
+
+      const result = await service.addImage(room.ownerId, room.id, {
+        key: verified.key,
+        isCover: false,
+      });
+
+      expect(cloudinary.verifyRoomImage).toHaveBeenCalledWith(
+        verified.key,
+        room.ownerId,
+        room.id,
+      );
+      expect(tx.roomImage.create).toHaveBeenCalledWith({
+        data: {
+          roomId: room.id,
+          key: verified.key,
+          url: verified.url,
+          isCover: true,
+          position: 0,
+        },
+      });
+      expect(result).toEqual(created);
+    });
+
+    it('does not write anything when Cloudinary rejects the identifier', async () => {
+      const room = { id: 42, ownerId: 'owner-1', deletedAt: null };
+      const prisma = {
+        room: { findUnique: jest.fn().mockResolvedValue(room) },
+        roomImage: { count: jest.fn(), findFirst: jest.fn() },
+        $transaction: jest.fn(),
+      };
+      const cloudinary = {
+        verifyRoomImage: jest
+          .fn()
+          .mockRejectedValue(new Error('Invalid room image identifier.')),
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        cloudinary as unknown as CloudinaryService,
+      );
+
+      await expect(
+        service.addImage(room.ownerId, room.id, {
+          key: 'rooms/another-owner/99/stolen-image',
+        }),
+      ).rejects.toThrow('Invalid room image identifier.');
+      expect(prisma.roomImage.count).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+  });
+
   describe('removeImage', () => {
     it('promotes the next image when the deleted image was the cover', async () => {
       const room = { id: 42, ownerId: 'owner-1', deletedAt: null };
       const cover = {
         id: 'image-1',
         roomId: room.id,
-        key: 'rooms/image-1',
+        key: 'rooms/owner-1/42/image-1',
         isCover: true,
       };
       const nextImage = { id: 'image-2', roomId: room.id, isCover: false };
@@ -163,6 +279,8 @@ describe('RoomsService', () => {
       };
       const cloudinary = {
         destroyAsset: jest.fn().mockResolvedValue(undefined),
+        isOwnedRoomImagePublicId: jest.fn().mockReturnValue(true),
+        warnLegacyAssetNotDestroyed: jest.fn(),
       };
       const service = new RoomsService(
         prisma as unknown as PrismaService,
@@ -180,6 +298,47 @@ describe('RoomsService', () => {
         data: { isCover: true },
       });
       expect(cloudinary.destroyAsset).toHaveBeenCalledWith(cover.key);
+    });
+
+    it('does not destroy legacy unscoped Cloudinary keys', async () => {
+      const room = { id: 42, ownerId: 'owner-1', deletedAt: null };
+      const image = {
+        id: 'legacy-image',
+        roomId: room.id,
+        key: 'rooms/legacy-shared-key',
+        isCover: false,
+      };
+      const tx = {
+        roomImage: {
+          delete: jest.fn().mockResolvedValue(image),
+          findFirst: jest.fn(),
+          update: jest.fn(),
+        },
+      };
+      const prisma = {
+        room: { findUnique: jest.fn().mockResolvedValue(room) },
+        roomImage: { findUnique: jest.fn().mockResolvedValue(image) },
+        $transaction: jest.fn(
+          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        ),
+      };
+      const cloudinary = {
+        destroyAsset: jest.fn(),
+        isOwnedRoomImagePublicId: jest.fn().mockReturnValue(false),
+        warnLegacyAssetNotDestroyed: jest.fn(),
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        cloudinary as unknown as CloudinaryService,
+      );
+
+      await service.removeImage(room.ownerId, room.id, image.id);
+
+      expect(cloudinary.destroyAsset).not.toHaveBeenCalled();
+      expect(cloudinary.warnLegacyAssetNotDestroyed).toHaveBeenCalledWith(
+        image.key,
+        room.id,
+      );
     });
   });
 });
