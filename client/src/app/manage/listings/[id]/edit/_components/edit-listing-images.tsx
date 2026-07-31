@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus, Star, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGES_PER_ROOM } from '@/lib/constants';
 import type { MyRoomDetail } from '@/features/rooms/api';
@@ -9,16 +9,29 @@ export function EditListingImages({
   images,
   isUploading,
   isDeleting,
+  isSettingCover,
+  settingCoverImageId,
   onFiles,
   onDelete,
+  onSetCover,
 }: {
   images: MyRoomDetail['images'];
   isUploading: boolean;
   isDeleting: boolean;
+  isSettingCover: boolean;
+  settingCoverImageId?: string;
   onFiles: (files: FileList | null) => void;
   onDelete: (imageId: string) => void;
+  onSetCover: (imageId: string) => void;
 }) {
   const canAdd = images.length < MAX_IMAGES_PER_ROOM;
+  const imageMutationPending =
+    isUploading || isDeleting || isSettingCover;
+  const orderedImages = [...images].sort(
+    (a, b) =>
+      Number(b.isCover) - Number(a.isCover) ||
+      a.position - b.position,
+  );
 
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5">
@@ -32,7 +45,7 @@ export function EditListingImages({
               type="file"
               accept={ACCEPTED_IMAGE_TYPES.join(',')}
               multiple
-              disabled={isUploading}
+              disabled={imageMutationPending}
               aria-label="Thêm ảnh phòng"
               className="absolute inset-0 cursor-pointer opacity-0"
               onChange={(event) => {
@@ -47,7 +60,7 @@ export function EditListingImages({
       </div>
 
       <div className="grid grid-cols-3 auto-rows-[96px] gap-3">
-        {images.map((image, index) => (
+        {orderedImages.map((image, index) => (
           <div
             key={image.id}
             className={cn(
@@ -58,16 +71,29 @@ export function EditListingImages({
             {/* eslint-disable-next-line @next/next/no-img-element -- Cloudinary remote image */}
             <img src={image.url} alt="" className="h-full w-full object-cover" />
             {image.isCover ? (
-              <span className="absolute bottom-1 left-1 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-brand-600 px-2 py-1 text-[10px] font-semibold text-white">
+                <Star className="h-3 w-3 fill-current" aria-hidden />
                 Ảnh bìa
               </span>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSetCover(image.id)}
+                disabled={imageMutationPending}
+                className="absolute bottom-2 left-2 inline-flex min-h-8 items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-card transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Star className="h-3.5 w-3.5" aria-hidden />
+                {isSettingCover && settingCoverImageId === image.id
+                  ? 'Đang đặt…'
+                  : 'Đặt làm ảnh bìa'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onDelete(image.id)}
-              disabled={isDeleting}
+              disabled={imageMutationPending}
               aria-label="Xoá ảnh"
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-60"
+              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 disabled:opacity-60"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
             </button>
@@ -80,7 +106,7 @@ export function EditListingImages({
               type="file"
               accept={ACCEPTED_IMAGE_TYPES.join(',')}
               multiple
-              disabled={isUploading}
+              disabled={imageMutationPending}
               aria-label="Thêm ảnh phòng"
               className="absolute inset-0 cursor-pointer opacity-0"
               onChange={(event) => {

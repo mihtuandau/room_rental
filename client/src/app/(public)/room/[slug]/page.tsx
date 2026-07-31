@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { RoomDetail } from '@/features/rooms/api';
+import { buildRoomJsonLd, buildRoomSeo } from '@/lib/seo/room';
 import { serverFetch } from '@/lib/server-api';
 import { RoomDetailContent } from './_components/room-detail-content';
-import { buildRoomJsonLd, buildRoomSeo } from './_lib/room-seo';
 
 type Props = { params: Promise<{ slug: string }> };
 

@@ -70,8 +70,11 @@ export function EditListingForm({
             images={room.images}
             isUploading={listing.isUploadingImage}
             isDeleting={listing.isDeletingImage}
+            isSettingCover={listing.isSettingCoverImage}
+            settingCoverImageId={listing.settingCoverImageId}
             onFiles={(files) => void listing.uploadImages(files)}
             onDelete={listing.removeImage}
+            onSetCover={listing.makeCoverImage}
           />
           <EditListingFields
             roomType={listing.roomType}

@@ -1,8 +1,5 @@
 import type { Metadata } from 'next';
-import { buildSearchQuery, type RoomSearchResult } from '@/features/rooms/api';
-import { PAGE_SIZE } from '@/features/rooms/search-params';
 import { findAreaLanding } from '@/lib/constants';
-import { serverFetch } from '@/lib/server-api';
 
 type AreaLanding = NonNullable<ReturnType<typeof findAreaLanding>>;
 
@@ -42,17 +39,4 @@ export function buildAreaMetadata(
       images: ['/banner.png'],
     },
   };
-}
-
-export function fetchAreaRooms(area: AreaLanding, page: number) {
-  const query = buildSearchQuery({
-    city: area.city,
-    district: area.district,
-    sort: 'newest',
-    page,
-    pageSize: PAGE_SIZE,
-  });
-  return serverFetch<RoomSearchResult>(`/rooms?${query}`, {
-    revalidate: 60,
-  }).catch(() => null);
 }

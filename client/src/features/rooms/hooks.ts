@@ -7,6 +7,7 @@ import {
   fetchMyRooms,
   fetchRooms,
   revealContact,
+  setRoomCoverImage,
   setRoomAmenities,
   updateRoom,
   type SearchParams,
@@ -98,6 +99,14 @@ export function useDeleteRoomImage(roomId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (imageId: string) => deleteRoomImage(roomId, imageId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: roomKeys.mineDetail(roomId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: roomKeys.all }),
+  });
+}
+
+export function useSetRoomCoverImage(roomId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (imageId: string) => setRoomCoverImage(roomId, imageId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: roomKeys.all }),
   });
 }

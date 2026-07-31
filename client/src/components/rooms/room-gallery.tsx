@@ -19,7 +19,11 @@ export function RoomGallery({
   images: RoomImage[];
   isVerified?: boolean;
 }) {
-  const ordered = [...images].sort((a, b) => a.position - b.position);
+  const ordered = [...images].sort(
+    (a, b) =>
+      Number(b.isCover) - Number(a.isCover) ||
+      a.position - b.position,
+  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
