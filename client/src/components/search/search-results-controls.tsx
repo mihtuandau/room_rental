@@ -64,9 +64,9 @@ export function SearchResultsControls({
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{heading}</h1>
           {state.mode === 'nearby' ? (
-            <p className="mt-2 max-w-2xl rounded-md border border-warning-600/20 bg-warning-50 px-3 py-2 text-xs text-zinc-700">
-              Bán kính hiện dùng để xem vùng trên bản đồ. Danh sách bên dưới vẫn lọc theo
-              các tiêu chí hiện có cho tới khi hệ thống hỗ trợ tìm theo tọa độ.
+            <p className="mt-2 max-w-2xl text-xs text-zinc-500">
+              Đang lọc theo vị trí đã ghim. Bản đồ chỉ hiển thị những tin có tọa độ hợp lệ.
+              {state.city ? ` Khu vực tham chiếu: ${state.ward ? `${state.ward}, ` : ''}${state.city}.` : ''}
             </p>
           ) : null}
           <p className="mt-1 text-sm text-zinc-600">

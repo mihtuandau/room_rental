@@ -14,6 +14,7 @@ import {
 import type { ProvinceOption } from '@/features/locations/api';
 import { useWards } from '@/features/locations/hooks';
 import type { SearchState } from '@/features/rooms/search-params';
+import { RADIUS_OPTIONS } from '@/lib/constants';
 
 // Radix Select forbids an empty item value, so "no filter" uses a sentinel.
 const ALL = '__all__';
@@ -118,7 +119,31 @@ export function SearchToolbar({
 
       <span className="hidden h-6 w-px bg-zinc-200 sm:block" aria-hidden />
 
+      {state.mode === 'nearby' ? (
+        <>
+          <Select
+            value={String(state.radiusKm ?? 3)}
+            onValueChange={(value) =>
+              onChange({ radiusKm: Number(value), mode: 'nearby', page: 1 })
+            }
+          >
+            <SelectTrigger className="border-0 shadow-none sm:w-28" aria-label="Bán kính tìm kiếm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RADIUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={String(option.value)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="hidden h-6 w-px bg-zinc-200 sm:block" aria-hidden />
+        </>
+      ) : null}
+
       <Input
+        key={state.keyword}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         placeholder="Tên đường, khu vực, từ khoá…"

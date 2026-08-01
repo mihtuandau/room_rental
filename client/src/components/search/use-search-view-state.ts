@@ -82,7 +82,7 @@ export function useSearchViewState() {
   ].join('|');
   const resultsHeading =
     state.mode === 'nearby'
-      ? `Phòng gần vị trí của bạn${state.radiusKm ? ` trong bán kính ${state.radiusKm} km` : ''}${locationSuffix(state)}`
+      ? `Phòng gần vị trí của bạn${state.radiusKm ? ` · ${state.radiusKm} km` : ''}${locationSuffix(state)}`
       : state.ward
         ? `Phòng trọ tại ${state.ward}, ${state.city}`
         : state.city

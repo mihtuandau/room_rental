@@ -184,6 +184,10 @@ export function HomeHero({
   const currentRooms = expanded ? (liveSearch.data?.rooms ?? rooms) : rooms;
   const currentTotalRooms = expanded ? (liveSearch.data?.total ?? totalRooms) : totalRooms;
 
+  // The results view owns the search controls once a search is expanded.
+  // Avoid rendering a second hero form and map above the results toolbar.
+  if (expanded) return null;
+
   const submit = (
     override?: {
       center?: [number, number];

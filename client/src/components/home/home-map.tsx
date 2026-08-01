@@ -384,10 +384,10 @@ export function HomeMap({
       </div>
       <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs text-zinc-600 shadow-card backdrop-blur-sm">
         {hasRadiusCenter && visibleRooms.length > 0
-          ? `${roomsInRadius.length}/${visibleRooms.length} phòng trong bán kính`
+          ? `${roomsInRadius.length}/${visibleRooms.length} tin có tọa độ trong bán kính`
           : visibleRooms.length > 0
-            ? `${visibleRooms.length} phòng đang hiển thị`
-          : 'Chưa có phòng có tọa độ trong khu vực này'}
+            ? `${visibleRooms.length}/${rooms.length} tin có tọa độ trên bản đồ`
+          : 'Chưa có tin có tọa độ để ghim trên bản đồ'}
       </div>
     </div>
   );
