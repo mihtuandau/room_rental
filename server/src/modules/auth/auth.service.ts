@@ -222,11 +222,7 @@ export class AuthService {
     }
   }
 
-  private async validateOtp(
-    phone: string,
-    purpose: OtpPurpose,
-    code: string,
-  ) {
+  private async validateOtp(phone: string, purpose: OtpPurpose, code: string) {
     const otp = await this.prisma.otpCode.findFirst({
       where: { phone, purpose, usedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -245,11 +241,7 @@ export class AuthService {
   }
 
   async resetPassword(phone: string, code: string, newPassword: string) {
-    const otp = await this.validateOtp(
-      phone,
-      OtpPurpose.reset_password,
-      code,
-    );
+    const otp = await this.validateOtp(phone, OtpPurpose.reset_password, code);
     const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
     await this.prisma.$transaction(async (tx) => {
       const consumed = await tx.otpCode.updateMany({

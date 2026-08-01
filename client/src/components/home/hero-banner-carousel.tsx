@@ -171,27 +171,32 @@ export function HeroBannerCarousel() {
   ]);
 
   return (
-    <div className="relative px-4 sm:px-6">
+    <div className="relative overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 shadow-card">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex touch-pan-y">
           {SLIDES.map((slide, i) => (
             <div
               key={slide.src}
-              // Keep enough of the neighbouring slides visible on desktop so
-              // the carousel is obvious without pushing the primary search
-              // action below the first viewport.
-              className="min-w-0 flex-[0_0_88%] px-2 sm:flex-[0_0_78%] sm:px-3 lg:flex-[0_0_min(75%,1200px)]"
+              className="min-w-0 flex-[0_0_100%]"
             >
               <div
                 data-slide-inner
-                className="relative aspect-video overflow-hidden rounded-xl shadow-popover [will-change:transform,opacity]"
+                className="relative aspect-video overflow-hidden [will-change:transform,opacity]"
               >
                 <Image
-                  src={slide.src}
+                  src={`${slide.src}?v=20260801`}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="scale-110 object-cover opacity-25 blur-xl"
+                  aria-hidden
+                />
+                <Image
+                  src={`${slide.src}?v=20260801`}
                   alt={slide.alt}
                   fill
-                  sizes="(min-width: 1024px) 75vw, 88vw"
-                  className="object-cover"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-contain"
                   priority={i === 0}
                 />
               </div>
@@ -204,7 +209,7 @@ export function HeroBannerCarousel() {
         type="button"
         onClick={() => emblaApi?.scrollPrev()}
         aria-label="Banner trước"
-        className="absolute left-1 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 shadow-card transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:flex"
+        className="absolute left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 shadow-card transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:flex"
       >
         <ChevronLeft className="h-5 w-5" aria-hidden />
       </button>
@@ -212,12 +217,12 @@ export function HeroBannerCarousel() {
         type="button"
         onClick={() => emblaApi?.scrollNext()}
         aria-label="Banner tiếp theo"
-        className="absolute right-1 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 shadow-card transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:flex"
+        className="absolute right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-700 shadow-card transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:flex"
       >
         <ChevronRight className="h-5 w-5" aria-hidden />
       </button>
 
-      <div className="mt-4 flex items-center justify-center gap-2">
+      <div className="absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2">
         {SLIDES.map((slide, i) => (
           <button
             key={slide.src}

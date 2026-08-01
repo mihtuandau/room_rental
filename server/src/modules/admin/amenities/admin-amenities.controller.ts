@@ -24,7 +24,10 @@ export class AdminAmenitiesController {
   constructor(private readonly adminAmenitiesService: AdminAmenitiesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List the full amenity catalog, including inactive entries and usage counts' })
+  @ApiOperation({
+    summary:
+      'List the full amenity catalog, including inactive entries and usage counts',
+  })
   list() {
     return this.adminAmenitiesService.list();
   }

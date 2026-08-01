@@ -26,7 +26,7 @@ export function BrowseResults({
   return (
     <div
       id="ket-qua"
-      className="mx-auto w-full max-w-7xl space-y-12 pb-8 pt-8 sm:space-y-16 sm:pt-12"
+      className="mx-auto w-full max-w-7xl space-y-12 pb-8 pt-0 sm:space-y-16"
     >
       {browseTop}
       <section id="tin-moi" className="scroll-mt-20 px-4 sm:px-6">

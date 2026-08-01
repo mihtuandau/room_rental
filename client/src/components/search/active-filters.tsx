@@ -40,6 +40,13 @@ export function ActiveFilters({
 }: ActiveFiltersProps) {
   const chips: Chip[] = [];
 
+  if (state.mode === 'nearby')
+    chips.push({
+      key: 'nearby',
+      label: state.radiusKm ? `Gần vị trí của bạn (${state.radiusKm} km)` : 'Gần vị trí của bạn',
+      remove: { mode: 'area', lat: null, lng: null, radiusKm: null },
+    });
+
   if (state.keyword)
     chips.push({ key: 'keyword', label: `“${state.keyword}”`, remove: { keyword: '' } });
   // Removing the city also clears the ward (a ward without its city is meaningless).

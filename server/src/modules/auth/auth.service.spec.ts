@@ -46,7 +46,9 @@ describe('AuthService registration OTP', () => {
     };
     const config = {
       get: jest.fn((key: string) =>
-        key.includes('EXPIRES') ? '20m' : 'test-secret-with-at-least-32-characters',
+        key.includes('EXPIRES')
+          ? '20m'
+          : 'test-secret-with-at-least-32-characters',
       ),
     };
     const service = new AuthService(

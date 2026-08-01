@@ -99,6 +99,14 @@ export const PRICE_RANGE_OPTIONS = [
 
 export type PriceRangeValue = (typeof PRICE_RANGE_OPTIONS)[number]['value'];
 
+/** UI-only radius choices for the home map. Backend search remains unchanged. */
+export const RADIUS_OPTIONS = [
+  { value: 1, label: '1 km' },
+  { value: 3, label: '3 km' },
+  { value: 5, label: '5 km' },
+  { value: 10, label: '10 km' },
+] as const;
+
 /**
  * Area-landing pages (`/rooms-for-rent/<slug>`) — SEO entry points for a
  * specific district, pre-filtered server-rendered lists distinct from the

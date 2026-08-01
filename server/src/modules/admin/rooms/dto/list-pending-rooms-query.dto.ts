@@ -3,7 +3,9 @@ import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '@/common/dto/pagination-query.dto';
 
 export class ListPendingRoomsQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Search title, location, or owner contact' })
+  @ApiPropertyOptional({
+    description: 'Search title, location, or owner contact',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)

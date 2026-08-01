@@ -190,6 +190,35 @@ body {
   background: var(--color-brand-600);
   color: var(--color-white);
 }
+.rr-user-marker {
+  position: relative;
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  background: color-mix(in oklab, var(--color-brand-600) 24%, transparent);
+  cursor: pointer;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-brand-600) 16%, transparent);
+}
+.rr-user-marker::after {
+  position: absolute;
+  inset: -7px;
+  border: 1px solid color-mix(in oklab, var(--color-brand-600) 45%, transparent);
+  border-radius: inherit;
+  content: '';
+}
+.rr-user-marker-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-white);
+  border-radius: inherit;
+  background: var(--color-brand-600);
+  box-shadow: var(--shadow-card);
+}
 .maplibregl-popup-content {
   padding: 0;
   border-radius: var(--radius-lg);

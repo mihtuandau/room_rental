@@ -1,14 +1,17 @@
 'use client';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useEffect, useRef, useState } from 'react';
-import type { Map as MlMap, Marker } from 'maplibre-gl';
-import { formatPriceShort } from '@/lib/utils';
-import { OSM_STYLE } from '@/lib/map-style';
-import { ROOM_TYPE_LABELS } from '@/lib/constants';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
 import { PLACEHOLDER_IMAGE, type RoomCardItem } from '@/components/rooms/room-card';
+import type { SearchState } from '@/features/rooms/search-params';
+import { ROOM_TYPE_LABELS } from '@/lib/constants';
+import { HOME_MAP_COLORS, OSM_STYLE } from '@/lib/map-style';
+import { formatPriceShort } from '@/lib/utils';
 
 const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
+const MARKER_COLLISION_OFFSET_DEGREES = 0.00024;
+const USER_MARKER_COLLISION_KM = 0.05;
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
@@ -17,8 +20,13 @@ const HTML_ESCAPES: Record<string, string> = {
   '"': '&quot;',
   "'": '&#39;',
 };
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c] ?? c);
+}
+
+function getRoomImageUrl(room: RoomCardItem) {
+  return room.images.find((image) => image.url)?.url ?? PLACEHOLDER_IMAGE;
 }
 
 function popupHtml(room: RoomCardItem) {
@@ -29,28 +37,101 @@ function popupHtml(room: RoomCardItem) {
   </a>`;
 }
 
+function isLocated(room: RoomCardItem) {
+  return (
+    room.latitude != null &&
+    room.longitude != null &&
+    Number.isFinite(room.latitude) &&
+    Number.isFinite(room.longitude)
+  );
+}
+
+function circleFeature(center: [number, number], radiusKm: number) {
+  const points: [number, number][] = [];
+  const latitudeFactor = 111.32;
+  const longitudeFactor = Math.max(1, 111.32 * Math.cos((center[1] * Math.PI) / 180));
+
+  for (let i = 0; i <= 96; i += 1) {
+    const angle = (i / 96) * Math.PI * 2;
+    points.push([
+      center[0] + (radiusKm / longitudeFactor) * Math.cos(angle),
+      center[1] + (radiusKm / latitudeFactor) * Math.sin(angle),
+    ]);
+  }
+
+  return {
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'Polygon' as const, coordinates: [points] },
+  };
+}
+
+function distanceKm(from: [number, number], to: [number, number]) {
+  const earthRadiusKm = 6371;
+  const latitudeDelta = ((to[1] - from[1]) * Math.PI) / 180;
+  const longitudeDelta = ((to[0] - from[0]) * Math.PI) / 180;
+  const fromLatitude = (from[1] * Math.PI) / 180;
+  const toLatitude = (to[1] * Math.PI) / 180;
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(fromLatitude) * Math.cos(toLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function coordinateKey(point: [number, number]) {
+  return `${point[0].toFixed(5)}:${point[1].toFixed(5)}`;
+}
+
+function offsetMarkerPosition(point: [number, number], index: number) {
+  const angle = ((index % 8) / 8) * Math.PI * 2;
+  const ring = Math.floor(index / 8) + 1;
+
+  return [
+    point[0] + Math.cos(angle) * MARKER_COLLISION_OFFSET_DEGREES * ring,
+    point[1] + Math.sin(angle) * MARKER_COLLISION_OFFSET_DEGREES * ring,
+  ] as [number, number];
+}
+
 export function ResultsMap({
   rooms,
+  state,
   activeId = null,
   onActivate,
 }: {
   rooms: RoomCardItem[];
-  /** Room to highlight, synced with the list. */
+  state: SearchState;
   activeId?: number | null;
   onActivate?: (id: number | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
+  const markersRef = useRef<Marker[]>([]);
+  const userMarkerRef = useRef<Marker | null>(null);
   const markerEls = useRef<Map<number, HTMLElement>>(new Map());
-  // Keep the callback in a ref so marker listeners always call the latest one
-  // without the markers effect depending on its identity.
   const onActivateRef = useRef(onActivate);
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     onActivateRef.current = onActivate;
   });
-  const [ready, setReady] = useState(false);
 
-  // Create the map once on mount.
+  const userCenter = useMemo<[number, number] | null>(() => {
+    if (state.mode !== 'nearby' || !state.lat || !state.lng) return null;
+    const latitude = Number(state.lat);
+    const longitude = Number(state.lng);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return [longitude, latitude];
+  }, [state.lat, state.lng, state.mode]);
+  const radiusKm = state.radiusKm ?? 3;
+  const locatedRooms = useMemo(() => rooms.filter(isLocated), [rooms]);
+  const roomsInRadius = useMemo(() => {
+    if (!userCenter) return locatedRooms;
+    return locatedRooms.filter((room) =>
+      distanceKm(userCenter, [room.longitude as number, room.latitude as number]) <= radiusKm,
+    );
+  }, [locatedRooms, radiusKm, userCenter]);
+
   useEffect(() => {
     let cancelled = false;
     void import('maplibre-gl').then(({ Map, NavigationControl }) => {
@@ -58,8 +139,8 @@ export function ResultsMap({
       const map = new Map({
         container: containerRef.current,
         style: OSM_STYLE,
-        center: HCMC_CENTER,
-        zoom: 11,
+        center: userCenter ?? HCMC_CENTER,
+        zoom: userCenter ? 12 : 11,
       });
       map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
       map.on('load', () => {
@@ -69,63 +150,167 @@ export function ResultsMap({
     });
     return () => {
       cancelled = true;
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
+    // The map is created once. Data changes are handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // (Re)draw markers whenever the results change or the map becomes ready.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const markers: Marker[] = [];
+
+    if (!userCenter) {
+      if (map.getLayer('results-radius-line')) map.removeLayer('results-radius-line');
+      if (map.getLayer('results-radius-fill')) map.removeLayer('results-radius-fill');
+      if (map.getSource('results-radius')) map.removeSource('results-radius');
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
+      return;
+    }
+
+    if (locatedRooms.length === 0) {
+      map.easeTo({ center: userCenter, zoom: 12, duration: 300 });
+    }
+    const feature = circleFeature(userCenter, radiusKm);
+    const source = map.getSource('results-radius');
+    if (source?.type === 'geojson') {
+      (source as GeoJSONSource).setData(feature);
+    } else {
+      map.addSource('results-radius', { type: 'geojson', data: feature });
+      map.addLayer({
+        id: 'results-radius-fill',
+        type: 'fill',
+        source: 'results-radius',
+        paint: { 'fill-color': HOME_MAP_COLORS.radiusFill, 'fill-opacity': 0.18 },
+      });
+      map.addLayer({
+        id: 'results-radius-line',
+        type: 'line',
+        source: 'results-radius',
+        paint: {
+          'line-color': HOME_MAP_COLORS.radiusLine,
+          'line-width': 2.5,
+          'line-opacity': 0.9,
+          'line-dasharray': [2, 2],
+        },
+      });
+    }
+
+    let cancelled = false;
+    void import('maplibre-gl').then(({ Marker, Popup }) => {
+      if (cancelled || !userCenter) return;
+      userMarkerRef.current?.remove();
+
+      const markerButton = document.createElement('button');
+      markerButton.type = 'button';
+      markerButton.className = 'rr-user-marker';
+      markerButton.setAttribute('aria-label', 'Vị trí của bạn');
+      const dot = document.createElement('span');
+      dot.className = 'rr-user-marker-dot';
+      markerButton.appendChild(dot);
+
+      const popupContent = document.createElement('div');
+      popupContent.className = 'rr-popup';
+      const title = document.createElement('strong');
+      title.className = 'rr-popup-title';
+      title.textContent = 'Vị trí của bạn';
+      const meta = document.createElement('span');
+      meta.className = 'rr-popup-meta';
+      meta.textContent = `Đang xem phòng trong bán kính ${radiusKm} km`;
+      popupContent.append(title, meta);
+
+      userMarkerRef.current = new Marker({ element: markerButton, anchor: 'center' })
+        .setLngLat(userCenter)
+        .setPopup(new Popup({ offset: 18, closeButton: false }).setDOMContent(popupContent))
+        .addTo(map);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locatedRooms.length, radiusKm, ready, userCenter]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
     const els = markerEls.current;
     els.clear();
     let cancelled = false;
 
     void import('maplibre-gl').then(({ Marker, Popup, LngLatBounds }) => {
       if (cancelled) return;
-      const located = rooms.filter(
-        (r) => r.latitude != null && r.longitude != null,
-      );
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
       const bounds = new LngLatBounds();
+      if (userCenter) bounds.extend(userCenter);
+      const renderedPoints = new Map<string, number>();
 
-      for (const room of located) {
+      for (const room of locatedRooms) {
+        const roomPoint: [number, number] = [room.longitude as number, room.latitude as number];
+        const key = coordinateKey(roomPoint);
+        const collisionIndex = renderedPoints.get(key) ?? 0;
+        renderedPoints.set(key, collisionIndex + 1);
+        const isTooCloseToUser = userCenter
+          ? distanceKm(userCenter, roomPoint) <= USER_MARKER_COLLISION_KM
+          : false;
+        const markerPoint =
+          collisionIndex > 0 || isTooCloseToUser
+            ? offsetMarkerPosition(roomPoint, collisionIndex)
+            : roomPoint;
         const el = document.createElement('button');
         el.type = 'button';
         el.className = 'rr-marker';
-        el.innerHTML = `
-          <img class="rr-marker-photo" src="${escapeHtml(room.images[0]?.url ?? PLACEHOLDER_IMAGE)}" alt="" />
-          <span class="rr-marker-price">${escapeHtml(formatPriceShort(room.price))}</span>
-        `;
+        el.setAttribute('aria-label', `${room.title}, ${formatPriceShort(room.price)}`);
+
+        const image = document.createElement('img');
+        image.className = 'rr-marker-photo';
+        image.src = getRoomImageUrl(room);
+        image.alt = '';
+        image.addEventListener('error', () => {
+          image.src = PLACEHOLDER_IMAGE;
+        });
+        el.appendChild(image);
+
+        const price = document.createElement('span');
+        price.className = 'rr-marker-price';
+        price.textContent = formatPriceShort(room.price);
+        el.appendChild(price);
+
         el.addEventListener('mouseenter', () => onActivateRef.current?.(room.id));
         el.addEventListener('mouseleave', () => onActivateRef.current?.(null));
 
-        const popup = new Popup({ offset: 32, closeButton: false }).setHTML(
-          popupHtml(room),
-        );
         const marker = new Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([room.longitude as number, room.latitude as number])
-          .setPopup(popup)
+          .setLngLat(markerPoint)
+          .setPopup(new Popup({ offset: 32, closeButton: false }).setHTML(popupHtml(room)))
           .addTo(map);
-        markers.push(marker);
+        markersRef.current.push(marker);
         els.set(room.id, el);
-        bounds.extend([room.longitude as number, room.latitude as number]);
+        bounds.extend(roomPoint);
       }
 
-      if (located.length > 0) {
-        map.fitBounds(bounds, { padding: 64, maxZoom: 14, duration: 0 });
+      if (locatedRooms.length > 0) {
+        map.fitBounds(bounds, {
+          padding: userCenter ? 72 : 64,
+          maxZoom: userCenter ? 13 : 14,
+          duration: userCenter ? 300 : 0,
+        });
       }
     });
 
     return () => {
       cancelled = true;
-      markers.forEach((m) => m.remove());
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
       els.clear();
     };
-  }, [rooms, ready]);
+  }, [locatedRooms, ready, userCenter]);
 
-  // Highlight the active marker when the selection changes (e.g. list hover).
   useEffect(() => {
     markerEls.current.forEach((el, id) => {
       el.classList.toggle('is-active', id === activeId);
@@ -133,9 +318,18 @@ export function ResultsMap({
   }, [activeId]);
 
   return (
-    <div
-      ref={containerRef}
-      className="h-[70vh] min-h-[420px] w-full overflow-hidden rounded-lg border border-zinc-200"
-    />
+    <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden rounded-lg border border-zinc-200">
+      <div ref={containerRef} className="h-full w-full" />
+      {userCenter ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-zinc-200 bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur-sm">
+          <p className="font-medium text-zinc-900">Bán kính {radiusKm} km</p>
+          <p className="mt-0.5 text-zinc-500">
+            {roomsInRadius.length > 0
+              ? `${roomsInRadius.length} phòng có tọa độ trong vùng`
+              : 'Chưa có phòng có tọa độ trong vùng này'}
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }

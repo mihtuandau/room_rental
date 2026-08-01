@@ -80,6 +80,17 @@ export class RoomsService {
   async search(dto: SearchRoomsDto) {
     const page = dto.page ?? 1;
     const pageSize = dto.pageSize ?? 20;
+    const hasAnyGeoParam =
+      dto.lat !== undefined ||
+      dto.lng !== undefined ||
+      dto.radiusKm !== undefined;
+    const hasRadiusSearch = dto.lat !== undefined && dto.lng !== undefined;
+
+    if (hasAnyGeoParam && !hasRadiusSearch) {
+      throw new BadRequestException(
+        'Both latitude and longitude are required for radius search.',
+      );
+    }
 
     // Prisma can't do accent-insensitive matching — narrow to matching ids via
     // a parameterized raw query first, then apply the rest as normal Prisma filters.
@@ -112,10 +123,47 @@ export class RoomsService {
       }
     }
 
+    let radiusMatchedIds: number[] | undefined;
+    if (hasRadiusSearch) {
+      const radiusKm = dto.radiusKm ?? 3;
+      const rows = await this.prisma.$queryRaw<{ id: number }[]>(
+        Prisma.sql`
+          SELECT id
+          FROM rooms
+          WHERE status = 'active'
+            AND deleted_at IS NULL
+            AND latitude IS NOT NULL
+            AND longitude IS NOT NULL
+            AND (
+              6371 * 2 * asin(
+                sqrt(
+                  power(sin(radians((${dto.lat} - latitude) / 2)), 2) +
+                  cos(radians(${dto.lat})) *
+                  cos(radians(latitude)) *
+                  power(sin(radians((${dto.lng} - longitude) / 2)), 2)
+                )
+              )
+            ) <= ${radiusKm}
+        `,
+      );
+      radiusMatchedIds = rows.map((r) => r.id);
+      if (radiusMatchedIds.length === 0) {
+        return { rooms: [], total: 0, page, pageSize };
+      }
+    }
+
+    const scopedIds =
+      keywordMatchedIds && radiusMatchedIds
+        ? keywordMatchedIds.filter((id) => radiusMatchedIds.includes(id))
+        : (keywordMatchedIds ?? radiusMatchedIds);
+    if (scopedIds && scopedIds.length === 0) {
+      return { rooms: [], total: 0, page, pageSize };
+    }
+
     const where = {
       status: 'active' as const,
       deletedAt: null,
-      ...(keywordMatchedIds && { id: { in: keywordMatchedIds } }),
+      ...(scopedIds && { id: { in: scopedIds } }),
       ...(dto.city && { city: dto.city }),
       ...(dto.district && { district: dto.district }),
       ...(dto.ward && { ward: dto.ward }),
@@ -358,10 +406,7 @@ export class RoomsService {
       if (image.isCover) {
         const nextCover = await tx.roomImage.findFirst({
           where: { roomId: room.id },
-          orderBy: [
-            { position: 'asc' },
-            { createdAt: 'asc' },
-          ],
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
         });
         if (nextCover) {
           await tx.roomImage.update({

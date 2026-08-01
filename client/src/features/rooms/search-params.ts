@@ -13,6 +13,7 @@ import type { SearchParams } from './api';
 
 const ROOM_TYPE_VALUES = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
 export const SORT_VALUES = ['newest', 'price_asc', 'price_desc'] as const;
+export const SEARCH_MODE_VALUES = ['area', 'nearby'] as const;
 export const PAGE_SIZE = 12;
 
 /**
@@ -33,6 +34,10 @@ export const searchParsers = {
   verifiedOnly: parseAsBoolean.withDefault(false),
   amenityIds: parseAsArrayOf(parseAsInteger).withDefault([]),
   sort: parseAsStringLiteral(SORT_VALUES).withDefault('newest'),
+  mode: parseAsStringLiteral(SEARCH_MODE_VALUES).withDefault('area'),
+  lat: parseAsString,
+  lng: parseAsString,
+  radiusKm: parseAsInteger,
   page: parseAsInteger.withDefault(1),
   // UI-only: forces full results mode even with zero filters set (e.g. "Xem
   // tất cả" or pressing the hero's search button with every field on its
@@ -53,6 +58,10 @@ export interface SearchState {
   verifiedOnly: boolean;
   amenityIds: number[];
   sort: (typeof SORT_VALUES)[number];
+  mode: (typeof SEARCH_MODE_VALUES)[number];
+  lat: string | null;
+  lng: string | null;
+  radiusKm: number | null;
   page: number;
   all: boolean;
 }
@@ -63,15 +72,20 @@ export interface SearchState {
  * object — and therefore an identical React Query key.
  */
 export function toSearchParams(v: SearchState): SearchParams {
+  const hasRadiusSearch = v.mode === 'nearby' && v.lat && v.lng;
+
   return {
     keyword: v.keyword || undefined,
-    city: v.city || undefined,
-    ward: v.ward || undefined,
+    city: hasRadiusSearch ? undefined : v.city || undefined,
+    ward: hasRadiusSearch ? undefined : v.ward || undefined,
     roomType: v.roomType ?? undefined,
     priceMin: v.priceMin ?? undefined,
     priceMax: v.priceMax ?? undefined,
     areaMin: v.areaMin ?? undefined,
     areaMax: v.areaMax ?? undefined,
+    lat: hasRadiusSearch ? v.lat ?? undefined : undefined,
+    lng: hasRadiusSearch ? v.lng ?? undefined : undefined,
+    radiusKm: hasRadiusSearch ? (v.radiusKm ?? 3) : undefined,
     verifiedOnly: v.verifiedOnly || undefined,
     amenityIds: v.amenityIds.length ? v.amenityIds : undefined,
     sort: v.sort,
@@ -99,6 +113,7 @@ export function isSearchExpanded(v: SearchState): boolean {
     v.areaMin !== null ||
     v.areaMax !== null ||
     v.verifiedOnly ||
-    v.amenityIds.length > 0
+    v.amenityIds.length > 0 ||
+    v.mode === 'nearby'
   );
 }

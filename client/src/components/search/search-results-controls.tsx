@@ -3,14 +3,13 @@
 import { LayoutGrid, Map as MapIcon, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -64,6 +63,12 @@ export function SearchResultsControls({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{heading}</h1>
+          {state.mode === 'nearby' ? (
+            <p className="mt-2 max-w-2xl rounded-md border border-warning-600/20 bg-warning-50 px-3 py-2 text-xs text-zinc-700">
+              Bán kính hiện dùng để xem vùng trên bản đồ. Danh sách bên dưới vẫn lọc theo
+              các tiêu chí hiện có cho tới khi hệ thống hỗ trợ tìm theo tọa độ.
+            </p>
+          ) : null}
           <p className="mt-1 text-sm text-zinc-600">
             {total === undefined
               ? 'Đang tải…'
@@ -154,8 +159,8 @@ function MobileFilters({
   onClear: () => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="lg:hidden">
           <SlidersHorizontal className="h-4 w-4" aria-hidden />
           Bộ lọc
@@ -165,12 +170,12 @@ function MobileFilters({
             </span>
           ) : null}
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Bộ lọc</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
+      </SheetTrigger>
+      <SheetContent className="max-w-md">
+        <SheetHeader>
+          <SheetTitle>Bộ lọc tìm kiếm</SheetTitle>
+        </SheetHeader>
+        <SheetBody>
           <FilterPanel
             key={resetKey}
             state={state}
@@ -178,12 +183,14 @@ function MobileFilters({
             onChange={onChange}
             onClear={onClear}
           />
-        </DialogBody>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Xem kết quả</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetBody>
+        <div className="border-t border-zinc-200 bg-white p-4">
+          <Button className="w-full" onClick={() => onOpenChange(false)}>
+            Xem kết quả
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

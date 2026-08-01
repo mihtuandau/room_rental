@@ -91,11 +91,7 @@ export class AdminRoomsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: SetVerifiedDto,
   ) {
-    return this.adminRoomsService.setVerified(
-      adminId,
-      id,
-      dto.isVerified,
-    );
+    return this.adminRoomsService.setVerified(adminId, id, dto.isVerified);
   }
 
   @Get(':id/moderations')

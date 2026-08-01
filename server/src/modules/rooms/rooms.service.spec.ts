@@ -3,6 +3,86 @@ import { CloudinaryService } from '../storage/cloudinary.service';
 import { RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
+  describe('search', () => {
+    it('does not require coordinates for a normal search', async () => {
+      const prisma = {
+        $transaction: jest.fn((queries: unknown[]) => Promise.all(queries)),
+        room: {
+          findMany: jest.fn().mockResolvedValue([{ id: 1 }]),
+          count: jest.fn().mockResolvedValue(1),
+        },
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      const result = await service.search({ page: 1, pageSize: 12 });
+
+      expect(prisma.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'active',
+            deletedAt: null,
+          }),
+        }),
+      );
+      expect(result.total).toBe(1);
+    });
+
+    it('filters public results by radius around coordinates', async () => {
+      const prisma = {
+        $queryRaw: jest.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
+        $transaction: jest.fn((queries: unknown[]) => Promise.all(queries)),
+        room: {
+          findMany: jest.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
+          count: jest.fn().mockResolvedValue(2),
+        },
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      const result = await service.search({
+        lat: 16.0544,
+        lng: 108.2022,
+        radiusKm: 5,
+        page: 1,
+        pageSize: 12,
+      });
+
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(prisma.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'active',
+            deletedAt: null,
+            id: { in: [1, 2] },
+          }),
+          take: 12,
+        }),
+      );
+      expect(result).toEqual({
+        rooms: [{ id: 1 }, { id: 2 }],
+        total: 2,
+        page: 1,
+        pageSize: 12,
+      });
+    });
+
+    it('rejects incomplete radius coordinates', async () => {
+      const service = new RoomsService(
+        {} as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      await expect(service.search({ lat: 16.0544 })).rejects.toThrow(
+        'Both latitude and longitude are required for radius search.',
+      );
+    });
+  });
+
   describe('create', () => {
     it('rejects a password account whose phone has not been verified', async () => {
       const prisma = {
@@ -28,9 +108,7 @@ describe('RoomsService', () => {
           city: 'Đà Nẵng',
           district: 'Hải Châu',
         }),
-      ).rejects.toThrow(
-        'Verify your phone number before posting a listing.',
-      );
+      ).rejects.toThrow('Verify your phone number before posting a listing.');
       expect(prisma.room.create).not.toHaveBeenCalled();
     });
   });
@@ -116,8 +194,8 @@ describe('RoomsService', () => {
       const prisma = {
         room: { findUnique: jest.fn().mockResolvedValue(room) },
         roomImage: { findUnique: jest.fn().mockResolvedValue(image) },
-        $transaction: jest.fn(
-          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
         ),
       };
       const service = new RoomsService(
@@ -160,9 +238,7 @@ describe('RoomsService', () => {
 
       await expect(
         service.setCoverImage('caller-1', 42, 'image-2'),
-      ).rejects.toThrow(
-        'You do not have permission to modify this listing.',
-      );
+      ).rejects.toThrow('You do not have permission to modify this listing.');
       expect(prisma.roomImage.findUnique).not.toHaveBeenCalled();
     });
   });
@@ -190,8 +266,8 @@ describe('RoomsService', () => {
             .mockResolvedValueOnce(null)
             .mockResolvedValueOnce(null),
         },
-        $transaction: jest.fn(
-          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
         ),
       };
       const cloudinary = {
@@ -265,16 +341,14 @@ describe('RoomsService', () => {
         roomImage: {
           delete: jest.fn().mockResolvedValue(cover),
           findFirst: jest.fn().mockResolvedValue(nextImage),
-          update: jest
-            .fn()
-            .mockResolvedValue({ ...nextImage, isCover: true }),
+          update: jest.fn().mockResolvedValue({ ...nextImage, isCover: true }),
         },
       };
       const prisma = {
         room: { findUnique: jest.fn().mockResolvedValue(room) },
         roomImage: { findUnique: jest.fn().mockResolvedValue(cover) },
-        $transaction: jest.fn(
-          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
         ),
       };
       const cloudinary = {
@@ -318,8 +392,8 @@ describe('RoomsService', () => {
       const prisma = {
         room: { findUnique: jest.fn().mockResolvedValue(room) },
         roomImage: { findUnique: jest.fn().mockResolvedValue(image) },
-        $transaction: jest.fn(
-          async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
         ),
       };
       const cloudinary = {

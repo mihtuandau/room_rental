@@ -82,6 +82,7 @@ export function SearchView({
               isPending={query.isPending}
               isError={query.isError}
               isPlaceholderData={query.isPlaceholderData}
+              state={search.state}
               onActivate={search.setActiveId}
               onPage={search.goToPage}
               onClear={search.clearAll}

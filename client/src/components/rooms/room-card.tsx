@@ -77,8 +77,10 @@ export function RoomCard({
       onMouseEnter={onActivate}
       onMouseLeave={onDeactivate}
       className={cn(
-        'group relative overflow-hidden rounded-lg border bg-white transition-shadow',
-        active ? 'border-brand-600 shadow-card' : 'border-zinc-200 hover:shadow-card',
+        'group relative overflow-hidden rounded-lg border bg-white transition-[transform,box-shadow,border-color] duration-200',
+        active
+          ? 'border-brand-600 shadow-card'
+          : 'border-zinc-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-card',
       )}
     >
       <div className="relative aspect-[4/3]">
@@ -88,7 +90,7 @@ export function RoomCard({
           fill
           priority={priority}
           sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
         />
 
         <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
@@ -114,12 +116,13 @@ export function RoomCard({
           />
         </button>
 
-        <span className="absolute bottom-2 left-2 rounded-full bg-brand-600 px-2.5 py-1 text-sm font-semibold text-white">
-          {formatPrice(room.price)}
-        </span>
       </div>
 
       <div className="space-y-1.5 p-3">
+        <p className="text-base font-semibold tabular-nums text-brand-700">
+          {formatPrice(room.price)}
+          <span className="ml-1 text-xs font-normal text-zinc-500">/tháng</span>
+        </p>
         <h3 className="line-clamp-1 text-sm font-medium">{room.title}</h3>
         <p className="flex items-center gap-1 text-xs text-zinc-500">
           <MapPin className="h-3 w-3 shrink-0" aria-hidden />

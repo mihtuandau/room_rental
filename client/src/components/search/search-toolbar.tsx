@@ -36,6 +36,9 @@ export function SearchToolbar({
   const [keyword, setKeyword] = useState(state.keyword);
   const cityCode = provinces.find((p) => p.value === state.city)?.code;
   const wards = useWards(cityCode);
+  const wardOptions = wards.data ?? [];
+  const shouldShowCurrentWard =
+    Boolean(state.ward) && !wardOptions.some((ward) => ward === state.ward);
 
   const submitKeyword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +54,14 @@ export function SearchToolbar({
         value={state.city || ALL}
         onValueChange={(v) =>
           // Changing province invalidates the ward, so clear it.
-          onChange({ city: v === ALL ? '' : v, ward: '' })
+          onChange({
+            city: v === ALL ? '' : v,
+            ward: '',
+            mode: 'area',
+            lat: null,
+            lng: null,
+            radiusKm: null,
+          })
         }
       >
         <SelectTrigger
@@ -74,7 +84,15 @@ export function SearchToolbar({
 
       <Select
         value={state.ward || ALL}
-        onValueChange={(v) => onChange({ ward: v === ALL ? '' : v })}
+        onValueChange={(v) =>
+          onChange({
+            ward: v === ALL ? '' : v,
+            mode: 'area',
+            lat: null,
+            lng: null,
+            radiusKm: null,
+          })
+        }
         disabled={!state.city}
       >
         <SelectTrigger
@@ -85,7 +103,12 @@ export function SearchToolbar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>Tất cả phường/xã</SelectItem>
-          {(wards.data ?? []).map((w) => (
+          {shouldShowCurrentWard ? (
+            <SelectItem value={state.ward}>
+              {state.ward}
+            </SelectItem>
+          ) : null}
+          {wardOptions.map((w) => (
             <SelectItem key={w} value={w}>
               {w}
             </SelectItem>

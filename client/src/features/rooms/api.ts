@@ -71,6 +71,9 @@ export interface SearchParams {
   priceMax?: number;
   areaMin?: number;
   areaMax?: number;
+  lat?: string;
+  lng?: string;
+  radiusKm?: number;
   verifiedOnly?: boolean;
   /** backend expects a comma-separated list; a listing must have ALL of them */
   amenityIds?: number[];

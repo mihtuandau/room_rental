@@ -12,6 +12,7 @@ import {
   Max,
   Min,
   IsPositive,
+  IsNumber,
 } from 'class-validator';
 import { RoomType } from '../../../../generated/prisma/client';
 
@@ -67,6 +68,41 @@ export class SearchRoomsDto {
   areaMax?: number;
 
   @ApiPropertyOptional({
+    description: 'Latitude of the search center for radius search',
+    example: 16.0544,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat?: number;
+
+  @ApiPropertyOptional({
+    description: 'Longitude of the search center for radius search',
+    example: 108.2022,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng?: number;
+
+  @ApiPropertyOptional({
+    description: 'Radius in kilometers around lat/lng',
+    default: 3,
+    minimum: 1,
+    maximum: 50,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  radiusKm?: number;
+
+  @ApiPropertyOptional({
     description:
       'Only return verified listings (still ranked verified-first either way)',
   })
@@ -84,7 +120,7 @@ export class SearchRoomsDto {
   @Transform(({ value }: { value: string }) =>
     String(value)
       .split(',')
-      .map((v) => Number(v.trim()))
+      .map((v) => Number(v.trim())),
   )
   @ArrayMaxSize(20)
   @ArrayUnique()

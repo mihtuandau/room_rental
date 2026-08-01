@@ -24,8 +24,18 @@ const CLEARED: Partial<SearchState> = {
   areaMax: null,
   verifiedOnly: false,
   amenityIds: [],
+  mode: 'area',
+  lat: null,
+  lng: null,
+  radiusKm: null,
   page: 1,
 };
+
+function locationSuffix(state: SearchState) {
+  if (state.ward && state.city) return ` tại ${state.ward}, ${state.city}`;
+  if (state.city) return ` tại ${state.city}`;
+  return '';
+}
 
 export function useSearchViewState() {
   const [state, setState] = useQueryStates(searchParsers, {
@@ -50,6 +60,7 @@ export function useSearchViewState() {
     Boolean(state.city) ||
     Boolean(state.ward) ||
     Boolean(state.roomType) ||
+    state.mode === 'nearby' ||
     state.priceMin !== null ||
     state.priceMax !== null ||
     state.areaMin !== null ||
@@ -69,13 +80,16 @@ export function useSearchViewState() {
     state.areaMax,
     state.verifiedOnly,
   ].join('|');
-  const resultsHeading = state.ward
-    ? `Phòng trọ tại ${state.ward}, ${state.city}`
-    : state.city
-      ? `Phòng trọ tại ${state.city}`
-      : hasActiveFilters
-        ? 'Kết quả tìm phòng'
-        : 'Tin đăng mới nhất';
+  const resultsHeading =
+    state.mode === 'nearby'
+      ? `Phòng gần vị trí của bạn${state.radiusKm ? ` trong bán kính ${state.radiusKm} km` : ''}${locationSuffix(state)}`
+      : state.ward
+        ? `Phòng trọ tại ${state.ward}, ${state.city}`
+        : state.city
+          ? `Phòng trọ tại ${state.city}`
+          : hasActiveFilters
+            ? 'Kết quả tìm phòng'
+            : 'Tin đăng mới nhất';
   const rangeFrom = query.data
     ? (query.data.page - 1) * PAGE_SIZE + 1
     : 0;
