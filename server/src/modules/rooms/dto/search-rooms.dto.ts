@@ -1,13 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayUnique,
   IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
   Length,
+  Max,
   Min,
+  IsPositive,
 } from 'class-validator';
 import { RoomType } from '../../../../generated/prisma/client';
 
@@ -81,9 +85,11 @@ export class SearchRoomsDto {
     String(value)
       .split(',')
       .map((v) => Number(v.trim()))
-      .filter((n) => !Number.isNaN(n)),
   )
+  @ArrayMaxSize(20)
+  @ArrayUnique()
   @IsInt({ each: true })
+  @IsPositive({ each: true })
   amenityIds?: number[];
 
   @ApiPropertyOptional({ enum: SORT_VALUES, default: 'newest' })
@@ -102,5 +108,6 @@ export class SearchRoomsDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(50)
   pageSize?: number = 20;
 }

@@ -51,6 +51,44 @@ export class NotificationsService {
     return this.prisma.notification.create({ data: input });
   }
 
+  async createSavedSearchMatchOnce(input: {
+    savedSearchId: string;
+    userId: string;
+    roomId: number;
+    roomTitle: string;
+  }) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.notificationLog.create({
+          data: {
+            savedSearchId: input.savedSearchId,
+            roomId: input.roomId,
+          },
+        }),
+        this.prisma.notification.create({
+          data: {
+            userId: input.userId,
+            type: NotificationType.saved_search_match,
+            title: 'Có tin đăng mới phù hợp',
+            body: `"${input.roomTitle}" khớp với tìm kiếm đã lưu của bạn.`,
+            roomId: input.roomId,
+          },
+        }),
+      ]);
+      return true;
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   async notifyListingApproved(room: {
     ownerId: string;
     id: number;

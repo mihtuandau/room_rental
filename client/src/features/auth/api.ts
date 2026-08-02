@@ -20,8 +20,16 @@ export function register(input: {
   phone: string;
   password: string;
   fullName?: string;
+  otpCode: string;
 }) {
   return authRequest<{ ok: true }>('/register', input);
+}
+
+export function sendRegisterOtp(phone: string) {
+  return apiRequest<{ success: true }>('/auth/otp/send', {
+    method: 'POST',
+    body: JSON.stringify({ phone, purpose: 'register' }),
+  });
 }
 
 export function googleLogin(input: { idToken: string }) {

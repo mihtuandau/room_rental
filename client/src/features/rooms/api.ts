@@ -104,6 +104,13 @@ export function fetchRooms(params: SearchParams) {
   return apiRequest<RoomSearchResult>(`/rooms?${buildSearchQuery(params)}`);
 }
 
+export function recordRoomView(roomId: number, visitorId: string) {
+  return apiRequest<{ recorded: boolean }>(`/rooms/${roomId}/view`, {
+    method: 'POST',
+    body: JSON.stringify({ visitorId }),
+  });
+}
+
 /** Mirrors the backend's CreateRoomDto. */
 export interface CreateRoomInput {
   title: string;
@@ -175,7 +182,7 @@ export function confirmRoomImage(
 ) {
   return apiRequest<RoomImage>(`/rooms/${roomId}/images/confirm`, {
     method: 'POST',
-    body: JSON.stringify({ key: image.public_id, url: image.secure_url, isCover }),
+    body: JSON.stringify({ key: image.public_id, isCover }),
   });
 }
 

@@ -15,9 +15,9 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  // Both extensions ship with the postgis/postgis image used by
-  // docker-compose.yml — a plain postgres install won't have postgis.
-  extensions = [postgis, unaccent]
+  // Search uses PostgreSQL's unaccent extension. PostGIS is intentionally not
+  // required because the current schema stores latitude/longitude as decimals.
+  extensions = [unaccent]
 }
 
 // -----------------------------------------------------------------------------
@@ -240,6 +240,7 @@ model RoomImage {
   //   CREATE UNIQUE INDEX room_one_cover_idx ON room_images(room_id) WHERE is_cover = true;
   @@index([roomId])
   @@index([roomId, position])
+  @@unique([key])
   @@map("room_images")
 }
 
@@ -402,6 +403,8 @@ model RoomView {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   ipHash String? @map("ip_hash")
+  // Daily anonymous-browser dedupe key. Nullable preserves legacy rows.
+  dedupeKey String? @unique @map("dedupe_key")
 
   createdAt DateTime @default(now()) @map("created_at")
 

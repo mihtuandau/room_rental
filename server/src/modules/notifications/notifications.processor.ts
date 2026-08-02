@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
-import { NotificationType, RoomStatus } from '../../../generated/prisma/client';
+import { RoomStatus } from '../../../generated/prisma/client';
 import {
   NotificationsService,
   SAVED_SEARCH_QUEUE,
@@ -11,6 +11,8 @@ import {
 interface MatchRoomJobData {
   roomId: number;
 }
+
+const RECIPIENT_BATCH_SIZE = 5;
 
 @Processor(SAVED_SEARCH_QUEUE)
 export class NotificationsProcessor extends WorkerHost {
@@ -48,61 +50,70 @@ export class NotificationsProcessor extends WorkerHost {
       include: { user: { select: { id: true, phone: true } } },
     });
 
-    for (const search of matches) {
-      // idempotent: unique constraint on [savedSearchId, roomId] blocks duplicate
-      // sends across retries/cron re-scans — skip silently if already notified.
-      try {
-        await this.prisma.notificationLog.create({
-          data: { savedSearchId: search.id, roomId: room.id },
-        });
-      } catch {
-        continue;
-      }
+    let transientFailure: unknown;
+    for (
+      let offset = 0;
+      offset < matches.length;
+      offset += RECIPIENT_BATCH_SIZE
+    ) {
+      const batch = matches.slice(offset, offset + RECIPIENT_BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(async (search) => {
+          const created =
+            await this.notificationsService.createSavedSearchMatchOnce({
+              savedSearchId: search.id,
+              userId: search.user.id,
+              roomId: room.id,
+              roomTitle: room.title,
+            });
+          if (!created) return;
 
-      // In-app notification goes to everyone matched, phone or not — unlike
-      // SMS below, it doesn't need one.
-      try {
-        await this.notificationsService.create({
-          userId: search.user.id,
-          type: NotificationType.saved_search_match,
-          title: 'Có tin đăng mới phù hợp',
-          body: `"${room.title}" khớp với tìm kiếm đã lưu của bạn.`,
-          roomId: room.id,
-        });
-      } catch (err) {
-        this.logger.error(
-          `Failed to create in-app notification for user ${search.user.id}, room ${room.id}`,
-          err instanceof Error ? err.stack : err,
-        );
-      }
+          // SMS is an optional channel. A provider failure must not roll back
+          // the durable in-app notification or make a retry duplicate it.
+          if (search.user.phone) {
+            try {
+              await this.sendNotification({ id: search.user.id }, room);
+            } catch (error) {
+              this.logger.error(
+                `Failed to send optional notification for user ${search.user.id}, room ${room.id}`,
+                error instanceof Error ? error.stack : error,
+              );
+            }
+          }
 
-      // SMS is a bonus channel on top — Google-only accounts have no phone yet,
-      // so they just don't get this one, not the whole notification.
-      if (!search.user.phone) continue;
+          await this.prisma.savedSearch.update({
+            where: { id: search.id },
+            data: { lastNotifiedAt: new Date() },
+          });
+        }),
+      );
 
-      try {
-        await this.sendNotification({ phone: search.user.phone }, room);
-        await this.prisma.savedSearch.update({
-          where: { id: search.id },
-          data: { lastNotifiedAt: new Date() },
-        });
-      } catch (err) {
-        // one user's delivery failure must never fail the whole job
-        this.logger.error(
-          `Failed to notify user ${search.user.id} for room ${room.id}`,
-          err instanceof Error ? err.stack : err,
-        );
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          transientFailure ??= result.reason;
+          this.logger.error(
+            `Failed to persist a saved-search notification for room ${room.id}`,
+            result.reason instanceof Error
+              ? result.reason.stack
+              : result.reason,
+          );
+        }
       }
     }
+
+    // BullMQ retries transient database failures. Recipients already completed
+    // are skipped by the unique notification log on the next run.
+    if (transientFailure) throw transientFailure;
   }
 
   private async sendNotification(
-    user: { phone: string },
+    user: { id: string },
     room: { title: string; slug: string },
   ) {
-    // TODO: wire up a real SMS/push provider — placeholder keeps the job flow testable.
+    // TODO: wire up a real SMS/push provider. This placeholder keeps the
+    // delivery path testable without logging the user's phone number.
     this.logger.log(
-      `[DEV ONLY] Notify ${user.phone}: new listing matches your saved search — "${room.title}" (${room.slug})`,
+      `[DEV ONLY] Notification queued for user ${user.id}, room ${room.slug}.`,
     );
     await Promise.resolve();
   }

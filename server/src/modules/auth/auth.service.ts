@@ -2,12 +2,12 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { randomInt } from 'node:crypto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { SmsService } from './sms/sms.service';
@@ -39,14 +39,34 @@ export class AuthService {
     if (existing)
       throw new ConflictException('This phone number is already registered.');
 
+    const otp = await this.validateOtp(
+      dto.phone,
+      OtpPurpose.register,
+      dto.otpCode,
+    );
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_HASH_COST);
-    const user = await this.prisma.user.create({
-      data: {
-        phone: dto.phone,
-        passwordHash,
-        fullName: dto.fullName,
-        role: Role.user,
-      },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const consumed = await tx.otpCode.updateMany({
+        where: {
+          id: otp.id,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+          attempts: { lt: OTP_MAX_ATTEMPTS },
+        },
+        data: { usedAt: new Date() },
+      });
+      if (consumed.count !== 1) {
+        throw new ForbiddenException('OTP code is invalid or has expired.');
+      }
+      return tx.user.create({
+        data: {
+          phone: dto.phone,
+          passwordHash,
+          fullName: dto.fullName,
+          role: Role.user,
+          isPhoneVerified: true,
+        },
+      });
     });
     return this.issueTokens(user.id, user.role, user.tokenVersion);
   }
@@ -113,7 +133,7 @@ export class AuthService {
 
   async issueTokens(userId: string, role: string, tokenVersion: number) {
     const accessToken = await this.jwt.signAsync(
-      { sub: userId, role },
+      { sub: userId, role, tokenVersion },
       {
         secret: this.config.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.config.get<string>(
@@ -151,14 +171,21 @@ export class AuthService {
   }
 
   async sendOtp(phone: string, purpose: OtpPurpose) {
+    let shouldSend = true;
     if (purpose === OtpPurpose.reset_password) {
       const user = await this.prisma.user.findUnique({ where: { phone } });
-      if (!user || user.deletedAt)
-        throw new NotFoundException('No account found for this phone number.');
+      shouldSend = Boolean(user && !user.deletedAt);
+    }
+    if (purpose === OtpPurpose.register) {
+      const user = await this.prisma.user.findUnique({ where: { phone } });
+      if (user && !user.deletedAt) {
+        throw new ConflictException('This phone number is already registered.');
+      }
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1_000_000).toString();
     const codeHash = await bcrypt.hash(code, OTP_HASH_COST);
+    if (!shouldSend) return;
     await this.prisma.otpCode.create({
       data: {
         phone,
@@ -172,6 +199,34 @@ export class AuthService {
   }
 
   async verifyOtp(phone: string, purpose: OtpPurpose, code: string) {
+    const otp = await this.validateOtp(phone, purpose, code);
+    const consumed = await this.prisma.otpCode.updateMany({
+      where: {
+        id: otp.id,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+        attempts: { lt: OTP_MAX_ATTEMPTS },
+      },
+      data: { usedAt: new Date() },
+    });
+    if (consumed.count !== 1) {
+      throw new ForbiddenException('OTP code is invalid or has expired.');
+    }
+
+    if (purpose === OtpPurpose.register) {
+      // Supports legacy accounts created before registration required an OTP.
+      await this.prisma.user.updateMany({
+        where: { phone },
+        data: { isPhoneVerified: true },
+      });
+    }
+  }
+
+  private async validateOtp(
+    phone: string,
+    purpose: OtpPurpose,
+    code: string,
+  ) {
     const otp = await this.prisma.otpCode.findFirst({
       where: { phone, purpose, usedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -186,28 +241,34 @@ export class AuthService {
       });
       throw new UnauthorizedException('Incorrect OTP code.');
     }
-    // single-use: mark consumed so it can't be replayed
-    await this.prisma.otpCode.update({
-      where: { id: otp.id },
-      data: { usedAt: new Date() },
-    });
-
-    if (purpose === OtpPurpose.register) {
-      await this.prisma.user.updateMany({
-        where: { phone },
-        data: { isPhoneVerified: true },
-      });
-    }
+    return otp;
   }
 
   async resetPassword(phone: string, code: string, newPassword: string) {
-    await this.verifyOtp(phone, OtpPurpose.reset_password, code);
-
+    const otp = await this.validateOtp(
+      phone,
+      OtpPurpose.reset_password,
+      code,
+    );
     const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
-    await this.prisma.user.update({
-      where: { phone },
-      // bump tokenVersion so every previously issued refresh token is revoked
-      data: { passwordHash, tokenVersion: { increment: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const consumed = await tx.otpCode.updateMany({
+        where: {
+          id: otp.id,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+          attempts: { lt: OTP_MAX_ATTEMPTS },
+        },
+        data: { usedAt: new Date() },
+      });
+      if (consumed.count !== 1) {
+        throw new ForbiddenException('OTP code is invalid or has expired.');
+      }
+      await tx.user.update({
+        where: { phone },
+        // bump tokenVersion so every previously issued refresh token is revoked
+        data: { passwordHash, tokenVersion: { increment: 1 } },
+      });
     });
   }
 }

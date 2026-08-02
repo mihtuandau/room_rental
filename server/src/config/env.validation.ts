@@ -18,7 +18,13 @@ export const envSchema = z.object({
   // Only the client id is needed: we verify Google ID tokens sent by the
   // frontend, we never run the redirect flow that would require the secret.
   GOOGLE_CLIENT_ID: z.string().min(1),
-});
+}).refine(
+  (env) => env.JWT_ACCESS_SECRET !== env.JWT_REFRESH_SECRET,
+  {
+    message: 'JWT access and refresh secrets must be different.',
+    path: ['JWT_REFRESH_SECRET'],
+  },
+);
 
 export type EnvConfig = z.infer<typeof envSchema>;
 

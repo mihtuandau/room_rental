@@ -1,9 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
+import { randomUUID } from 'node:crypto';
+import {
+  ALLOWED_IMAGE_FORMATS,
+  IMAGE_MAX_BYTES,
+} from './storage.constants';
+
+interface CloudinaryImageResource {
+  public_id: string;
+  secure_url: string;
+  bytes: number;
+  format: string;
+  resource_type: string;
+}
 
 @Injectable()
 export class CloudinaryService {
+  private readonly logger = new Logger(CloudinaryService.name);
   private cloudName: string;
   private apiKey: string;
   private apiSecret: string;
@@ -20,9 +34,16 @@ export class CloudinaryService {
     });
   }
 
-  createUploadSignature(folder: string) {
+  createUploadSignature(publicIdPrefix: string) {
     const timestamp = Math.round(Date.now() / 1000);
-    const paramsToSign = { timestamp, folder };
+    const publicId = `${publicIdPrefix}/${randomUUID()}`;
+    const allowedFormats = ALLOWED_IMAGE_FORMATS.join(',');
+    const paramsToSign = {
+      timestamp,
+      public_id: publicId,
+      overwrite: false,
+      allowed_formats: allowedFormats,
+    };
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
       this.apiSecret,
@@ -32,13 +53,73 @@ export class CloudinaryService {
       cloudName: this.cloudName,
       apiKey: this.apiKey,
       timestamp,
-      folder,
+      publicId,
+      overwrite: false,
+      allowedFormats,
       signature,
       uploadUrl: `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`,
     };
   }
 
+  roomImagePrefix(userId: string, roomId: number) {
+    return `rooms/${userId}/${roomId}`;
+  }
+
+  isOwnedRoomImagePublicId(
+    publicId: string,
+    userId: string,
+    roomId: number,
+  ) {
+    return publicId.startsWith(`${this.roomImagePrefix(userId, roomId)}/`);
+  }
+
+  async verifyRoomImage(
+    publicId: string,
+    userId: string,
+    roomId: number,
+  ): Promise<{ key: string; url: string }> {
+    if (!this.isOwnedRoomImagePublicId(publicId, userId, roomId)) {
+      throw new BadRequestException('Invalid room image identifier.');
+    }
+
+    let asset: CloudinaryImageResource;
+    try {
+      asset = (await cloudinary.api.resource(publicId, {
+        resource_type: 'image',
+      })) as CloudinaryImageResource;
+    } catch {
+      throw new BadRequestException('Uploaded image could not be verified.');
+    }
+
+    const allowed = ALLOWED_IMAGE_FORMATS.includes(
+      asset.format.toLowerCase() as (typeof ALLOWED_IMAGE_FORMATS)[number],
+    );
+    const valid =
+      asset.public_id === publicId &&
+      asset.resource_type === 'image' &&
+      asset.secure_url.startsWith(
+        `https://res.cloudinary.com/${this.cloudName}/image/upload/`,
+      ) &&
+      allowed &&
+      asset.bytes <= IMAGE_MAX_BYTES;
+
+    if (!valid) {
+      await this.destroyAsset(publicId).catch(() => undefined);
+      throw new BadRequestException(
+        'Image must be JPG, PNG, or WebP and no larger than 5 MB.',
+      );
+    }
+
+    return { key: asset.public_id, url: asset.secure_url };
+  }
+
   async destroyAsset(publicId: string) {
     await cloudinary.uploader.destroy(publicId);
+  }
+
+  warnLegacyAssetNotDestroyed(publicId: string, roomId: number) {
+    this.logger.warn(
+      `Skipped Cloudinary deletion for legacy unscoped image ${publicId} on room ${roomId}.`,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,6 +12,12 @@ export class SavedSearchesService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateSavedSearchDto) {
+    const count = await this.prisma.savedSearch.count({ where: { userId } });
+    if (count >= 20) {
+      throw new BadRequestException(
+        'You can save at most 20 searches. Delete one before adding another.',
+      );
+    }
     return this.prisma.savedSearch.create({ data: { ...dto, userId } });
   }
 

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -20,6 +21,14 @@ export class RegisterDto {
   @MinLength(8)
   @MaxLength(72)
   password!: string;
+
+  @ApiProperty({
+    example: '123456',
+    description: 'Single-use OTP sent for the register purpose',
+  })
+  @IsNumberString()
+  @Length(6, 6)
+  otpCode!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

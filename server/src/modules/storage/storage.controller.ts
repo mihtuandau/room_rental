@@ -1,28 +1,41 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { CloudinaryService } from './cloudinary.service';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { StorageService } from './storage.service';
 
 @ApiTags('storage')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly cloudinaryService: CloudinaryService) {}
+  constructor(private readonly storageService: StorageService) {}
 
-  @Post('presign/room-image')
+  @Post('presign/room-image/:roomId')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Get signed params to upload a room image directly to Cloudinary',
   })
-  presignRoomImage() {
-    return this.cloudinaryService.createUploadSignature('rooms');
+  presignRoomImage(
+    @CurrentUser('id') userId: string,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.storageService.createRoomImageSignature(userId, roomId);
   }
 
   @Post('presign/avatar')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Get signed params to upload an avatar directly to Cloudinary',
   })
-  presignAvatar() {
-    return this.cloudinaryService.createUploadSignature('avatars');
+  presignAvatar(@CurrentUser('id') userId: string) {
+    return this.storageService.createAvatarSignature(userId);
   }
 }

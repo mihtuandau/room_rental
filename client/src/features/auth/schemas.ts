@@ -21,6 +21,9 @@ export const registerSchema = loginSchema
       .optional()
       .or(z.literal('')),
     confirmPassword: z.string(),
+    otpCode: z
+      .string()
+      .regex(/^\d{6}$/, 'Mã xác minh gồm 6 chữ số.'),
   })
   // There is no role picker at signup — any signed-in user can post a listing.
   .refine((v) => v.password === v.confirmPassword, {

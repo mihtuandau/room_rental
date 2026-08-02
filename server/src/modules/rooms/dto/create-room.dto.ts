@@ -74,20 +74,24 @@ export class CreateRoomDto {
 
   @ApiProperty()
   @IsString()
+  @Length(2, 100)
   city!: string;
 
   @ApiProperty()
   @IsString()
+  @Length(2, 100)
   district!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @Length(1, 100)
   ward?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @Length(1, 300)
   address?: string;
 
   @ApiProperty({ required: false, minimum: -90, maximum: 90 })

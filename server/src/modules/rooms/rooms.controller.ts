@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -16,6 +17,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { RoomsService } from './rooms.service';
@@ -24,6 +26,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { SearchRoomsDto } from './dto/search-rooms.dto';
 import { ConfirmImageDto } from './dto/confirm-image.dto';
 import { SetAmenitiesDto } from './dto/set-amenities.dto';
+import { RecordRoomViewDto } from './dto/record-room-view.dto';
 
 @ApiTags('rooms')
 @Controller('rooms')
@@ -31,6 +34,7 @@ export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
   @Get()
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Public room search / listing (verified-first, paginated)',
   })
@@ -68,11 +72,24 @@ export class RoomsController {
     return this.roomsService.findActiveBySlug(slug);
   }
 
+  @Post(':id/view')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Record one deduplicated anonymous browser view for a listing',
+  })
+  recordView(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordRoomViewDto,
+  ) {
+    return this.roomsService.recordView(id, dto.visitorId);
+  }
+
   // Deliberately not role-restricted: in practice the same person both rents
   // and lets out rooms, so any signed-in user may post. `role` only drives UI
   // (and still strictly gates admin endpoints); ownership is what protects a
   // listing, and every new listing still waits for admin approval.
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60 * 60_000 } })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new listing (status: pending)' })

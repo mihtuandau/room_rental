@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
@@ -20,6 +20,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { HealthModule } from './modules/health/health.module';
+import { RoomRentThrottlerGuard } from './common/guards/roomrent-throttler.guard';
 
 @Module({
   imports: [
@@ -42,6 +43,9 @@ import { HealthModule } from './modules/health/health.module';
     HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: RoomRentThrottlerGuard },
+  ],
 })
 export class AppModule {}

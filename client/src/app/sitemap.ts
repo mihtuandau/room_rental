@@ -5,7 +5,9 @@ import { AREA_LANDINGS } from '@/lib/constants';
 const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:5000'
 ).replace(/\/+$/, '');
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 50;
+const PAGE_FETCH_CONCURRENCY = 5;
+const MAX_SITEMAP_ROOMS = 49_000;
 
 interface SitemapRoom {
   slug: string;
@@ -23,17 +25,29 @@ async function getActiveRooms(): Promise<SitemapRoom[]> {
     { revalidate: 3600 },
   );
 
-  const pages = Math.ceil(first.total / PAGE_SIZE);
+  const roomLimit = Math.min(first.total, MAX_SITEMAP_ROOMS);
+  const pages = Math.ceil(roomLimit / PAGE_SIZE);
   if (pages <= 1) return first.rooms;
 
-  const rest = await Promise.all(
-    Array.from({ length: pages - 1 }, (_, index) =>
-      serverFetch<RoomsPage>(`/rooms?page=${index + 2}&pageSize=${PAGE_SIZE}`, {
-        revalidate: 3600,
-      }),
-    ),
-  );
-  return [...first.rooms, ...rest.flatMap((page) => page.rooms)];
+  const rooms = [...first.rooms];
+  for (let firstPage = 2; firstPage <= pages; firstPage += PAGE_FETCH_CONCURRENCY) {
+    const lastPage = Math.min(
+      firstPage + PAGE_FETCH_CONCURRENCY - 1,
+      pages,
+    );
+    const batch = await Promise.all(
+      Array.from(
+        { length: lastPage - firstPage + 1 },
+        (_, index) =>
+          serverFetch<RoomsPage>(
+            `/rooms?page=${firstPage + index}&pageSize=${PAGE_SIZE}`,
+            { revalidate: 3600 },
+          ),
+      ),
+    );
+    rooms.push(...batch.flatMap((page) => page.rooms));
+  }
+  return rooms.slice(0, roomLimit);
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
