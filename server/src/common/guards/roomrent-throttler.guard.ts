@@ -28,9 +28,7 @@ export function buildRateLimitTracker(request: TrackerRequest): string {
 
   const visitorId = request.body?.visitorId;
   if (typeof visitorId === 'string' && visitorId.trim()) {
-    const fingerprint = createHash('sha256')
-      .update(visitorId)
-      .digest('hex');
+    const fingerprint = createHash('sha256').update(visitorId).digest('hex');
     return `visitor:${fingerprint}`;
   }
 

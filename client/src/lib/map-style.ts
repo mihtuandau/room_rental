@@ -16,3 +16,9 @@ export const OSM_STYLE = {
   },
   layers: [{ id: 'osm', type: 'raster' as const, source: 'osm' }],
 };
+
+/** Paint values for the home radius overlay, kept beside the shared map style. */
+export const HOME_MAP_COLORS = {
+  radiusFill: '#008f6a',
+  radiusLine: '#00765a',
+} as const;

@@ -2,10 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import { randomUUID } from 'node:crypto';
-import {
-  ALLOWED_IMAGE_FORMATS,
-  IMAGE_MAX_BYTES,
-} from './storage.constants';
+import { ALLOWED_IMAGE_FORMATS, IMAGE_MAX_BYTES } from './storage.constants';
 
 interface CloudinaryImageResource {
   public_id: string;
@@ -65,11 +62,7 @@ export class CloudinaryService {
     return `rooms/${userId}/${roomId}`;
   }
 
-  isOwnedRoomImagePublicId(
-    publicId: string,
-    userId: string,
-    roomId: number,
-  ) {
+  isOwnedRoomImagePublicId(publicId: string, userId: string, roomId: number) {
     return publicId.startsWith(`${this.roomImagePrefix(userId, roomId)}/`);
   }
 

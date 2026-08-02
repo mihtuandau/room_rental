@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
 
   images: {
     qualities: [60, 75, 90],
+    localPatterns: [{ pathname: '/**' }],
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       // seed data uses placeholder images; drop this once real listings exist

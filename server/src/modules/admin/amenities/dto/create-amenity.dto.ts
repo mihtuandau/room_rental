@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsOptional, IsString, Length } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 import { AmenityType } from '../../../../../generated/prisma/client';
 
 export class CreateAmenityDto {

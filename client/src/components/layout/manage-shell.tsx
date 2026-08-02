@@ -6,7 +6,10 @@ import { cn } from '@/lib/utils';
 
 export function ManageShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showListingSidebar = !pathname.startsWith('/manage/account');
+  const isStandalonePage =
+    pathname.startsWith('/manage/account') ||
+    pathname.startsWith('/manage/listings/new');
+  const showListingSidebar = !isStandalonePage;
 
   return (
     <div className={cn('flex flex-1', showListingSidebar && 'md:pl-64')}>

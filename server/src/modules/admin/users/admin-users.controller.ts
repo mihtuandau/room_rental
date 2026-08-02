@@ -23,13 +23,17 @@ export class AdminUsersController {
   constructor(private readonly adminUsersService: AdminUsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List users with role, status, and keyword filters' })
+  @ApiOperation({
+    summary: 'List users with role, status, and keyword filters',
+  })
   list(@Query() query: ListUsersQueryDto) {
     return this.adminUsersService.list(query);
   }
 
   @Get('export')
-  @ApiOperation({ summary: 'Export filtered safe user records for administrators' })
+  @ApiOperation({
+    summary: 'Export filtered safe user records for administrators',
+  })
   export(@Query() query: ListUsersQueryDto) {
     return this.adminUsersService.export(query);
   }

@@ -3,14 +3,33 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, ChevronDown, Heart, LogOut, Search, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  ArrowLeft,
+  Bell,
+  ChevronDown,
+  Heart,
+  LogOut,
+  Menu,
+  Search,
+  UserRound,
+} from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetBody,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
@@ -18,6 +37,7 @@ import { useLogout } from '@/features/auth/hooks';
 import { useProfile } from '@/features/users/hooks';
 import { useFavorites } from '@/features/favorites/hooks';
 import { useNotifications } from '@/features/notifications/hooks';
+import { cn } from '@/lib/utils';
 
 const PUBLIC_NAV_ITEMS = [
   { href: '/#tim-phong', label: 'Tìm phòng' },
@@ -105,7 +125,7 @@ export function Header() {
           )}
 
           {inManageMode ? (
-            <Button variant="outline" className="hidden sm:inline-flex" asChild>
+            <Button variant="outline" className="hidden lg:inline-flex" asChild>
               <Link href="/">
                 <ArrowLeft className="h-4 w-4" aria-hidden />
                 Về trang tìm phòng
@@ -114,13 +134,13 @@ export function Header() {
           ) : (
             isBootstrapped &&
             isSignedIn && (
-              <Button variant="outline" className="hidden sm:inline-flex" asChild>
+              <Button variant="outline" className="hidden lg:inline-flex" asChild>
                 <Link href="/manage/listings">Tin của tôi</Link>
               </Button>
             )
           )}
 
-          <Button className="hidden sm:inline-flex" asChild>
+          <Button className="hidden lg:inline-flex" asChild>
             {/* /manage/* is also gated at the edge by middleware.ts, but that's
                 a coarse cookie check — this client-side redirect is what
                 actually fires reliably regardless of environment quirks there. */}
@@ -191,9 +211,94 @@ export function Header() {
               <Link href="/login">Đăng nhập</Link>
             </Button>
           )}
+
+          <MobileNavigation
+            isSignedIn={isSignedIn}
+            inManageMode={inManageMode}
+          />
         </div>
       </div>
     </header>
+  );
+}
+
+function MobileNavigation({
+  isSignedIn,
+  inManageMode,
+}: {
+  isSignedIn: boolean;
+  inManageMode: boolean;
+}) {
+  const postHref = isSignedIn
+    ? '/manage/listings/new'
+    : `/login?next=${encodeURIComponent('/manage/listings/new')}`;
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="lg:hidden">
+          <Menu className="h-5 w-5" aria-hidden />
+          <span className="sr-only">Mở menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Tìm phòng và quản lý tin đăng của bạn.
+          </SheetDescription>
+        </SheetHeader>
+        <SheetBody className="flex flex-col">
+          <nav aria-label="Điều hướng trên thiết bị di động">
+            <ul className="space-y-2">
+              {PUBLIC_NAV_ITEMS.map((item) => (
+                <li key={item.href}>
+                  <SheetClose asChild>
+                    <Link
+                      href={item.href}
+                      className="flex h-10 items-center rounded-md px-3 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                    >
+                      {item.label}
+                    </Link>
+                  </SheetClose>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="mt-auto space-y-2 border-t border-zinc-100 pt-4">
+            {inManageMode ? (
+              <SheetClose asChild>
+                <Link
+                  href="/"
+                  className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  Về trang tìm phòng
+                </Link>
+              </SheetClose>
+            ) : (
+              isSignedIn && (
+                <SheetClose asChild>
+                  <Link
+                    href="/manage/listings"
+                    className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+                  >
+                    Tin của tôi
+                  </Link>
+                </SheetClose>
+              )
+            )}
+
+            <SheetClose asChild>
+              <Link href={postHref} className={cn(buttonVariants(), 'w-full')}>
+                Đăng tin
+              </Link>
+            </SheetClose>
+          </div>
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }
 

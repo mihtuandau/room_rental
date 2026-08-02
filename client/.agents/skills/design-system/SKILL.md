@@ -135,6 +135,30 @@ first, then add `sm:` / `lg:`.
 - Filters: a bottom sheet on mobile, a sidebar from `lg:`
 - Tap targets: minimum `h-10` (40px); icon-only buttons `h-10 w-10`
 
+## Public home composition
+
+The public home page uses one stable editorial rhythm so future sections do not
+drift into unrelated layouts:
+
+- Shared shell: `mx-auto w-full max-w-7xl px-4 sm:px-6`.
+- Hero: one column on mobile, `lg:grid-cols-2` on desktop. Put the value
+  proposition and primary search on the left; keep the curated banner/media on
+  the right. The search belongs inside the hero, never as a detached strip.
+- Marketing hero title may use `text-3xl sm:text-4xl lg:text-5xl` with
+  `font-semibold tracking-tight`; this is the only public-home exception to the
+  regular page-title scale.
+- Section rhythm: `py-10 sm:py-12`; headings use a short supporting sentence
+  and optional right-aligned action.
+- Statistics: four equal columns on desktop and two columns on mobile, separated
+  by dividers rather than individual floating cards.
+- Categories: five compact cards on desktop, using one canonical category icon
+  in a circular frame; do not turn this section into another room-image grid.
+- Featured listings: three equal room cards on desktop. Reserve asymmetric hero
+  cards for editorial campaigns, not the default home page.
+- Trust reasons: three plain columns with one icon, heading, and short paragraph.
+- The landlord CTA is a single horizontal brand panel on desktop and stacks on
+  mobile.
+
 ## Accessibility floor
 
 - Text contrast ≥ 4.5:1. `brand-600` on white passes; `brand-500` on white does not — don't use it for text.

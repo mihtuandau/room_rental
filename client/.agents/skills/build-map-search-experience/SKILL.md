@@ -69,6 +69,9 @@ For large result sets, prefer GeoJSON sources and MapLibre layers with clusterin
 - Keep shareable filters in `nuqs`, not local map state.
 - Normalize URL state with `toSearchParams` before building both query keys and HTTP queries.
 - Keep UI-only flags out of backend requests.
+- On the public home hero, radius is a map-preview control only unless the backend
+  contract explicitly supports geospatial search. Tie it to a clear center:
+  selected province/listing cluster or explicit browser geolocation.
 - Do not refetch on every `move` event.
 - If implementing “search this area,” store the settled viewport or bounds only after explicit user action or debounced `moveend`.
 - Preserve pagination and sort semantics when viewport filters change.

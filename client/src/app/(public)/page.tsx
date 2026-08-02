@@ -4,7 +4,9 @@ import { createLoader } from 'nuqs/server';
 import { CategorySection } from '@/components/home/category-section';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
+import { HomeStats } from '@/components/home/home-stats';
 import { LandlordCta } from '@/components/home/landlord-cta';
+import { WhyChooseUs } from '@/components/home/why-choose-us';
 import { SearchView } from '@/components/search/search-view';
 import type { Amenity } from '@/features/amenities/api';
 import { fetchProvinces } from '@/features/locations/api';
@@ -80,8 +82,9 @@ export default async function HomePage({ searchParams }: Props) {
   const parsed = await loadSearchParams(await searchParams);
   const filters = toSearchParams(parsed);
   const queryClient = makeQueryClient();
+  const roomQueryKey = roomKeys.search(filters);
   const roomsPromise = queryClient.prefetchQuery({
-    queryKey: roomKeys.search(filters),
+    queryKey: roomQueryKey,
     queryFn: () =>
       serverFetch<RoomSearchResult>(
         `/rooms?${buildSearchQuery(filters)}`,
@@ -95,21 +98,35 @@ export default async function HomePage({ searchParams }: Props) {
     ),
     fetchProvinces(),
   ]);
+  const initialRooms = queryClient.getQueryData<RoomSearchResult>(roomQueryKey);
+  const totalRooms = initialRooms?.total ?? 0;
 
   return (
     <>
-      <HomeHero provinces={provinces} />
       <HydrationBoundary state={dehydrate(queryClient)}>
+        <HomeHero
+          provinces={provinces}
+          rooms={initialRooms?.rooms ?? []}
+          totalRooms={totalRooms}
+        />
         <SearchView
           amenities={amenities}
           provinces={provinces}
           browseTop={
             <>
+              <HomeStats totalRooms={totalRooms} />
               <CategorySection />
               <FeaturedSection />
             </>
           }
-          browseBottom={<LandlordCta />}
+          browseBottom={
+            <>
+              <WhyChooseUs />
+              <div className="mt-12 sm:mt-16">
+                <LandlordCta />
+              </div>
+            </>
+          }
         />
       </HydrationBoundary>
     </>

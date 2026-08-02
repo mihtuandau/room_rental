@@ -5,7 +5,7 @@ import { RoomGrid } from '@/components/rooms/room-card';
 import { RoomGridSkeleton } from '@/components/rooms/room-card-skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import type { RoomSearchResult } from '@/features/rooms/api';
-import { PAGE_SIZE } from '@/features/rooms/search-params';
+import { PAGE_SIZE, type SearchState } from '@/features/rooms/search-params';
 import { cn } from '@/lib/utils';
 import { SearchPagination } from './search-pagination';
 import type { ResultsView } from './use-search-view-state';
@@ -28,6 +28,7 @@ export function SearchResultsContent({
   isPending,
   isError,
   isPlaceholderData,
+  state,
   onActivate,
   onPage,
   onClear,
@@ -40,6 +41,7 @@ export function SearchResultsContent({
   isPending: boolean;
   isError: boolean;
   isPlaceholderData: boolean;
+  state: SearchState;
   onActivate: (roomId: number | null) => void;
   onPage: (page: number) => void;
   onClear: () => void;
@@ -66,6 +68,7 @@ export function SearchResultsContent({
     return (
       <ResultsMap
         rooms={data.rooms}
+        state={state}
         activeId={activeId}
         onActivate={onActivate}
       />
