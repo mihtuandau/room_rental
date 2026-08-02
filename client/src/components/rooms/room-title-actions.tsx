@@ -22,7 +22,6 @@ export function RoomTitleActions({
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      // The user's own explicit share action — not something we initiate.
       await navigator.share({ url }).catch(() => undefined);
       return;
     }

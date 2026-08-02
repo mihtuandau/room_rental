@@ -28,11 +28,6 @@ export function SearchView({
       <BrowseResults
         browseTop={browseTop}
         browseBottom={browseBottom}
-        rooms={query.data?.rooms}
-        isPending={query.isPending}
-        isError={query.isError}
-        onRetry={() => void query.refetch()}
-        onExpand={search.expandToFullSearch}
       />
     );
   }

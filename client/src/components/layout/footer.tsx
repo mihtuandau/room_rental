@@ -1,33 +1,113 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { serverFetch } from '@/lib/server-api';
+import type { RoomSearchResult } from '@/features/rooms/api';
 
-/**
- * Only links to routes that exist (or are planned in this milestone) — a footer
- * full of dead links reads as an abandoned site, which is the opposite of the
- * trust signal this product sells.
- */
-const LINK_GROUPS = [
-  {
-    title: 'Tìm phòng',
-    links: [
+async function getActiveLocationLinks() {
+  try {
+    const data = await serverFetch<RoomSearchResult>('/rooms?pageSize=50', {
+      revalidate: 300,
+    });
+    const rooms = data?.rooms ?? [];
+
+    const cityMap = new Map<string, number>();
+    const districtMap = new Map<
+      string,
+      { city: string; district: string; count: number }
+    >();
+
+    rooms.forEach((r) => {
+      if (r.city) {
+        cityMap.set(r.city, (cityMap.get(r.city) ?? 0) + 1);
+      }
+      if (r.city && r.district) {
+        const key = `${r.city}-${r.district}`;
+        const existing = districtMap.get(key);
+        districtMap.set(key, {
+          city: r.city,
+          district: r.district,
+          count: (existing?.count ?? 0) + 1,
+        });
+      }
+    });
+
+    const links: { label: string; href: string }[] = [
       { label: 'Tất cả tin đăng', href: '/' },
-      { label: 'Phòng trọ Quận 7', href: '/rooms-for-rent/quan-7' },
-      { label: 'Phòng trọ Bình Thạnh', href: '/rooms-for-rent/binh-thanh' },
-    ],
-  },
-  {
-    title: 'Cho thuê',
-    links: [
-      { label: 'Đăng tin', href: '/manage/listings/new' },
-      { label: 'Tin của tôi', href: '/manage/listings' },
-    ],
-  },
-];
+    ];
 
-export function Footer() {
+    // Add live city search links dynamically from database
+    cityMap.forEach((_count, city) => {
+      links.push({
+        label: `Phòng trọ tại ${city}`,
+        href: `/?city=${encodeURIComponent(city)}&all=true`,
+      });
+    });
+
+    // Add live district search links dynamically from database
+    districtMap.forEach(({ city, district }) => {
+      links.push({
+        label: `Phòng trọ ${district}`,
+        href: `/?city=${encodeURIComponent(city)}&district=${encodeURIComponent(district)}&all=true`,
+      });
+    });
+
+    // Fallback list if database has no listing locations yet
+    if (links.length <= 1) {
+      return [
+        { label: 'Tất cả tin đăng', href: '/' },
+        {
+          label: 'Phòng trọ TP. Hồ Chí Minh',
+          href: '/?city=H%E1%BB%93+Ch%C3%AD+Minh&all=true',
+        },
+        { label: 'Phòng trọ Hà Nội', href: '/?city=H%C3%A0+N%E1%BB%99i&all=true' },
+        { label: 'Phòng trọ Bình Thạnh', href: '/rooms-for-rent/binh-thanh' },
+        { label: 'Phòng trọ Quận 7', href: '/rooms-for-rent/quan-7' },
+      ];
+    }
+
+    return links.slice(0, 7);
+  } catch {
+    return [
+      { label: 'Tất cả tin đăng', href: '/' },
+      {
+        label: 'Phòng trọ TP. Hồ Chí Minh',
+        href: '/?city=H%E1%BB%93+Ch%C3%AD+Minh&all=true',
+      },
+      { label: 'Phòng trọ Hà Nội', href: '/?city=H%C3%A0+N%E1%BB%99i&all=true' },
+      { label: 'Phòng trọ Bình Thạnh', href: '/rooms-for-rent/binh-thanh' },
+      { label: 'Phòng trọ Quận 7', href: '/rooms-for-rent/quan-7' },
+    ];
+  }
+}
+
+export async function Footer() {
+  const locationLinks = await getActiveLocationLinks();
+
+  const linkGroups = [
+    {
+      title: 'Tìm phòng theo khu vực',
+      links: locationLinks,
+    },
+    {
+      title: 'Cho thuê',
+      links: [
+        { label: 'Đăng tin', href: '/manage/listings/new' },
+        { label: 'Tin của tôi', href: '/manage/listings' },
+      ],
+    },
+    {
+      title: 'Hỗ trợ & Liên hệ',
+      links: [
+        { label: 'Email: hotro@trooi.vn', href: 'mailto:hotro@trooi.vn' },
+        { label: 'Hotline: 090 123 4567', href: 'tel:0901234567' },
+        { label: 'Chính sách bảo mật', href: '/privacy' },
+      ],
+    },
+  ];
+
   return (
     <footer className="mt-12 border-t border-zinc-200 sm:mt-16">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-[1.5fr_1fr_1fr] sm:px-6">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-6">
         <div className="space-y-2">
           <Image
             src="/logo.png"
@@ -43,7 +123,7 @@ export function Footer() {
           </p>
         </div>
 
-        {LINK_GROUPS.map((group) => (
+        {linkGroups.map((group) => (
           <nav key={group.title} aria-label={group.title} className="space-y-3">
             <h2 className="text-sm font-semibold text-zinc-900">{group.title}</h2>
             <ul className="space-y-2">
@@ -63,14 +143,8 @@ export function Footer() {
       </div>
 
       <div className="border-t border-zinc-100">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <p>© {new Date().getFullYear()} Trọ Ơi</p>
-          <Link
-            href="/privacy"
-            className="w-fit rounded-md transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-          >
-            Chính sách quyền riêng tư
-          </Link>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 text-xs text-zinc-500 sm:px-6">
+          <p>© {new Date().getFullYear()} Trọ Ơi. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

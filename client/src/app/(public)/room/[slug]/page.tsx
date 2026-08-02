@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { RoomDetail } from '@/features/rooms/api';
+import type { RoomDetail, RoomSearchResult } from '@/features/rooms/api';
 import { buildRoomJsonLd, buildRoomSeo } from '@/lib/seo/room';
 import { serverFetch } from '@/lib/server-api';
 import { RoomDetailContent } from './_components/room-detail-content';
@@ -11,6 +11,30 @@ async function getRoom(slug: string): Promise<RoomDetail | null> {
   return serverFetch<RoomDetail>(`/rooms/${slug}`, { revalidate: 120 }).catch(
     () => null,
   );
+}
+
+async function getSimilarRooms(city: string, roomType: string, currentRoomId: number) {
+  try {
+    const res = await serverFetch<RoomSearchResult>(
+      `/rooms?city=${encodeURIComponent(city)}&roomType=${roomType}&pageSize=5`,
+      { revalidate: 120 },
+    );
+    return (res.rooms ?? []).filter((r) => r.id !== currentRoomId).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+async function getRecommendedRooms(city: string, currentRoomId: number) {
+  try {
+    const res = await serverFetch<RoomSearchResult>(
+      `/rooms?city=${encodeURIComponent(city)}&sort=newest&pageSize=6`,
+      { revalidate: 120 },
+    );
+    return (res.rooms ?? []).filter((r) => r.id !== currentRoomId).slice(0, 4);
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -44,6 +68,9 @@ export default async function RoomDetailPage({ params }: Props) {
   const room = await getRoom((await params).slug);
   if (!room) notFound();
 
+  const similarRooms = await getSimilarRooms(room.city, room.roomType, room.id);
+  const recommendedRooms = await getRecommendedRooms(room.city, room.id);
+
   return (
     <div className="bg-zinc-50">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
@@ -56,7 +83,11 @@ export default async function RoomDetailPage({ params }: Props) {
             ),
           }}
         />
-        <RoomDetailContent room={room} />
+        <RoomDetailContent
+          room={room}
+          similarRooms={similarRooms}
+          recommendedRooms={recommendedRooms}
+        />
       </div>
     </div>
   );

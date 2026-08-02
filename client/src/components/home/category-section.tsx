@@ -30,8 +30,8 @@ async function getCategorySummary(roomType: string) {
 }
 
 /**
- * Category artwork is curated in /public so every room type stays visually
- * consistent. Counts remain live data from the search endpoint.
+ * Category Section: Clearly clickable category card buttons with circular icon badges,
+ * distinct white card boundaries, and count pill tags for 100% affordance.
  */
 export async function CategorySection() {
   const categories = await Promise.all(
@@ -41,35 +41,44 @@ export async function CategorySection() {
     })),
   );
 
+  // Sort by total desc so the most-stocked category leads
+  const sorted = [...categories].sort(
+    (a, b) => (b.data?.total ?? 0) - (a.data?.total ?? 0),
+  );
+
   return (
-    <section
-      id="kham-pha"
-      className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 sm:px-6"
-    >
-      <div>
-        <h2 className="text-lg font-semibold">Bạn muốn ở kiểu phòng nào?</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          Chọn nhanh loại hình phù hợp với nhu cầu của bạn.
-        </p>
+    <section id="kham-pha" className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 sm:px-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900">
+            Bạn muốn ở kiểu phòng nào?
+          </h2>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            Chọn nhanh loại hình phù hợp với nhu cầu của bạn.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {categories.map(({ value, label, data }) => {
+      <div className="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+        {sorted.map(({ value, label, data }) => {
           const total = data?.total ?? 0;
           const Icon = CATEGORY_ICONS[value];
           return (
             <Link
               key={value}
-              href={`/?roomType=${value}`}
-              className="group flex min-h-32 flex-col items-center justify-center rounded-lg border border-zinc-200 bg-white p-4 text-center transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+              href={`/?roomType=${value}&all=true`}
+              aria-label={`${label} — ${total} tin đăng`}
+              className="group flex flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white p-4 text-center shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-brand-500 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 cursor-pointer"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition-transform duration-200 group-hover:scale-105">
-                <Icon className="h-5 w-5" aria-hidden />
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition-transform duration-200 group-hover:scale-110 group-hover:bg-brand-100">
+                <Icon className="h-6 w-6" aria-hidden />
               </span>
-              <p className="mt-3 text-sm font-medium">{label}</p>
-              <p className="mt-1 text-xs text-zinc-500">
-                {total.toLocaleString('vi-VN')} tin đăng
+              <p className="mt-3 text-sm font-semibold text-zinc-900 transition-colors duration-150 group-hover:text-brand-700">
+                {label}
               </p>
+              <span className="mt-1.5 inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 transition-colors duration-150 group-hover:bg-brand-50 group-hover:text-brand-700">
+                {total.toLocaleString('vi-VN')} tin đăng
+              </span>
             </Link>
           );
         })}

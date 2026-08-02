@@ -113,19 +113,17 @@ export default async function HomePage({ searchParams }: Props) {
           amenities={amenities}
           provinces={provinces}
           browseTop={
-            <>
+            <div className="space-y-12 sm:space-y-16">
               <HomeStats totalRooms={totalRooms} />
               <CategorySection />
               <FeaturedSection />
-            </>
+            </div>
           }
           browseBottom={
-            <>
+            <div className="space-y-12 sm:space-y-16 mt-0">
               <WhyChooseUs />
-              <div className="mt-12 sm:mt-16">
-                <LandlordCta />
-              </div>
-            </>
+              <LandlordCta />
+            </div>
           }
         />
       </HydrationBoundary>

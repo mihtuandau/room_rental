@@ -134,6 +134,8 @@ export function RoomGallery({
               title={title}
               images={ordered}
               startIndex={lightboxIndex}
+              isVerified={isVerified}
+              showTitle={true}
             />
           </DialogBody>
         </DialogContent>
@@ -146,10 +148,14 @@ function CarouselGallery({
   title,
   images,
   startIndex = 0,
+  isVerified = false,
+  showTitle = false,
 }: {
   title: string;
   images: RoomImage[];
   startIndex?: number;
+  isVerified?: boolean;
+  showTitle?: boolean;
 }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, startIndex });
   const [selected, setSelected] = useState(startIndex);
@@ -168,6 +174,17 @@ function CarouselGallery({
 
   return (
     <div className="relative">
+      {showTitle && (
+        <div className="flex items-center justify-between gap-4 border-b border-zinc-100 bg-white px-4 py-3 rounded-t-lg">
+          <h3 className="text-sm font-semibold text-zinc-900 truncate flex-1">{title}</h3>
+          {isVerified && (
+            <span className="flex items-center gap-1 shrink-0 bg-brand-600 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider">
+              <ShieldCheck className="h-3 w-3" />
+              Đã xác minh
+            </span>
+          )}
+        </div>
+      )}
       <div className="overflow-hidden rounded-lg" ref={emblaRef}>
         <div className="flex">
           {images.map((image, i) => (

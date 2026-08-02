@@ -34,6 +34,28 @@
   --shadow-popover: 0 10px 25px -5px rgb(0 0 0 / 0.12);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Staggered entrance animation for grid cards */
+  --animate-fade-up: fade-up 0.5s var(--ease-out-soft) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Infinite horizontal marquee for category strip */
+  --animate-scroll-x: scroll-x 28s linear infinite;
+
+  @keyframes scroll-x {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
 }
 
 body {
