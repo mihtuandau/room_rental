@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { ReportDialog } from '@/components/rooms/report-dialog';
@@ -10,8 +13,29 @@ import type { RoomDetail } from '@/features/rooms/api';
 import { ROOM_TYPE_LABELS } from '@/lib/constants';
 import { formatPrice } from '@/lib/utils';
 import { RoomAmenities, RoomFacts } from './room-detail-sections';
+import { RoomGrid, type RoomCardItem } from '@/components/rooms/room-card';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
-export function RoomDetailContent({ room }: { room: RoomDetail }) {
+export function RoomDetailContent({
+  room,
+  similarRooms = [],
+  recommendedRooms = [],
+}: {
+  room: RoomDetail;
+  similarRooms?: RoomCardItem[];
+  recommendedRooms?: RoomCardItem[];
+}) {
+  const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
+
   const displayAddress = Array.from(
     new Set(
       [room.address, room.ward, room.district, room.city].filter(
@@ -21,10 +45,10 @@ export function RoomDetailContent({ room }: { room: RoomDetail }) {
   ).join(', ');
 
   return (
-    <>
-      <RoomViewTracker roomId={room.id} />
+    <div className="pb-24 lg:pb-6">
+      <RoomViewTracker room={room} />
       <div className="flex items-center justify-between gap-4">
-        <BackButton label="Quay lại kết quả tìm kiếm" />
+        <BackButton />
         <RoomTitleActions roomId={room.id} roomSlug={room.slug} />
       </div>
       <header className="mb-5 mt-4">
@@ -89,6 +113,54 @@ export function RoomDetailContent({ room }: { room: RoomDetail }) {
           />
         </div>
       </div>
-    </>
+
+      {similarRooms.length > 0 && (
+        <section className="mt-12 border-t border-zinc-200 pt-8">
+          <h2 className="text-xl font-semibold text-zinc-900">Tin đăng tương tự</h2>
+          <p className="mt-1 text-sm text-zinc-500 mb-6">Các tin đăng cùng khu vực và loại hình phòng</p>
+          <RoomGrid rooms={similarRooms} />
+        </section>
+      )}
+
+      {recommendedRooms.length > 0 && (
+        <section className="mt-12 border-t border-zinc-200 pt-8">
+          <h2 className="text-xl font-semibold text-zinc-900">Có thể bạn cũng thích</h2>
+          <p className="mt-1 text-sm text-zinc-500 mb-6">Gợi ý phòng trọ mới nhất tại khu vực của bạn</p>
+          <RoomGrid rooms={recommendedRooms} />
+        </section>
+      )}
+
+      {/* Sticky mobile contact bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t border-zinc-200 bg-white p-4 shadow-lg lg:hidden pb-safe-bottom">
+        <div>
+          <p className="text-xs text-zinc-500">Giá thuê</p>
+          <p className="text-lg font-bold text-zinc-900">
+            {formatPrice(room.price)}
+            <span className="text-xs font-normal text-zinc-500">/tháng</span>
+          </p>
+        </div>
+        <Sheet open={isContactSheetOpen} onOpenChange={setIsContactSheetOpen}>
+          <SheetTrigger asChild>
+            <Button className="px-6">Liên hệ chủ trọ</Button>
+          </SheetTrigger>
+          <SheetContent className="rounded-l-xl h-full max-w-sm pb-8">
+            <SheetHeader className="text-left border-b border-zinc-100 pb-3">
+              <SheetTitle>Liên hệ chủ trọ</SheetTitle>
+              <SheetDescription>Thông tin liên hệ của người đăng tin</SheetDescription>
+            </SheetHeader>
+            <SheetBody className="py-4">
+              <RoomContactCard
+                roomId={room.id}
+                roomSlug={room.slug}
+                price={room.price}
+                deposit={room.deposit}
+                isVerified={room.isVerified}
+                owner={room.owner}
+              />
+            </SheetBody>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </div>
   );
 }

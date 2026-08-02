@@ -96,7 +96,10 @@ export function RoomCard({
         <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
           {room.isVerified && <VerifiedBadge />}
           {isNew && (
-            <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-xs font-medium text-white">
+            <span
+              title="Tin đăng mới tạo trong vòng 3 ngày qua"
+              className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-xs font-medium text-white cursor-help"
+            >
               Mới
             </span>
           )}

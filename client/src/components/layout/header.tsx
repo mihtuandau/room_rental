@@ -38,11 +38,13 @@ import { useProfile } from '@/features/users/hooks';
 import { useFavorites } from '@/features/favorites/hooks';
 import { useNotifications } from '@/features/notifications/hooks';
 import { cn } from '@/lib/utils';
+import { useQueryStates } from 'nuqs';
+import { isSearchExpanded as checkSearchExpanded, searchParsers } from '@/features/rooms/search-params';
 
 const PUBLIC_NAV_ITEMS = [
-  { href: '/#tim-phong', label: 'Tìm phòng' },
-  { href: '/#kham-pha', label: 'Khám phá' },
-  { href: '/#tin-moi', label: 'Tin mới' },
+  { href: '/', label: 'Tìm phòng', id: 'tim-phong' },
+  { href: '/#kham-pha', label: 'Khám phá', id: 'kham-pha' },
+  { href: '/#tin-moi', label: 'Tin mới', id: 'tin-moi' },
 ] as const;
 
 export function Header() {
@@ -67,11 +69,49 @@ export function Header() {
   // (its own "Tìm kiếm" button already goes to the same expanded results).
   const isHome = pathname === '/';
 
+  const [urlState, setUrlState] = useQueryStates(searchParsers);
+  const isSearchExpanded = checkSearchExpanded(urlState);
+
+  const handleHomeLinkClick = (anchorId?: string) => (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      void setUrlState({
+        keyword: null,
+        city: null,
+        ward: null,
+        roomType: null,
+        priceMin: null,
+        priceMax: null,
+        areaMin: null,
+        areaMax: null,
+        verifiedOnly: null,
+        amenityIds: null,
+        sort: null,
+        mode: null,
+        lat: null,
+        lng: null,
+        radiusKm: null,
+        all: null,
+        page: null,
+      }).then(() => {
+        if (anchorId) {
+          const el = document.getElementById(anchorId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 shadow-card backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <Link
           href="/"
+          onClick={handleHomeLinkClick()}
           aria-label="Trọ Ơi — Trang chủ"
           className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
@@ -93,6 +133,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleHomeLinkClick(item.id === 'tim-phong' ? undefined : item.id)}
               className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             >
               {item.label}
@@ -215,6 +256,7 @@ export function Header() {
           <MobileNavigation
             isSignedIn={isSignedIn}
             inManageMode={inManageMode}
+            onHomeLinkClick={handleHomeLinkClick}
           />
         </div>
       </div>
@@ -225,9 +267,11 @@ export function Header() {
 function MobileNavigation({
   isSignedIn,
   inManageMode,
+  onHomeLinkClick,
 }: {
   isSignedIn: boolean;
   inManageMode: boolean;
+  onHomeLinkClick: (anchorId?: string) => (e: React.MouseEvent) => void;
 }) {
   const postHref = isSignedIn
     ? '/manage/listings/new'
@@ -256,6 +300,7 @@ function MobileNavigation({
                   <SheetClose asChild>
                     <Link
                       href={item.href}
+                      onClick={onHomeLinkClick(item.id === 'tim-phong' ? undefined : item.id)}
                       className="flex h-10 items-center rounded-md px-3 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
                     >
                       {item.label}

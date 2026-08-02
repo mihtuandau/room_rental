@@ -129,6 +129,12 @@ export const AREA_LANDINGS: AreaLanding[] = [
     district: 'Bình Thạnh',
     label: 'Bình Thạnh, Hồ Chí Minh',
   },
+  { slug: 'quan-1', city: 'Hồ Chí Minh', district: 'Quận 1', label: 'Quận 1, Hồ Chí Minh' },
+  { slug: 'quan-10', city: 'Hồ Chí Minh', district: 'Quận 10', label: 'Quận 10, Hồ Chí Minh' },
+  { slug: 'thu-duc', city: 'Hồ Chí Minh', district: 'Thành phố Thủ Đức', label: 'TP. Thủ Đức, Hồ Chí Minh' },
+  { slug: 'cau-giay', city: 'Hà Nội', district: 'Cầu Giấy', label: 'Cầu Giấy, Hà Nội' },
+  { slug: 'nam-tu-liem', city: 'Hà Nội', district: 'Nam Từ Liêm', label: 'Nam Từ Liêm, Hà Nội' },
+  { slug: 'hai-ba-trung', city: 'Hà Nội', district: 'Hai Bà Trưng', label: 'Hai Bà Trưng, Hà Nội' },
 ];
 
 export function findAreaLanding(slug: string): AreaLanding | undefined {

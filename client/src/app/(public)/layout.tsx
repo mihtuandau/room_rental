@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { FloatingLandlordBadge } from '@/components/layout/floating-landlord-badge';
 
 /**
  * Chrome for the public, SEO-critical pages. `(auth)` gets its own bare layout
@@ -10,6 +11,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <Header />
       <main className="flex-1">{children}</main>
+      <FloatingLandlordBadge />
       <Footer />
     </>
   );

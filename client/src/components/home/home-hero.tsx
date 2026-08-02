@@ -271,11 +271,19 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-hidden py-10 sm:py-12"
+      className="relative isolate scroll-mt-20 overflow-hidden py-10 sm:py-16 bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30"
     >
+      {/* Decorative blurred background blobs for premium aesthetic */}
+      <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
+        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-200 to-indigo-300 opacity-25 sm:left-[calc(50%-30rem)] sm:w-[72rem]" />
+      </div>
+      <div className="absolute inset-x-0 -bottom-40 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
+        <div className="relative right-0 aspect-[1155/678] w-[30rem] translate-x-1/3 bg-gradient-to-br from-indigo-200 to-brand-300 opacity-20 sm:w-[50rem]" />
+      </div>
+
       <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12">
         <div className="max-w-xl">
-          <p className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+          <p className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 border border-brand-100/80">
             <ShieldCheck className="h-4 w-4" aria-hidden />
             Tin đăng được kiểm duyệt trước khi hiển thị
           </p>
