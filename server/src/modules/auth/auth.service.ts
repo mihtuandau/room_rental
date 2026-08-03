@@ -77,12 +77,20 @@ export class AuthService {
 
   async findOrCreateGoogleUser(profile: GoogleProfile) {
     const byGoogleId = await this.prisma.user.findUnique({ where: { googleId: profile.googleId } });
-    if (byGoogleId) return byGoogleId;
+    if (byGoogleId) {
+      return this.prisma.user.update({
+        where: { id: byGoogleId.id },
+        data: {
+          email: byGoogleId.email ?? profile.email,
+          isEmailVerified: true,
+        },
+      });
+    }
     const byEmail = await this.prisma.user.findUnique({ where: { email: profile.email } });
     if (byEmail) {
       return this.prisma.user.update({
         where: { id: byEmail.id },
-        data: { googleId: profile.googleId, fullName: byEmail.fullName ?? profile.fullName, avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl },
+        data: { googleId: profile.googleId, isEmailVerified: true, fullName: byEmail.fullName ?? profile.fullName, avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl },
       });
     }
     return this.prisma.user.create({
@@ -146,6 +154,12 @@ export class AuthService {
     }
   }
 
+  async verifyResetOtp(dto: { phone?: string; email?: string; code: string }) {
+    const identifier = this.normalizeIdentifier(dto);
+    if (!identifier.email && !identifier.phone) throw new ForbiddenException('A verified email or phone is required.');
+    await this.validateOtp(identifier, OtpPurpose.reset_password, dto.code);
+  }
+
   private async validateOtp(identifier: Identifier, purpose: OtpPurpose, code: string) {
     const otp = await this.prisma.otpCode.findFirst({
       where: { ...(identifier.email ? { email: identifier.email } : { phone: identifier.phone }), purpose, usedAt: null, expiresAt: { gt: new Date() } },
@@ -167,6 +181,24 @@ export class AuthService {
       const consumed = await tx.otpCode.updateMany({ where: { id: otp.id, usedAt: null, expiresAt: { gt: new Date() }, attempts: { lt: OTP_MAX_ATTEMPTS } }, data: { usedAt: new Date() } });
       if (consumed.count !== 1) throw new ForbiddenException('OTP code is invalid or has expired.');
       await tx.user.update({ where: identifier.email ? { email: identifier.email } : { phone: identifier.phone }, data: { passwordHash, tokenVersion: { increment: 1 } } });
+    });
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt || !user.passwordHash || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+    if (currentPassword === newPassword) {
+      throw new ForbiddenException('New password must be different from the current password.');
+    }
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_HASH_COST);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
     });
   }
 

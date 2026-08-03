@@ -68,3 +68,17 @@ export function resetPassword(input: {
     body: JSON.stringify(input),
   });
 }
+
+export function verifyResetOtp(input: { email?: string; phone?: string; code: string }) {
+  return apiRequest<{ success: true }>('/auth/otp/verify-reset', {
+    method: 'POST',
+    body: JSON.stringify({ ...input, purpose: 'reset_password' }),
+  });
+}
+
+export function changePassword(input: { currentPassword: string; newPassword: string }) {
+  return apiRequest<{ success: true }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}

@@ -7,10 +7,12 @@ import {
   ArrowLeft,
   Bell,
   ChevronDown,
+  BarChart3,
   Heart,
+  ListChecks,
   LogOut,
   Menu,
-  ShieldCheck,
+  Settings,
   UserRound,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -168,7 +170,7 @@ export function Header() {
             )
           )}
 
-          <Button className="hidden lg:inline-flex" asChild>
+          {!inManageMode && <Button className="hidden lg:inline-flex" asChild>
             {/* /manage/* is also gated at the edge by middleware.ts, but that's
                 a coarse cookie check — this client-side redirect is what
                 actually fires reliably regardless of environment quirks there. */}
@@ -181,7 +183,7 @@ export function Header() {
             >
               Đăng tin
             </Link>
-          </Button>
+          </Button>}
 
           {!isBootstrapped ? (
             <Skeleton className="h-10 w-10 rounded-full" />
@@ -208,20 +210,27 @@ export function Header() {
                   <ChevronDown className="hidden h-4 w-4 sm:block" aria-hidden />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-72">
                 <div className="border-b border-zinc-100 px-3 py-2">
                   <p className="max-w-48 truncate text-sm font-medium text-zinc-900">
                     {profile?.fullName || 'Tài khoản của bạn'}
                   </p>
-                  <p className="mt-0.5 text-xs text-zinc-500">Quản lý thông tin và tin đăng</p>
                 </div>
-                <DropdownMenuItem onSelect={() => router.push('/account')}>
-                  <UserRound className="h-4 w-4" aria-hidden />
-                  Tài khoản
+                <DropdownMenuItem onSelect={() => router.push('/account')} className="gap-3 py-2.5">
+                  <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                  Hồ sơ cá nhân
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => router.push('/account/security')}>
-                  <ShieldCheck className="h-4 w-4" aria-hidden />
-                  Bảo mật
+                <DropdownMenuItem onSelect={() => router.push('/manage/listings')} className="gap-3 py-2.5">
+                  <ListChecks className="h-4 w-4 shrink-0" aria-hidden />
+                  Quản lý tin đăng
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push('/manage/dashboard')} className="gap-3 py-2.5">
+                  <BarChart3 className="h-4 w-4 shrink-0" aria-hidden />
+                  Thống kê
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push('/account/security')} className="gap-3 py-2.5">
+                  <Settings className="h-4 w-4 shrink-0" aria-hidden />
+                  Cài đặt tài khoản
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={logout.isPending}
@@ -326,11 +335,11 @@ function MobileNavigation({
               )
             )}
 
-            <SheetClose asChild>
+            {!inManageMode && <SheetClose asChild>
               <Link href={postHref} className={cn(buttonVariants(), 'w-full')}>
                 Đăng tin
               </Link>
-            </SheetClose>
+            </SheetClose>}
           </div>
         </SheetBody>
       </SheetContent>

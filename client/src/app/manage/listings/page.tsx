@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { BackButton } from '@/components/ui/back-button';
 import { MyListingsView } from './my-listings-view';
+import { ManageNavigation } from '@/components/layout/manage-shell';
 
 export const metadata: Metadata = {
   title: 'Tin của tôi',
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function MyListingsPage() {
   return (
-    <div className="w-full px-4 py-8 md:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
       {/* The header already shows this exact action on desktop (manage mode) —
           only shown here on mobile, where that button is hidden for space. */}
       <BackButton label="Về trang tìm phòng" className="mb-4 sm:hidden" />
@@ -20,6 +21,7 @@ export default function MyListingsPage() {
           Tìm kiếm, lọc và quản lý toàn bộ tin đăng bạn đã đăng.
         </p>
       </div>
+      <ManageNavigation pathname="/manage/listings" />
       <MyListingsView />
     </div>
   );

@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
-// Never select passwordHash/tokenVersion — safe fields only.
+// Select only the password presence flag; never return the hash itself.
 const PROFILE_SELECT = {
   id: true,
   phone: true,
   email: true,
   googleId: true,
+  passwordHash: true,
   fullName: true,
   avatarUrl: true,
   contactPhone: true,
@@ -20,11 +21,12 @@ const PROFILE_SELECT = {
 
 function toPublicProfile(profile: {
   googleId: string | null;
+  passwordHash: string | null;
   email: string | null;
   [key: string]: unknown;
 }) {
-  const { googleId, ...safeProfile } = profile;
-  return { ...safeProfile, googleLinked: Boolean(googleId) };
+  const { googleId, passwordHash, ...safeProfile } = profile;
+  return { ...safeProfile, googleLinked: Boolean(googleId), hasPassword: Boolean(passwordHash) };
 }
 
 @Injectable()

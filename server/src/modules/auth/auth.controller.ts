@@ -17,6 +17,8 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '@/common/guards/jwt-refresh.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
@@ -129,6 +131,15 @@ export class AuthController {
     return { success: true };
   }
 
+  @Post('otp/verify-reset')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Verify a password-reset OTP before setting a new password' })
+  async verifyResetOtp(@Body() dto: VerifyOtpDto) {
+    await this.authService.verifyResetOtp(dto);
+    return { success: true };
+  }
+
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -137,6 +148,18 @@ export class AuthController {
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto, dto.code, dto.newPassword);
+    return { success: true };
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Change the authenticated account password' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
     return { success: true };
   }
 }

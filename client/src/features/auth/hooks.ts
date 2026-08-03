@@ -11,6 +11,8 @@ import {
   sendResetOtp,
   resetPassword,
   sendRegisterOtp,
+  changePassword,
+  verifyResetOtp,
 } from './api';
 
 /**
@@ -55,6 +57,14 @@ export function useSendResetOtp() {
 
 export function useResetPassword() {
   return useMutation({ mutationFn: resetPassword });
+}
+
+export function useChangePassword() {
+  return useMutation({ mutationFn: changePassword });
+}
+
+export function useVerifyResetOtp() {
+  return useMutation({ mutationFn: verifyResetOtp });
 }
 
 export function useLogout() {
