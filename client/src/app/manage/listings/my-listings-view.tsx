@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { CheckCircle2, Clock3, FileText, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
+import type { MyRoomItem } from '@/features/rooms/api';
 import { useMyRooms } from '@/features/rooms/hooks';
 import {
   ListingsToolbar,
@@ -50,7 +52,9 @@ export function MyListingsView() {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+    <div className="space-y-4">
+      <ListingsStats rooms={rooms} />
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
       <ListingsToolbar
         keyword={keyword}
         status={statusFilter}
@@ -79,6 +83,32 @@ export function MyListingsView() {
           />
         </>
       )}
+      </div>
+    </div>
+  );
+}
+
+function ListingsStats({ rooms }: { rooms: MyRoomItem[] }) {
+  const items = [
+    { label: 'Tổng tin đăng', value: rooms.length, icon: FileText, tone: 'bg-brand-50 text-brand-700' },
+    { label: 'Đang hiển thị', value: rooms.filter((room) => room.status === 'active').length, icon: CheckCircle2, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Chờ duyệt', value: rooms.filter((room) => room.status === 'pending').length, icon: Clock3, tone: 'bg-amber-50 text-amber-700' },
+    { label: 'Bị từ chối', value: rooms.filter((room) => room.status === 'rejected').length, icon: XCircle, tone: 'bg-rose-50 text-rose-700' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {items.map(({ label, value, icon: Icon, tone }) => (
+        <div key={label} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+            <Icon className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xl font-bold tabular-nums text-zinc-900">{value.toLocaleString('vi-VN')}</p>
+            <p className="truncate text-xs text-zinc-500">{label}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

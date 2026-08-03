@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AdminBreadcrumb, AdminNavLinks } from "./admin-navigation";
 import {
   DropdownMenu,
@@ -66,7 +65,6 @@ export function AdminTopbar() {
       </div>
 
       <div className="ml-3 flex items-center gap-1">
-        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

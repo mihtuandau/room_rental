@@ -7,6 +7,7 @@ import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { SmsService } from './sms/sms.service';
 import { GoogleTokenService } from './google/google-token.service';
+import { EmailService } from './email/email.service';
 
 @Module({
   // JwtModule.register({}) with no default secret/options: AuthService signs
@@ -19,6 +20,7 @@ import { GoogleTokenService } from './google/google-token.service';
     JwtRefreshStrategy,
     SmsService,
     GoogleTokenService,
+    EmailService,
   ],
 })
 export class AuthModule {}

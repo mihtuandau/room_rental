@@ -40,7 +40,7 @@ export function LoginForm() {
       // Re-run Server Components so the header reflects the signed-in state.
       router.refresh();
     } catch (err) {
-      // The backend returns one generic message for a wrong phone OR password,
+      // The backend returns one generic message for a wrong identifier OR password,
       // so it belongs on the form, not on a single field.
       if (err instanceof ApiError && err.status === 401) {
         setError('root', { message: 'Số điện thoại hoặc mật khẩu không đúng.' });
@@ -56,15 +56,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Field
-        id="phone"
-        label="Số điện thoại"
-        inputMode="tel"
-        autoComplete="tel"
-        placeholder="0912345678"
-        error={errors.phone?.message}
-        {...register('phone')}
-      />
+      <Field id="identifier" label="Email hoặc số điện thoại" autoComplete="username" placeholder="ban@example.com hoặc 0912345678" error={errors.identifier?.message} {...register('identifier')} />
 
       <div>
         <Field

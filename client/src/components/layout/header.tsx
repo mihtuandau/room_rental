@@ -10,7 +10,7 @@ import {
   Heart,
   LogOut,
   Menu,
-  Search,
+  ShieldCheck,
   UserRound,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -31,7 +31,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { useLogout } from '@/features/auth/hooks';
 import { useProfile } from '@/features/users/hooks';
@@ -39,10 +38,10 @@ import { useFavorites } from '@/features/favorites/hooks';
 import { useNotifications } from '@/features/notifications/hooks';
 import { cn } from '@/lib/utils';
 import { useQueryStates } from 'nuqs';
-import { isSearchExpanded as checkSearchExpanded, searchParsers } from '@/features/rooms/search-params';
+import { searchParsers } from '@/features/rooms/search-params';
 
 const PUBLIC_NAV_ITEMS = [
-  { href: '/', label: 'Tìm phòng', id: 'tim-phong' },
+  { href: '/#tim-phong', label: 'Tìm phòng', id: 'tim-phong' },
   { href: '/#kham-pha', label: 'Khám phá', id: 'kham-pha' },
   { href: '/#tin-moi', label: 'Tin mới', id: 'tin-moi' },
 ] as const;
@@ -67,10 +66,8 @@ export function Header() {
   const inManageMode = pathname.startsWith('/manage');
   // Home already has the hero search bar — a header one there is redundant
   // (its own "Tìm kiếm" button already goes to the same expanded results).
-  const isHome = pathname === '/';
 
-  const [urlState, setUrlState] = useQueryStates(searchParsers);
-  const isSearchExpanded = checkSearchExpanded(urlState);
+  const [, setUrlState] = useQueryStates(searchParsers);
 
   const handleHomeLinkClick = (anchorId?: string) => (e: React.MouseEvent) => {
     if (pathname === '/') {
@@ -133,7 +130,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={handleHomeLinkClick(item.id === 'tim-phong' ? undefined : item.id)}
+              onClick={handleHomeLinkClick(item.id)}
               className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             >
               {item.label}
@@ -144,16 +141,6 @@ export function Header() {
         <div className="flex-1" />
 
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
-
-          {!isHome && (
-            <Button variant="ghost" size="icon" className="sm:hidden" asChild>
-              <Link href="/" aria-label="Tìm phòng">
-                <Search className="h-5 w-5" />
-              </Link>
-            </Button>
-          )}
-
           {isBootstrapped && isSignedIn && (
             <>
               <HeaderIconLink href="/notifications" label="Thông báo" count={unreadCount}>
@@ -231,6 +218,10 @@ export function Header() {
                 <DropdownMenuItem onSelect={() => router.push('/account')}>
                   <UserRound className="h-4 w-4" aria-hidden />
                   Tài khoản
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push('/account/security')}>
+                  <ShieldCheck className="h-4 w-4" aria-hidden />
+                  Bảo mật
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={logout.isPending}

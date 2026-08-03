@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Banknote, CircleDotDashed, LocateFixed, Search, ShieldCheck } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Banknote, CircleDotDashed, LocateFixed, Search } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,40 @@ import { HomeMap } from './home-map';
 const ALL = '__all__';
 const DEFAULT_RADIUS_KM = 3;
 type SearchCenterMode = 'province' | 'nearby';
+
+function AnimatedStat({
+  value,
+  label,
+  suffix = '',
+}: {
+  value: number;
+  label: string;
+  suffix?: string;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const startedAt = window.performance.now();
+    let frame = 0;
+    const animate = (timestamp: number) => {
+      const progress = Math.min((timestamp - startedAt) / 900, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(value * eased));
+      if (progress < 1) frame = window.requestAnimationFrame(animate);
+    };
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [value]);
+
+  return (
+    <div className="text-center sm:text-left">
+      <p className="text-lg font-bold tabular-nums text-brand-700">
+        {displayValue.toLocaleString('vi-VN')}{suffix}
+      </p>
+      <p className="mt-0.5 text-[11px] text-zinc-500 sm:text-xs">{label}</p>
+    </div>
+  );
+}
 
 interface ReverseGeocodeResponse {
   display_name?: string;
@@ -152,11 +186,9 @@ async function resolveNearbyPlace(center: [number, number], provinces: ProvinceO
 export function HomeHero({
   provinces,
   rooms,
-  totalRooms = 0,
 }: {
   provinces: ProvinceOption[];
   rooms: RoomCardItem[];
-  totalRooms?: number;
 }) {
   const [urlState, setUrlState] = useQueryStates(searchParsers, {
     history: 'push',
@@ -172,6 +204,7 @@ export function HomeHero({
     urlState.lng && urlState.lat ? [Number(urlState.lng), Number(urlState.lat)] : null,
   );
   const [locationMessage, setLocationMessage] = useState('');
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [radiusKm, setRadiusKm] = useState(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
   const [priceRangeValue, setPriceRangeValue] = useState(
     PRICE_RANGE_OPTIONS.find(
@@ -182,7 +215,17 @@ export function HomeHero({
   const liveSearchParams = useMemo(() => toSearchParams(urlState), [urlState]);
   const liveSearch = useRoomsSearch(liveSearchParams);
   const currentRooms = expanded ? (liveSearch.data?.rooms ?? rooms) : rooms;
-  const currentTotalRooms = expanded ? (liveSearch.data?.total ?? totalRooms) : totalRooms;
+  const locationSuggestions = keyword.trim()
+    ? provinces
+        .filter((province) => {
+          const query = normalizePlaceName(keyword);
+          return (
+            normalizePlaceName(province.label).includes(query) ||
+            normalizePlaceName(province.value).includes(query)
+          );
+        })
+        .slice(0, 6)
+    : [];
 
   // The results view owns the search controls once a search is expanded.
   // Avoid rendering a second hero form and map above the results toolbar.
@@ -200,6 +243,12 @@ export function HomeHero({
     const nextMode = override?.mode ?? centerMode;
     const nextCenter = override?.center ?? userCenter;
     const nextRadiusKm = override?.radiusKm ?? radiusKm;
+    const typedLocation = keyword.trim();
+    const matchedProvince = provinces.find(
+      (province) =>
+        normalizePlaceName(province.label) === normalizePlaceName(typedLocation) ||
+        normalizePlaceName(province.value) === normalizePlaceName(typedLocation),
+    );
     if (nextMode === 'nearby' && !nextCenter) {
       setLocationMessage('Bạn cần cho phép lấy vị trí trước khi tìm gần tôi.');
       return;
@@ -207,8 +256,8 @@ export function HomeHero({
 
     const range = PRICE_RANGE_OPTIONS.find((p) => p.value === priceRangeValue);
     setUrlState({
-      keyword: keyword.trim(),
-      city: override?.city ?? city,
+      keyword: matchedProvince ? '' : typedLocation,
+      city: matchedProvince?.value ?? override?.city ?? city,
       ward: nextMode === 'nearby' ? (override?.ward ?? urlState.ward) : '',
       roomType: urlState.roomType,
       priceMin: range?.priceMin ?? null,
@@ -271,7 +320,7 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-hidden py-10 sm:py-16 bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30"
+      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30 pb-8 pt-10 sm:pb-10 sm:pt-16 lg:min-h-[520px] lg:py-16"
     >
       {/* Decorative blurred background blobs for premium aesthetic */}
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
@@ -283,10 +332,6 @@ export function HomeHero({
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12">
         <div className="max-w-xl">
-          <p className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 border border-brand-100/80">
-            <ShieldCheck className="h-4 w-4" aria-hidden />
-            Tin đăng được kiểm duyệt trước khi hiển thị
-          </p>
           <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
             Tìm phòng nhanh hơn,
             <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
@@ -324,8 +369,11 @@ export function HomeHero({
 
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_auto] lg:items-end">
               <Field label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
+                <div className="relative mt-1">
                 <Input
                   value={keyword}
+                  onFocus={() => setShowLocationSuggestions(true)}
+                  onBlur={() => window.setTimeout(() => setShowLocationSuggestions(false), 120)}
                   onChange={(event) => {
                     setKeyword(event.target.value);
                     setCenterMode('province');
@@ -333,8 +381,29 @@ export function HomeHero({
                     setLocationMessage('');
                   }}
                   placeholder="Ví dụ: Hải Châu, Bách Khoa, đường Lê Lợi…"
-                  className="mt-1 h-11"
+                  className="h-11"
                 />
+                {showLocationSuggestions && locationSuggestions.length > 0 ? (
+                  <div className="absolute inset-x-0 top-[calc(100%+0.35rem)] z-30 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 text-left shadow-popover">
+                    {locationSuggestions.map((province) => (
+                      <button
+                        key={province.value}
+                        type="button"
+                        className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-zinc-700 hover:bg-brand-50 hover:text-brand-700 focus-visible:bg-brand-50 focus-visible:outline-none"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setKeyword(province.label);
+                          setCity(province.value);
+                          setCenterMode('province');
+                          setShowLocationSuggestions(false);
+                        }}
+                      >
+                        {province.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                </div>
               </Field>
 
               {centerMode === 'nearby' ? (
@@ -376,14 +445,19 @@ export function HomeHero({
               </Button>
             </div>
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
-            <p className="mt-3 text-xs text-zinc-500">
-              Hiện có{' '}
-              <span className="font-medium text-brand-700">
-                {currentTotalRooms.toLocaleString('vi-VN')} tin đăng
-              </span>{' '}
-              để bạn khám phá.
-            </p>
           </form>
+
+          <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-200 border-t border-zinc-200/80 pt-4">
+            <div className="pr-3 text-center sm:text-left">
+              <AnimatedStat value={rooms.length} label="tin đang hiển thị" suffix="+" />
+            </div>
+            <div className="px-3 text-center sm:text-left">
+              <AnimatedStat value={provinces.length} label="tỉnh, thành phố" />
+            </div>
+            <div className="pl-3 text-center sm:text-left">
+              <AnimatedStat value={0} label="phí đăng tin" suffix=" ₫" />
+            </div>
+          </div>
         </div>
 
         <HomeMap

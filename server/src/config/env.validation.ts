@@ -19,6 +19,14 @@ export const envSchema = z
     // Only the client id is needed: we verify Google ID tokens sent by the
     // frontend, we never run the redirect flow that would require the secret.
     GOOGLE_CLIENT_ID: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    EMAIL_FROM: z.string().min(1).optional(),
+    MAIL_HOST: z.string().min(1).optional(),
+    MAIL_PORT: z.coerce.number().int().positive().optional(),
+    MAIL_USER: z.string().email().optional(),
+    MAIL_PASSWORD: z.string().min(1).optional(),
+    MAIL_FROM: z.string().email().optional(),
+    MAIL_FROM_NAME: z.string().min(1).optional(),
   })
   .refine((env) => env.JWT_ACCESS_SECRET !== env.JWT_REFRESH_SECRET, {
     message: 'JWT access and refresh secrets must be different.',

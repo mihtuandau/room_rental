@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { RegisterForm } from '@/features/auth/components/register-form';
 import { GoogleSignInButton } from '@/features/auth/components/google-sign-in-button';
 import { AuthDivider } from '@/features/auth/components/auth-divider';
@@ -43,3 +42,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+import Link from 'next/link';

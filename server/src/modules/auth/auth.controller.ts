@@ -48,15 +48,12 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Log in with phone number + password' })
+  @ApiOperation({ summary: 'Log in with phone number or email + password' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken } = await this.authService.login(
-      dto.phone,
-      dto.password,
-    );
+    const { accessToken, refreshToken } = await this.authService.login(dto, dto.password);
     res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions);
     return { accessToken };
   }
@@ -114,9 +111,9 @@ export class AuthController {
   @Post('otp/send')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) // anti SMS-spam
-  @ApiOperation({ summary: 'Send a one-time OTP code to a phone number' })
+  @ApiOperation({ summary: 'Send a one-time OTP code by phone or email' })
   async sendOtp(@Body() dto: SendOtpDto) {
-    await this.authService.sendOtp(dto.phone, dto.purpose);
+    await this.authService.sendOtp(dto, dto.purpose);
     return { success: true };
   }
 
@@ -125,10 +122,10 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary:
-      'Verify an OTP code (marks the phone as verified when purpose = register)',
+      'Verify an OTP code (marks the selected contact as verified when purpose = register)',
   })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
-    await this.authService.verifyOtp(dto.phone, dto.purpose, dto.code);
+    await this.authService.verifyOtp(dto, dto.purpose, dto.code);
     return { success: true };
   }
 
@@ -139,7 +136,7 @@ export class AuthController {
     summary: 'Reset password using a verified reset_password OTP code',
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.authService.resetPassword(dto.phone, dto.code, dto.newPassword);
+    await this.authService.resetPassword(dto, dto.code, dto.newPassword);
     return { success: true };
   }
 }

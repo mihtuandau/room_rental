@@ -2,6 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
 import type { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
 import type { RoomCardItem } from '@/components/rooms/room-card';
 import { PLACEHOLDER_IMAGE } from '@/components/rooms/room-card';
@@ -122,6 +123,7 @@ export function HomeMap({
   const markersRef = useRef<Marker[]>([]);
   const userMarkerRef = useRef<Marker | null>(null);
   const [ready, setReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
   const locatedRooms = useMemo(() => rooms.filter(isLocated), [rooms]);
   const cityRooms = useMemo(
     () => (selectedCity ? locatedRooms.filter((room) => room.city === selectedCity) : locatedRooms),
@@ -138,13 +140,6 @@ export function HomeMap({
     if (!hasRadiusCenter) return cityRooms;
     return locatedRooms;
   }, [cityRooms, hasFocusedCenter, hasRadiusCenter, locatedRooms]);
-  const roomsInRadius = useMemo(() => {
-    if (!hasRadiusCenter) return visibleRooms;
-    return visibleRooms.filter((room) =>
-      distanceKm(center, [room.longitude as number, room.latitude as number]) <= radiusKm,
-    );
-  }, [center, hasRadiusCenter, radiusKm, visibleRooms]);
-
   useEffect(() => {
     let cancelled = false;
     void import('maplibre-gl').then(({ Map, NavigationControl }) => {
@@ -156,10 +151,15 @@ export function HomeMap({
         zoom: hasFocusedCenter ? 11.5 : 5.3,
       });
       map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+      let loaded = false;
       map.on('load', () => {
         if (cancelled) return;
+        loaded = true;
         map.resize();
         setReady(true);
+      });
+      map.on('error', () => {
+        if (!loaded) setMapError(true);
       });
       mapRef.current = map;
 
@@ -372,6 +372,23 @@ export function HomeMap({
   return (
     <div className="relative h-full min-h-[320px] overflow-hidden rounded-lg bg-brand-50">
       <div ref={containerRef} className="h-full w-full" />
+      {mapError ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-50/95 px-6 text-center">
+          <div className="max-w-xs rounded-xl border border-zinc-200 bg-white/95 px-4 py-3 shadow-card">
+            <p className="text-sm font-medium text-zinc-800">Không thể tải bản đồ</p>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Bạn vẫn có thể dùng bộ lọc và xem danh sách phòng bình thường.
+            </p>
+          </div>
+        </div>
+      ) : !ready ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-50/90 backdrop-blur-[1px]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 py-2 text-xs font-medium text-zinc-600 shadow-card">
+            <LoaderCircle className="h-4 w-4 animate-spin text-brand-600" aria-hidden />
+            Đang tải bản đồ…
+          </div>
+        </div>
+      ) : null}
       <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-zinc-200 bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur-sm">
         <p className="font-medium text-zinc-900">Bản đồ tìm phòng</p>
         <p className="mt-0.5 text-zinc-500">
@@ -381,13 +398,6 @@ export function HomeMap({
               ? `Đang xem tin đăng tại ${areaLabel}`
               : 'Chọn tỉnh hoặc dùng gần tôi'}
         </p>
-      </div>
-      <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full border border-zinc-200 bg-white/95 px-3 py-1.5 text-xs text-zinc-600 shadow-card backdrop-blur-sm">
-        {hasRadiusCenter && visibleRooms.length > 0
-          ? `${roomsInRadius.length}/${visibleRooms.length} tin có tọa độ trong bán kính`
-          : visibleRooms.length > 0
-            ? `${visibleRooms.length}/${rooms.length} tin có tọa độ trên bản đồ`
-          : 'Chưa có tin có tọa độ để ghim trên bản đồ'}
       </div>
     </div>
   );

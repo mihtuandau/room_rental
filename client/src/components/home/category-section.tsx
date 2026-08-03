@@ -48,12 +48,12 @@ export async function CategorySection() {
 
   return (
     <section id="kham-pha" className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 sm:px-6">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">
-            Bạn muốn ở kiểu phòng nào?
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+            Bạn muốn ở kiểu <span className="text-brand-700">phòng nào?</span>
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
+          <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
             Chọn nhanh loại hình phù hợp với nhu cầu của bạn.
           </p>
         </div>

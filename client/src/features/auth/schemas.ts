@@ -2,9 +2,10 @@ import { z } from 'zod';
 
 /** Mirrors the backend's VN_PHONE_REGEX so a valid form is rarely rejected. */
 export const VN_PHONE = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+export const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/;
 
 export const loginSchema = z.object({
-  phone: z.string().regex(VN_PHONE, 'Số điện thoại không hợp lệ.'),
+  identifier: z.string().min(1, 'Nhập email hoặc số điện thoại.'),
   password: z
     .string()
     .min(8, 'Mật khẩu cần tối thiểu 8 ký tự.')
@@ -13,6 +14,11 @@ export const loginSchema = z.object({
 
 export const registerSchema = loginSchema
   .extend({
+    password: z
+      .string()
+      .min(8, 'Mật khẩu cần tối thiểu 8 ký tự.')
+      .max(72, 'Mật khẩu tối đa 72 ký tự.')
+      .regex(STRONG_PASSWORD, 'Mật khẩu cần có chữ hoa, chữ thường và số.'),
     // The backend accepts fullName 2–100 chars, optional.
     fullName: z
       .string()
@@ -32,7 +38,7 @@ export const registerSchema = loginSchema
   });
 
 export const forgotPasswordSchema = z.object({
-  phone: z.string().regex(VN_PHONE, 'Số điện thoại không hợp lệ.'),
+  identifier: z.string().min(1, 'Nhập email hoặc số điện thoại.'),
 });
 
 export const resetPasswordSchema = z
@@ -42,7 +48,8 @@ export const resetPasswordSchema = z
     newPassword: z
       .string()
       .min(8, 'Mật khẩu cần tối thiểu 8 ký tự.')
-      .max(72, 'Mật khẩu tối đa 72 ký tự.'),
+      .max(72, 'Mật khẩu tối đa 72 ký tự.')
+      .regex(STRONG_PASSWORD, 'Mật khẩu cần có chữ hoa, chữ thường và số.'),
     confirmNewPassword: z.string(),
   })
   .refine((v) => v.newPassword === v.confirmNewPassword, {
