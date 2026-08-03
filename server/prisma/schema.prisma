@@ -122,6 +122,7 @@ model User {
   role            Role    @default(user)
   tokenVersion    Int     @default(0) @map("token_version")
   isPhoneVerified Boolean @default(false) @map("is_phone_verified")
+  isEmailVerified Boolean @default(false) @map("is_email_verified")
 
   deletedAt DateTime? @map("deleted_at")
   createdAt DateTime  @default(now()) @map("created_at")
@@ -143,7 +144,8 @@ model User {
 
 model OtpCode {
   id       String     @id @default(cuid())
-  phone    String
+  phone    String?
+  email    String?
   codeHash String     @map("code_hash")
   purpose  OtpPurpose
 
@@ -154,6 +156,7 @@ model OtpCode {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([phone, purpose])
+  @@index([email, purpose])
   @@index([expiresAt])
   @@map("otp_codes")
 }

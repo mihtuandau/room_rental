@@ -10,10 +10,12 @@ export function BrowseResults({
   return (
     <div
       id="ket-qua"
-      className="mx-auto w-full max-w-7xl space-y-12 pb-8 pt-0 sm:space-y-16"
+      className="mx-auto w-full max-w-7xl pb-16 pt-7 sm:pt-10 sm:pb-20"
     >
-      {browseTop}
-      {browseBottom}
+      <div className="flex flex-col gap-12 sm:gap-16">
+        {browseTop}
+        {browseBottom}
+      </div>
     </div>
   );
 }

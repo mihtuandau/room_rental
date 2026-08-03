@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AccountPage() {
   return (
-    <div className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-lg space-y-8 px-4 py-10 sm:px-6">
       <BackButton label="Về trang tìm phòng" className="mb-4 sm:hidden" />
       <h1 className="mb-6 text-xl font-semibold tracking-tight">Tài khoản của bạn</h1>
       <AccountView />

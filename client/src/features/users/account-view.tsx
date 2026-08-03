@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Camera, LogOut, ShieldCheck, UserRound } from 'lucide-react';
@@ -160,6 +160,8 @@ function ProfileForm({
     register,
     handleSubmit,
     reset,
+    setValue,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdateProfileFormInput>({
     resolver: zodResolver(updateProfileSchema),
@@ -169,6 +171,28 @@ function ProfileForm({
       zaloUrl: zaloUrl ?? '',
     },
   });
+  const contactPhoneValue = useWatch({ control, name: 'contactPhone' });
+  const zaloValue = useWatch({ control, name: 'zaloUrl' });
+  const generatedZaloRef = useRef('');
+  const initializedAutoFillRef = useRef(false);
+
+  useEffect(() => {
+    const normalizedPhone = (contactPhoneValue ?? '').replace(/\D/g, '');
+    const generatedZalo = normalizedPhone
+      ? `https://zalo.me/${normalizedPhone}`
+      : '';
+    const canAutoFill = !zaloValue || zaloValue === generatedZaloRef.current;
+
+    if (canAutoFill && zaloValue !== generatedZalo) {
+      setValue('zaloUrl', generatedZalo, {
+        shouldDirty: initializedAutoFillRef.current,
+        shouldValidate: initializedAutoFillRef.current,
+      });
+      generatedZaloRef.current = generatedZalo;
+    }
+
+    initializedAutoFillRef.current = true;
+  }, [contactPhoneValue, setValue, zaloValue]);
 
   // Re-sync defaults if the cache updates from elsewhere (e.g. after the
   // avatar upload's mutation writes back the full profile).

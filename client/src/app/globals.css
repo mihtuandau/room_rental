@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   /* Brand — primary actions and the "verified" trust signal.
      Competitors lean on orange/red urgency; Trọ Ơi stays calm and credible. */
@@ -66,96 +64,51 @@ body {
     color 150ms var(--ease-out-soft);
 }
 
-.dark body {
-  background: var(--color-zinc-950);
-  color: var(--color-zinc-100);
+.auth-page-transition { position: relative; overflow: visible; background: transparent; will-change: height; }
+.auth-route-layer {
+  width: 100%;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 1rem;
+  background: var(--color-white);
+  padding: 1rem;
+  box-shadow: var(--shadow-card);
 }
+.auth-route-current { position: relative; z-index: 2; }
+.auth-route-outgoing { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.auth-fly-in-left { animation: auth-fly-in-left 440ms var(--ease-out-soft) both; }
+.auth-fly-in-right { animation: auth-fly-in-right 440ms var(--ease-out-soft) both; }
+.auth-fly-out-right { animation: auth-fly-out-right 440ms var(--ease-out-soft) both; }
+.auth-fly-out-left { animation: auth-fly-out-left 440ms var(--ease-out-soft) both; }
+@keyframes auth-fly-in-left { from { opacity: 0; transform: translateX(-100%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes auth-fly-in-right { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes auth-fly-out-right { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+@keyframes auth-fly-out-left { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-100%); } }
+.auth-step-transition { will-change: opacity, transform; }
+.auth-step-forward { animation: auth-step-in-right 320ms var(--ease-out-soft) both; }
+.auth-step-back { animation: auth-step-in-left 320ms var(--ease-out-soft) both; }
+@keyframes auth-step-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes auth-step-in-left { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+.auth-route-current { position: relative; z-index: 2; }
+.auth-route-outgoing { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.auth-fly-in-left { animation: auth-fly-in-left 440ms var(--ease-out-soft) both; }
+.auth-fly-in-right { animation: auth-fly-in-right 440ms var(--ease-out-soft) both; }
+.auth-fly-out-right { animation: auth-fly-out-right 440ms var(--ease-out-soft) both; }
+.auth-fly-out-left { animation: auth-fly-out-left 440ms var(--ease-out-soft) both; }
+@keyframes auth-fly-in-left {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes auth-fly-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes auth-fly-out-right { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+@keyframes auth-fly-out-left { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-100%); } }
 
-/* Existing screens use the zinc ramp consistently, so these mappings turn
-   those light surfaces into one coherent dark palette without duplicating
-   dark variants across every feature page. */
-.dark .bg-white {
-  background-color: var(--color-zinc-900);
-}
-.dark [class*='bg-white/'] {
-  background-color: color-mix(in oklab, var(--color-zinc-800) 92%, transparent);
-}
-.dark .bg-zinc-50 {
-  background-color: var(--color-zinc-950);
-}
-.dark .bg-zinc-100 {
-  background-color: var(--color-zinc-800);
-}
-.dark .bg-zinc-200 {
-  background-color: var(--color-zinc-700);
-}
-.dark [class*='bg-zinc-50/'] {
-  background-color: color-mix(in oklab, var(--color-zinc-900) 75%, transparent);
-}
-.dark .text-zinc-900,
-.dark .text-zinc-800 {
-  color: var(--color-zinc-100);
-}
-.dark .text-zinc-700 {
-  color: var(--color-zinc-200);
-}
-.dark .text-zinc-600 {
-  color: var(--color-zinc-300);
-}
-.dark .text-zinc-500 {
-  color: var(--color-zinc-400);
-}
-.dark .border-zinc-100,
-.dark .border-zinc-200 {
-  border-color: var(--color-zinc-800);
-}
-.dark .border-zinc-300 {
-  border-color: var(--color-zinc-700);
-}
-.dark .bg-brand-50,
-.dark [class*='bg-brand-50/'] {
-  background-color: color-mix(
-    in oklab,
-    var(--color-brand-900) 55%,
-    var(--color-zinc-900)
-  );
-}
-.dark .text-brand-900 {
-  color: var(--color-brand-100);
-}
-.dark .text-brand-700 {
-  color: var(--color-brand-500);
-}
-.dark .bg-warning-50,
-.dark [class*='bg-warning-50/'] {
-  background-color: color-mix(
-    in oklab,
-    var(--color-warning-600) 18%,
-    var(--color-zinc-900)
-  );
-}
-.dark .bg-danger-50,
-.dark [class*='bg-danger-50/'] {
-  background-color: color-mix(
-    in oklab,
-    var(--color-danger-600) 18%,
-    var(--color-zinc-900)
-  );
-}
-.dark [class*='hover:bg-zinc-50']:hover,
-.dark [class*='hover:bg-zinc-100']:hover,
-.dark [class*='hover:bg-white']:hover,
-.dark [data-highlighted] {
-  background-color: var(--color-zinc-800);
-  color: var(--color-zinc-100);
-}
-.dark input,
-.dark textarea,
-.dark select {
-  color: var(--color-zinc-100);
-}
-.dark * {
-  --tw-ring-offset-color: var(--color-zinc-950);
+@media (prefers-reduced-motion: reduce) {
+  .auth-active-form,
+  .auth-route-layer,
+  .auth-step-transition { animation: none; }
 }
 
 /* Photo-pin markers on the results map: a room thumbnail with a price pill

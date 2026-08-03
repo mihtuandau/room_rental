@@ -4,7 +4,6 @@ import { createLoader } from 'nuqs/server';
 import { CategorySection } from '@/components/home/category-section';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
-import { HomeStats } from '@/components/home/home-stats';
 import { LandlordCta } from '@/components/home/landlord-cta';
 import { WhyChooseUs } from '@/components/home/why-choose-us';
 import { SearchView } from '@/components/search/search-view';
@@ -99,28 +98,24 @@ export default async function HomePage({ searchParams }: Props) {
     fetchProvinces(),
   ]);
   const initialRooms = queryClient.getQueryData<RoomSearchResult>(roomQueryKey);
-  const totalRooms = initialRooms?.total ?? 0;
-
   return (
     <>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <HomeHero
           provinces={provinces}
           rooms={initialRooms?.rooms ?? []}
-          totalRooms={totalRooms}
         />
         <SearchView
           amenities={amenities}
           provinces={provinces}
           browseTop={
-            <div className="space-y-12 sm:space-y-16">
-              <HomeStats totalRooms={totalRooms} />
+            <div className="flex flex-col gap-12 sm:gap-16">
               <CategorySection />
               <FeaturedSection />
             </div>
           }
           browseBottom={
-            <div className="space-y-12 sm:space-y-16 mt-0">
+            <div className="flex flex-col gap-12 sm:gap-16">
               <WhyChooseUs />
               <LandlordCta />
             </div>

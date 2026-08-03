@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { headers } from 'next/headers';
-import Script from 'next/script';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
 
@@ -52,21 +50,11 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
-
   return (
     <html
       lang="vi"
       className={`${inter.variable} h-full`}
-      suppressHydrationWarning
     >
-      <head>
-        <Script
-          src="/theme-init.js"
-          strategy="beforeInteractive"
-          nonce={nonce}
-        />
-      </head>
       <body className="flex min-h-full flex-col antialiased">
         <AppProviders>{children}</AppProviders>
       </body>

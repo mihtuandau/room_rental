@@ -28,7 +28,7 @@ export function EditListingForm({
   } = listing;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">
@@ -36,7 +36,7 @@ export function EditListingForm({
           </h1>
           <p className="mt-1 truncate text-sm text-zinc-600">{room.title}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-3 md:flex">
           <div className="text-right text-xs text-zinc-500">
             <p>Cập nhật lần cuối</p>
             <p className="font-medium text-zinc-900">
@@ -101,6 +101,26 @@ export function EditListingForm({
           onDelete={() => void listing.removeListing()}
         />
       </form>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-zinc-200 bg-white/95 px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={listing.discardChanges}
+          disabled={listing.busy}
+        >
+          Huỷ thay đổi
+        </Button>
+        <Button
+          type="submit"
+          form={FORM_ID}
+          className="flex-1"
+          disabled={listing.busy}
+        >
+          {isSubmitting ? 'Đang lưu…' : 'Lưu thay đổi'}
+        </Button>
+      </div>
     </div>
   );
 }

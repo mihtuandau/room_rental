@@ -106,15 +106,15 @@ export async function Footer() {
   ];
 
   return (
-    <footer className="mt-12 border-t border-zinc-200 sm:mt-16">
+    <footer className="mt-12 border-t border-brand-100/80 bg-brand-50/60 sm:mt-16">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-6">
         <div className="space-y-2">
           <Image
             src="/logo.png"
             alt="Trọ Ơi"
-            width={40}
-            height={40}
-            className="h-10 w-10"
+            width={48}
+            height={48}
+            className="h-12 w-12"
           />
 
           <p className="max-w-prose text-sm text-zinc-600">
@@ -142,7 +142,7 @@ export async function Footer() {
         ))}
       </div>
 
-      <div className="border-t border-zinc-100">
+      <div className="border-t border-brand-100/70">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 text-xs text-zinc-500 sm:px-6">
           <p>© {new Date().getFullYear()} Trọ Ơi. Tất cả quyền được bảo lưu.</p>
         </div>

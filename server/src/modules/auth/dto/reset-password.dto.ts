@@ -1,19 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsEmail,
   IsNumberString,
   IsString,
   Length,
   Matches,
+  IsOptional,
+  ValidateIf,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import { VN_PHONE_REGEX } from '@/common/constants/phone.constant';
+import { STRONG_PASSWORD_REGEX } from '@/common/constants/password.constant';
 
 export class ResetPasswordDto {
-  @ApiProperty({ example: '0912345678' })
+  @ApiProperty({ required: false, example: '0912345678' })
+  @ValidateIf((o) => !o.email)
   @IsString()
   @Matches(VN_PHONE_REGEX, { message: 'Invalid Vietnamese phone number.' })
-  phone!: string;
+  phone?: string;
+
+  @ApiProperty({ required: false, example: 'you@example.com' })
+  @IsOptional()
+  @IsEmail({}, { message: 'Invalid email address.' })
+  email?: string;
 
   @ApiProperty({ example: '123456' })
   @IsNumberString()
@@ -24,5 +34,6 @@ export class ResetPasswordDto {
   @IsString()
   @MinLength(8)
   @MaxLength(72)
+  @Matches(STRONG_PASSWORD_REGEX, { message: 'Password must include uppercase, lowercase, and a number.' })
   newPassword!: string;
 }

@@ -2,7 +2,9 @@ import { apiRequest } from '@/lib/api-client';
 
 export interface Profile {
   id: string;
-  phone: string;
+  phone: string | null;
+  email: string | null;
+  googleLinked: boolean;
   fullName: string | null;
   avatarUrl: string | null;
   contactPhone: string | null;
@@ -11,6 +13,7 @@ export interface Profile {
   // it only gates /admin (see client/CLAUDE.md section 1).
   role: 'user' | 'admin';
   isPhoneVerified: boolean;
+  isEmailVerified: boolean;
   createdAt: string;
 }
 
