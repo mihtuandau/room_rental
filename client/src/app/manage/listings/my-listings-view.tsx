@@ -97,15 +97,15 @@ function ListingsStats({ rooms }: { rooms: MyRoomItem[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {items.map(({ label, value, icon: Icon, tone }) => (
-        <div key={label} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+        <div key={label} className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-5">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${tone}`}>
             <Icon className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <p className="text-xl font-bold tabular-nums text-zinc-900">{value.toLocaleString('vi-VN')}</p>
-            <p className="truncate text-xs text-zinc-500">{label}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
+            <p className="text-xl font-semibold tabular-nums text-zinc-900">{value.toLocaleString('vi-VN')}</p>
           </div>
         </div>
       ))}

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AccountSecurityPage() {
   return (
-    <div className="mx-auto w-full max-w-lg px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
       <BackButton label="Về tài khoản" className="mb-4 sm:hidden" />
       <h1 className="mb-2 text-xl font-semibold tracking-tight">Bảo mật tài khoản</h1>
       <p className="mb-6 text-sm text-zinc-600">Quản lý phương thức đăng nhập và trạng thái xác minh.</p>

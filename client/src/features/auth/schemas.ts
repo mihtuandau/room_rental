@@ -57,7 +57,23 @@ export const resetPasswordSchema = z
     path: ['confirmNewPassword'],
   });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Nhập mật khẩu hiện tại.'),
+    newPassword: z
+      .string()
+      .min(8, 'Mật khẩu cần tối thiểu 8 ký tự.')
+      .max(72, 'Mật khẩu tối đa 72 ký tự.')
+      .regex(STRONG_PASSWORD, 'Mật khẩu cần có chữ hoa, chữ thường và số.'),
+    confirmNewPassword: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmNewPassword, {
+    message: 'Mật khẩu nhập lại không khớp.',
+    path: ['confirmNewPassword'],
+  });
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

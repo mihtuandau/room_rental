@@ -5,6 +5,7 @@ export interface Profile {
   phone: string | null;
   email: string | null;
   googleLinked: boolean;
+  hasPassword: boolean;
   fullName: string | null;
   avatarUrl: string | null;
   contactPhone: string | null;

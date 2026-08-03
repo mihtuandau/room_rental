@@ -22,8 +22,8 @@ export default async function EditListingPage({ params }: Props) {
   ]);
 
   return (
-    <div className="w-full px-4 py-8 md:px-6">
-        <BackButton label="Tin của tôi" className="mb-4 sm:hidden" />
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
+      <BackButton label="Tin của tôi" className="mb-4 sm:hidden" />
       <EditListingView roomId={Number(id)} amenities={amenities} provinces={provinces} />
     </div>
   );
