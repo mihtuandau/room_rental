@@ -2,7 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MlMap, Marker, Popup } from 'maplibre-gl';
 import { PLACEHOLDER_IMAGE, type RoomCardItem } from '@/components/rooms/room-card';
 import type { SearchState } from '@/features/rooms/search-params';
 import { ROOM_TYPE_LABELS } from '@/lib/constants';
@@ -30,10 +30,12 @@ function getRoomImageUrl(room: RoomCardItem) {
 }
 
 function popupHtml(room: RoomCardItem) {
-  return `<a class="rr-popup" href="/room/${encodeURIComponent(room.slug)}">
+  return `<a class="rr-popup rr-popup--room" href="/room/${encodeURIComponent(room.slug)}">
+    <img class="rr-popup-image" src="${escapeHtml(getRoomImageUrl(room))}" alt="" />
     <span class="rr-popup-title">${escapeHtml(room.title)}</span>
     <span class="rr-popup-meta">${escapeHtml(ROOM_TYPE_LABELS[room.roomType])} · ${escapeHtml(room.district)}</span>
     <span class="rr-popup-price">${escapeHtml(formatPriceShort(room.price))}/tháng</span>
+    <span class="rr-popup-action">Xem chi tiết phòng →</span>
   </a>`;
 }
 
@@ -216,7 +218,7 @@ export function ResultsMap({
       markerButton.appendChild(dot);
 
       const popupContent = document.createElement('div');
-      popupContent.className = 'rr-popup';
+      popupContent.className = 'rr-popup rr-popup--user';
       const title = document.createElement('strong');
       title.className = 'rr-popup-title';
       title.textContent = 'Vị trí của bạn';
@@ -242,6 +244,7 @@ export function ResultsMap({
     const els = markerEls.current;
     els.clear();
     let cancelled = false;
+    let closePopupOnMapClick: (() => void) | null = null;
 
     void import('maplibre-gl').then(({ Marker, Popup, LngLatBounds }) => {
       if (cancelled) return;
@@ -250,6 +253,15 @@ export function ResultsMap({
       const bounds = new LngLatBounds();
       if (userCenter) bounds.extend(userCenter);
       const renderedPoints = new Map<string, number>();
+      let activePopup: Popup | null = null;
+      let pinnedPopup: Popup | null = null;
+      let closeTimer: ReturnType<typeof setTimeout> | null = null;
+      closePopupOnMapClick = () => {
+        activePopup?.remove();
+        activePopup = null;
+        pinnedPopup = null;
+      };
+      map.on('click', closePopupOnMapClick);
 
       for (const room of locatedRooms) {
         const roomPoint: [number, number] = [room.longitude as number, room.latitude as number];
@@ -285,9 +297,44 @@ export function ResultsMap({
         el.addEventListener('mouseenter', () => onActivateRef.current?.(room.id));
         el.addEventListener('mouseleave', () => onActivateRef.current?.(null));
 
+        // Leaving anchor unset uses MapLibre's automatic edge-aware placement.
+        const popup = new Popup({ offset: 32, closeButton: false, closeOnClick: false }).setHTML(popupHtml(room));
+        const cancelClose = () => {
+          if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+          }
+        };
+        const scheduleClose = () => {
+          if (pinnedPopup === popup) return;
+          cancelClose();
+          closeTimer = setTimeout(() => {
+            popup.remove();
+            if (activePopup === popup) activePopup = null;
+            closeTimer = null;
+          }, 180);
+        };
+        const openPopup = () => {
+          cancelClose();
+          activePopup?.remove();
+          activePopup = popup;
+          pinnedPopup = popup;
+          popup.setLngLat(markerPoint).addTo(map);
+          const popupLink = popup.getElement()?.querySelector<HTMLElement>('.rr-popup');
+          if (popupLink && popupLink.dataset.hoverBound !== 'true') {
+            popupLink.dataset.hoverBound = 'true';
+            popupLink.addEventListener('mouseenter', cancelClose);
+            popupLink.addEventListener('mouseleave', scheduleClose);
+          }
+        };
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openPopup();
+        });
+        el.addEventListener('mouseleave', scheduleClose);
+
         const marker = new Marker({ element: el, anchor: 'bottom' })
           .setLngLat(markerPoint)
-          .setPopup(new Popup({ offset: 32, closeButton: false }).setHTML(popupHtml(room)))
           .addTo(map);
         markersRef.current.push(marker);
         els.set(room.id, el);
@@ -305,6 +352,7 @@ export function ResultsMap({
 
     return () => {
       cancelled = true;
+      if (closePopupOnMapClick) map.off('click', closePopupOnMapClick);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       els.clear();
