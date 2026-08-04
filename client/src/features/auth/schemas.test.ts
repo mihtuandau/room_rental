@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { forgotPasswordSchema, registerSchema } from './schemas';
 
-describe('auth email OTP contracts', () => {
-  it('requires an email for registration OTP', () => {
+describe('auth registration OTP contracts', () => {
+  it('accepts either an email or phone for registration OTP', () => {
     expect(
       registerSchema.safeParse({
         identifier: '0912345678',
@@ -10,7 +10,7 @@ describe('auth email OTP contracts', () => {
         confirmPassword: 'StrongPass1',
         otpCode: '123456',
       }).success,
-    ).toBe(false);
+    ).toBe(true);
 
     expect(
       registerSchema.safeParse({

@@ -27,10 +27,19 @@ export const envSchema = z
     MAIL_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().email().optional(),
     MAIL_FROM_NAME: z.string().min(1).optional(),
+    // Development-only deterministic OTP for the mock SMS transport.
+    DEV_OTP_CODE: z
+      .string()
+      .regex(/^\d{6}$/)
+      .optional(),
   })
   .refine((env) => env.JWT_ACCESS_SECRET !== env.JWT_REFRESH_SECRET, {
     message: 'JWT access and refresh secrets must be different.',
     path: ['JWT_REFRESH_SECRET'],
+  })
+  .refine((env) => env.NODE_ENV !== 'production' || !env.DEV_OTP_CODE, {
+    message: 'DEV_OTP_CODE must not be configured in production.',
+    path: ['DEV_OTP_CODE'],
   });
 
 export type EnvConfig = z.infer<typeof envSchema>;
