@@ -39,12 +39,17 @@ export class EmailService {
     if (apiKey && resendFrom) {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ from: resendFrom, to: [to], subject, text }),
       });
       if (!response.ok) {
         const providerMessage = await response.text().catch(() => '');
-        this.logger.error(`Email provider rejected delivery (status ${response.status}): ${providerMessage.slice(0, 300)}`);
+        this.logger.error(
+          `Email provider rejected delivery (status ${response.status}): ${providerMessage.slice(0, 300)}`,
+        );
         throw new Error('Email delivery failed.');
       }
       return;

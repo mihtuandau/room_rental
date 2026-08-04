@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -26,12 +27,19 @@ function toPublicProfile(profile: {
   [key: string]: unknown;
 }) {
   const { googleId, passwordHash, ...safeProfile } = profile;
-  return { ...safeProfile, googleLinked: Boolean(googleId), hasPassword: Boolean(passwordHash) };
+  return {
+    ...safeProfile,
+    googleLinked: Boolean(googleId),
+    hasPassword: Boolean(passwordHash),
+  };
 }
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {}
 
   async getProfile(userId: string) {
     const profile = await this.prisma.user.findUniqueOrThrow({
@@ -42,11 +50,30 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    if (dto.avatarUrl && !this.isOwnedCloudinaryAvatar(dto.avatarUrl, userId)) {
+      throw new BadRequestException('Avatar must be uploaded to Cloudinary.');
+    }
     const profile = await this.prisma.user.update({
       where: { id: userId },
       data: dto,
       select: PROFILE_SELECT,
     });
     return toPublicProfile(profile);
+  }
+
+  private isOwnedCloudinaryAvatar(urlValue: string, userId: string) {
+    try {
+      const url = new URL(urlValue);
+      const cloudName = this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME');
+      return (
+        url.protocol === 'https:' &&
+        url.hostname === 'res.cloudinary.com' &&
+        url.pathname.startsWith(
+          `/${cloudName}/image/upload/avatars/${userId}/`,
+        )
+      );
+    } catch {
+      return false;
+    }
   }
 }

@@ -6,30 +6,23 @@ import {
   IsString,
   Length,
   Matches,
-  ValidateIf,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { VN_PHONE_REGEX } from '@/common/constants/phone.constant';
 import { STRONG_PASSWORD_REGEX } from '@/common/constants/password.constant';
 
 export class RegisterDto {
-  @ApiProperty({ required: false, example: '0912345678' })
-  @ValidateIf((o) => !o.email)
-  @IsString()
-  @Matches(VN_PHONE_REGEX, { message: 'Invalid Vietnamese phone number.' })
-  phone?: string;
-
-  @ApiProperty({ required: false, example: 'you@example.com' })
-  @IsOptional()
+  @ApiProperty({ example: 'you@example.com' })
   @IsEmail({}, { message: 'Invalid email address.' })
-  email?: string;
+  email!: string;
 
   @ApiProperty({ minLength: 8 })
   @IsString()
   @MinLength(8)
   @MaxLength(72)
-  @Matches(STRONG_PASSWORD_REGEX, { message: 'Password must include uppercase, lowercase, and a number.' })
+  @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Password must include uppercase, lowercase, and a number.',
+  })
   password!: string;
 
   @ApiProperty({

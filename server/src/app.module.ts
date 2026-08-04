@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
@@ -21,11 +21,20 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { HealthModule } from './modules/health/health.module';
 import { RoomRentThrottlerGuard } from './common/guards/roomrent-throttler.guard';
+import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [{ ttl: 60_000, limit: 100 }],
+        ...(config.get('NODE_ENV') === 'production' && {
+          storage: new RedisThrottlerStorage(config),
+        }),
+      }),
+    }),
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     ScheduleModule.forRoot(),
     PrismaModule,

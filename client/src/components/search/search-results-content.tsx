@@ -20,12 +20,23 @@ const ResultsMap = dynamic(
   },
 );
 
+function SearchResultsSkeleton({ view }: { view: ResultsView }) {
+  if (view === 'map') {
+    return (
+      <div className="h-[70vh] min-h-[420px] w-full animate-pulse rounded-lg border border-zinc-200 bg-zinc-100" />
+    );
+  }
+
+  return <RoomGridSkeleton count={PAGE_SIZE} />;
+}
+
 export function SearchResultsContent({
   data,
   view,
   activeId,
   hasActiveFilters,
   isPending,
+  isFetching,
   isError,
   isPlaceholderData,
   state,
@@ -39,6 +50,7 @@ export function SearchResultsContent({
   activeId: number | null;
   hasActiveFilters: boolean;
   isPending: boolean;
+  isFetching: boolean;
   isError: boolean;
   isPlaceholderData: boolean;
   state: SearchState;
@@ -47,7 +59,12 @@ export function SearchResultsContent({
   onClear: () => void;
   onRetry: () => void;
 }) {
-  if (isPending) return <RoomGridSkeleton count={PAGE_SIZE} />;
+  // Show a layout-matching skeleton during the first client fetch after a
+  // reload as well as when no cached result exists. Keep previous results
+  // visible for pagination/filter transitions via `isPlaceholderData`.
+  if (isPending || (isFetching && !isPlaceholderData)) {
+    return <SearchResultsSkeleton view={view} />;
+  }
   if (isError || !data) return <ErrorState onRetry={onRetry} />;
   if (!data.rooms.length) {
     return hasActiveFilters ? (

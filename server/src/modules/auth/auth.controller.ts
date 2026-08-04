@@ -55,7 +55,10 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken } = await this.authService.login(dto, dto.password);
+    const { accessToken, refreshToken } = await this.authService.login(
+      dto,
+      dto.password,
+    );
     res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions);
     return { accessToken };
   }
@@ -113,7 +116,7 @@ export class AuthController {
   @Post('otp/send')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) // anti SMS-spam
-  @ApiOperation({ summary: 'Send a one-time OTP code by phone or email' })
+  @ApiOperation({ summary: 'Send a one-time OTP code by email' })
   async sendOtp(@Body() dto: SendOtpDto) {
     await this.authService.sendOtp(dto, dto.purpose);
     return { success: true };
@@ -134,7 +137,9 @@ export class AuthController {
   @Post('otp/verify-reset')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Verify a password-reset OTP before setting a new password' })
+  @ApiOperation({
+    summary: 'Verify a password-reset OTP before setting a new password',
+  })
   async verifyResetOtp(@Body() dto: VerifyOtpDto) {
     await this.authService.verifyResetOtp(dto);
     return { success: true };
@@ -159,7 +164,11 @@ export class AuthController {
     @CurrentUser('id') userId: string,
     @Body() dto: ChangePasswordDto,
   ) {
-    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
+    await this.authService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
     return { success: true };
   }
 }

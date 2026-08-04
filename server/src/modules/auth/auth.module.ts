@@ -5,7 +5,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { SmsService } from './sms/sms.service';
 import { GoogleTokenService } from './google/google-token.service';
 import { EmailService } from './email/email.service';
 
@@ -18,7 +17,6 @@ import { EmailService } from './email/email.service';
     AuthService,
     JwtAccessStrategy,
     JwtRefreshStrategy,
-    SmsService,
     GoogleTokenService,
     EmailService,
   ],

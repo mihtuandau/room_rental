@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { AuthService } from './auth.service';
-import { SmsService } from './sms/sms.service';
+import { EmailService } from './email/email.service';
 import { GoogleTokenService } from './google/google-token.service';
 
 describe('AuthService registration OTP', () => {
@@ -12,7 +12,7 @@ describe('AuthService registration OTP', () => {
     const codeHash = await bcrypt.hash('123456', 4);
     const otp = {
       id: 'otp-1',
-      phone: '0912345678',
+      email: 'owner@example.com',
       purpose: OtpPurpose.register,
       codeHash,
       attempts: 0,
@@ -34,8 +34,8 @@ describe('AuthService registration OTP', () => {
         findFirst: jest.fn().mockResolvedValue(otp),
         update: jest.fn(),
       },
-      $transaction: jest.fn(
-        async (callback: (transaction: typeof tx) => unknown) => callback(tx),
+      $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+        callback(tx),
       ),
     };
     const jwt = {
@@ -55,12 +55,12 @@ describe('AuthService registration OTP', () => {
       prisma as unknown as PrismaService,
       jwt as unknown as JwtService,
       config as unknown as ConfigService,
-      {} as SmsService,
+      {} as EmailService,
       {} as GoogleTokenService,
     );
 
     const result = await service.register({
-      phone: otp.phone,
+      email: otp.email,
       password: 'safe-password',
       fullName: 'Nguyễn Văn A',
       otpCode: '123456',
@@ -77,11 +77,11 @@ describe('AuthService registration OTP', () => {
     });
     expect(tx.user.create).toHaveBeenCalledWith({
       data: {
-        phone: otp.phone,
+        email: otp.email,
         passwordHash: expect.any(String),
         fullName: 'Nguyễn Văn A',
         role: Role.user,
-        isPhoneVerified: true,
+        isEmailVerified: true,
       },
     });
     expect(result).toEqual({
@@ -93,7 +93,7 @@ describe('AuthService registration OTP', () => {
   it('does not create an account when the OTP is incorrect', async () => {
     const otp = {
       id: 'otp-1',
-      phone: '0912345678',
+      email: 'owner@example.com',
       purpose: OtpPurpose.register,
       codeHash: await bcrypt.hash('654321', 4),
       attempts: 0,
@@ -112,13 +112,13 @@ describe('AuthService registration OTP', () => {
       prisma as unknown as PrismaService,
       {} as JwtService,
       {} as ConfigService,
-      {} as SmsService,
+      {} as EmailService,
       {} as GoogleTokenService,
     );
 
     await expect(
       service.register({
-        phone: otp.phone,
+        email: otp.email,
         password: 'safe-password',
         otpCode: '123456',
       }),
@@ -130,24 +130,72 @@ describe('AuthService registration OTP', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it('returns the same successful reset-OTP behavior for an unknown phone without sending', async () => {
+  it('does not create an OTP for an unknown reset email', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
       otpCode: { create: jest.fn() },
     };
-    const sms = { send: jest.fn() };
+    const email = { send: jest.fn() };
     const service = new AuthService(
       prisma as unknown as PrismaService,
       {} as JwtService,
       {} as ConfigService,
-      sms as unknown as SmsService,
+      email as unknown as EmailService,
       {} as GoogleTokenService,
     );
 
     await expect(
-      service.sendOtp('0912345678', OtpPurpose.reset_password),
+      service.sendOtp(
+        { email: 'unknown@example.com' },
+        OtpPurpose.reset_password,
+      ),
     ).resolves.toBeUndefined();
     expect(prisma.otpCode.create).not.toHaveBeenCalled();
-    expect(sms.send).not.toHaveBeenCalled();
+    expect(email.send).not.toHaveBeenCalled();
+  });
+
+  it('sends registration OTP by email only', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(null) },
+      otpCode: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const email = { send: jest.fn().mockResolvedValue(undefined) };
+    const service = new AuthService(
+      prisma as unknown as PrismaService,
+      {} as JwtService,
+      {} as ConfigService,
+      email as unknown as EmailService,
+      {} as GoogleTokenService,
+    );
+
+    await service.sendOtp({ email: 'owner@example.com' }, OtpPurpose.register);
+
+    expect(prisma.otpCode.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        email: 'owner@example.com',
+        purpose: OtpPurpose.register,
+        codeHash: expect.any(String),
+        expiresAt: expect.any(Date),
+      }),
+    });
+    expect(email.send).toHaveBeenCalledWith(
+      'owner@example.com',
+      expect.any(String),
+      expect.stringContaining('Mã xác minh'),
+    );
+  });
+
+  it('rejects phone-only OTP requests', async () => {
+    const service = new AuthService(
+      {} as PrismaService,
+      {} as JwtService,
+      {} as ConfigService,
+      {} as EmailService,
+      {} as GoogleTokenService,
+    );
+
+    await expect(
+      service.sendOtp({ phone: '0912345678' }, OtpPurpose.register),
+    ).rejects.toThrow('OTP is available by email only.');
   });
 });
