@@ -16,6 +16,7 @@ export type ResultsView = 'list' | 'map';
 const CLEARED: Partial<SearchState> = {
   keyword: '',
   city: '',
+  district: '',
   ward: '',
   roomType: null,
   priceMin: null,
@@ -32,6 +33,9 @@ const CLEARED: Partial<SearchState> = {
 };
 
 function locationSuffix(state: SearchState) {
+  if (state.ward && state.district && state.city)
+    return ` tại ${state.ward}, ${state.district}, ${state.city}`;
+  if (state.district && state.city) return ` tại ${state.district}, ${state.city}`;
   if (state.ward && state.city) return ` tại ${state.ward}, ${state.city}`;
   if (state.city) return ` tại ${state.city}`;
   return '';
@@ -58,6 +62,7 @@ export function useSearchViewState() {
   const hasActiveFilters =
     Boolean(state.keyword) ||
     Boolean(state.city) ||
+    Boolean(state.district) ||
     Boolean(state.ward) ||
     Boolean(state.roomType) ||
     state.mode === 'nearby' ||
@@ -84,7 +89,9 @@ export function useSearchViewState() {
     state.mode === 'nearby'
       ? `Phòng gần vị trí của bạn${state.radiusKm ? ` · ${state.radiusKm} km` : ''}${locationSuffix(state)}`
       : state.ward
-        ? `Phòng trọ tại ${state.ward}, ${state.city}`
+        ? `Phòng trọ tại ${state.ward}, ${state.district ? `${state.district}, ` : ''}${state.city}`
+        : state.district
+          ? `Phòng trọ tại ${state.district}, ${state.city}`
         : state.city
           ? `Phòng trọ tại ${state.city}`
           : hasActiveFilters

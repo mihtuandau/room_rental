@@ -39,7 +39,9 @@ export async function generateMetadata({
   const roomType = parsed.roomType
     ? ROOM_TYPE_LABELS[parsed.roomType]
     : 'Phòng cho thuê';
-  const location = parsed.ward || parsed.city;
+  const location = [parsed.ward, parsed.district, parsed.city]
+    .filter(Boolean)
+    .join(', ');
   const title = hasSearchState
     ? `${roomType}${location ? ` tại ${location}` : ''} — kết quả tìm kiếm`
     : 'Tìm phòng trọ, nhà nguyên căn đã xác minh';

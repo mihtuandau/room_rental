@@ -77,6 +77,7 @@ export function Header() {
       void setUrlState({
         keyword: null,
         city: null,
+        district: null,
         ward: null,
         roomType: null,
         priceMin: null,

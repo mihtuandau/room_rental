@@ -49,9 +49,19 @@ export function ActiveFilters({
 
   if (state.keyword)
     chips.push({ key: 'keyword', label: `“${state.keyword}”`, remove: { keyword: '' } });
-  // Removing the city also clears the ward (a ward without its city is meaningless).
+  // Removing an ancestor also clears all finer location levels.
   if (state.city)
-    chips.push({ key: 'city', label: state.city, remove: { city: '', ward: '' } });
+    chips.push({
+      key: 'city',
+      label: state.city,
+      remove: { city: '', district: '', ward: '' },
+    });
+  if (state.district)
+    chips.push({
+      key: 'district',
+      label: state.district,
+      remove: { district: '', ward: '' },
+    });
   if (state.ward)
     chips.push({ key: 'ward', label: state.ward, remove: { ward: '' } });
   if (state.roomType)

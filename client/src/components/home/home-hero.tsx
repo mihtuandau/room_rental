@@ -13,7 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { RoomCardItem } from '@/components/rooms/room-card';
-import { fetchWards, type ProvinceOption } from '@/features/locations/api';
+import {
+  fetchDistricts,
+  fetchWards,
+  type ProvinceOption,
+} from '@/features/locations/api';
 import { useRoomsSearch } from '@/features/rooms/hooks';
 import { isSearchExpanded, searchParsers, toSearchParams } from '@/features/rooms/search-params';
 import { PRICE_RANGE_OPTIONS, RADIUS_OPTIONS } from '@/lib/constants';
@@ -78,6 +82,8 @@ interface ReverseGeocodeResponse {
     quarter?: string;
     neighbourhood?: string;
     city_district?: string;
+    hamlet?: string;
+    locality?: string;
   };
 }
 
@@ -98,6 +104,11 @@ function normalizePlaceName(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+}
+
+function normalizeDistrictFallback(value: string) {
+  if (/^Quận\s+\d+$/iu.test(value.trim())) return value.trim();
+  return stripPlacePrefix(value);
 }
 
 function matchByName<T extends string>(rawValues: (string | undefined)[], options: readonly T[]) {
@@ -145,12 +156,12 @@ async function resolveNearbyPlace(center: [number, number], provinces: ProvinceO
   const address = result.address;
   const province = matchByName(
     [
-      address?.city,
-      address?.town,
-      address?.village,
       address?.state,
       address?.province,
       address?.municipality,
+      address?.city,
+      address?.town,
+      address?.village,
       address?.county,
       address?.state_district,
       address?.district,
@@ -159,28 +170,72 @@ async function resolveNearbyPlace(center: [number, number], provinces: ProvinceO
     provinces.map((provinceOption) => provinceOption.value),
   );
   const provinceOption = provinces.find((option) => option.value === province);
-  const wards = await fetchWards(provinceOption?.code);
-  const ward = matchByName(
-    [
-      address?.suburb,
-      address?.quarter,
-      address?.neighbourhood,
-      address?.city_district,
-      address?.borough,
-      address?.city_block,
-      address?.residential,
-      address?.pedestrian,
-      address?.road,
-      address?.village,
-      address?.town,
-      address?.county,
-      address?.district,
-      result.display_name,
-    ],
-    wards,
+  const districts = await fetchDistricts(provinceOption?.code);
+  const wardCandidates = [
+    address?.suburb,
+    address?.quarter,
+    address?.neighbourhood,
+    address?.city_block,
+    address?.hamlet,
+    address?.locality,
+    address?.village,
+  ];
+  const districtCandidates = [
+    address?.city_district,
+    address?.state_district,
+    address?.district,
+    address?.county,
+    address?.borough,
+  ];
+  const districtFallbackCandidates = [
+    address?.city_district,
+    address?.state_district,
+    address?.district,
+    address?.county,
+    address?.borough,
+  ];
+  // Prefer the district that owns the reverse-geocoded ward. This prevents
+  // ambiguous geocoder strings from pairing a ward with an unrelated district
+  // (for example Linh Xuân with Quận 1).
+  const districtByWard = districts
+    .map((districtOption) => ({
+      district: districtOption,
+      ward: matchByName(wardCandidates, districtOption.wardNames ?? []),
+    }))
+    // Numeric wards (e.g. "3") are repeated across many districts and cannot
+    // identify a parent district by themselves. Only named wards may provide
+    // the fallback district relationship.
+    .find(
+      (candidate) =>
+        Boolean(candidate.ward) &&
+        !/^\d+$/u.test(normalizePlaceName(candidate.ward ?? '')),
+    );
+  const district = districtByWard?.district.value ||
+    matchByName(
+      districtCandidates,
+      districts.map((districtOption) => districtOption.value),
+    ) ||
+    normalizeDistrictFallback(
+      districtFallbackCandidates.find(
+        (candidate): candidate is string => Boolean(candidate?.trim()),
+      ) ?? '',
+    );
+  const districtOption = districts.find((option) => option.value === district);
+  const wards = await fetchWards(provinceOption?.code, districtOption?.code);
+  const matchedWard =
+    districtByWard?.ward ||
+    matchByName(wardCandidates, wards);
+  const fallbackWard = normalizeDistrictFallback(
+    wardCandidates.find((candidate): candidate is string => Boolean(candidate?.trim())) ?? '',
   );
+  // A numeric ward is ambiguous without its parent district. Do not expose a
+  // misleading partial location if the reverse-geocoder omitted that parent.
+  const ward =
+    matchedWard || (wards.length === 0 && district && !/^\d+$/u.test(normalizePlaceName(fallbackWard)))
+      ? matchedWard || fallbackWard
+      : '';
 
-  return { city: province, ward };
+  return { city: province, district, ward };
 }
 
 export function HomeHero({
@@ -211,6 +266,40 @@ export function HomeHero({
       (p) => p.priceMin === urlState.priceMin && p.priceMax === urlState.priceMax,
     )?.value ?? ALL,
   );
+
+  // The header can clear the search URL while this home component stays
+  // mounted. Keep the hero's local controls aligned with the canonical URL so
+  // returning from results never leaves a stale nearby center or radius behind.
+  useEffect(() => {
+    const parsedCenter =
+      urlState.lat && urlState.lng
+        ? [Number(urlState.lng), Number(urlState.lat)] as [number, number]
+        : null;
+    const hasCoordinates =
+      parsedCenter !== null && parsedCenter.every((value) => Number.isFinite(value));
+    const frame = window.requestAnimationFrame(() => {
+      setCity(urlState.city);
+      setKeyword(urlState.keyword);
+      setCenterMode(urlState.mode === 'nearby' && hasCoordinates ? 'nearby' : 'province');
+      setUserCenter(hasCoordinates ? parsedCenter : null);
+      setRadiusKm(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
+      setPriceRangeValue(
+        PRICE_RANGE_OPTIONS.find(
+          (p) => p.priceMin === urlState.priceMin && p.priceMax === urlState.priceMax,
+        )?.value ?? ALL,
+      );
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    urlState.city,
+    urlState.keyword,
+    urlState.lat,
+    urlState.lng,
+    urlState.mode,
+    urlState.priceMax,
+    urlState.priceMin,
+    urlState.radiusKm,
+  ]);
   const expanded = isSearchExpanded(urlState);
   const liveSearchParams = useMemo(() => toSearchParams(urlState), [urlState]);
   const liveSearch = useRoomsSearch(liveSearchParams);
@@ -235,6 +324,7 @@ export function HomeHero({
     override?: {
       center?: [number, number];
       city?: string;
+      district?: string;
       ward?: string;
       mode?: SearchCenterMode;
       radiusKm?: number;
@@ -258,6 +348,7 @@ export function HomeHero({
     setUrlState({
       keyword: matchedProvince ? '' : typedLocation,
       city: matchedProvince?.value ?? override?.city ?? city,
+      district: nextMode === 'nearby' ? (override?.district ?? urlState.district) : '',
       ward: nextMode === 'nearby' ? (override?.ward ?? urlState.ward) : '',
       roomType: urlState.roomType,
       priceMin: range?.priceMin ?? null,
@@ -282,6 +373,7 @@ export function HomeHero({
       async (position) => {
         const nextCenter: [number, number] = [position.coords.longitude, position.coords.latitude];
         let detectedCity = '';
+        let detectedDistrict = '';
         let detectedWard = '';
         setCenterMode('nearby');
         setUserCenter(nextCenter);
@@ -290,21 +382,26 @@ export function HomeHero({
         try {
           const place = await resolveNearbyPlace(nextCenter, provinces);
           detectedCity = place.city;
+          detectedDistrict = place.district;
           detectedWard = place.ward;
         } catch {
           detectedCity = '';
+          detectedDistrict = '';
           detectedWard = '';
         }
 
         setCity(detectedCity);
         setLocationMessage(
           detectedCity
-            ? `Đã tự chọn khu vực: ${detectedWard ? `${detectedWard}, ` : ''}${detectedCity}.`
-            : 'Đã ghim vị trí hiện tại nhưng chưa xác định được tỉnh/phường.',
+            ? `Đã tự chọn khu vực: ${
+                detectedWard ? `${detectedWard}, ` : ''
+              }${detectedDistrict ? `${detectedDistrict}, ` : ''}${detectedCity}.`
+            : 'Đã ghim vị trí hiện tại nhưng chưa xác định được tỉnh/huyện/phường.',
         );
         submit({
           center: nextCenter,
           city: detectedCity,
+          district: detectedDistrict,
           ward: detectedWard,
           mode: 'nearby',
           radiusKm: DEFAULT_RADIUS_KM,
@@ -313,7 +410,8 @@ export function HomeHero({
       () => {
         setLocationMessage('Chưa lấy được vị trí. Bạn có thể nhập khu vực để tìm.');
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+      // Do not reuse a stale location when the user explicitly presses "Gần tôi".
+      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
     );
   };
 
