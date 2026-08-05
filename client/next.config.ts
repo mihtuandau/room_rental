@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
     localPatterns: [{ pathname: '/**' }],
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
+      // Google OAuth avatars are served from this exact hostname.
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       // seed data uses placeholder images; drop this once real listings exist
       { protocol: 'https', hostname: 'picsum.photos' },
     ],

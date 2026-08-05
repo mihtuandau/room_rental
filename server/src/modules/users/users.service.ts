@@ -68,9 +68,7 @@ export class UsersService {
       return (
         url.protocol === 'https:' &&
         url.hostname === 'res.cloudinary.com' &&
-        url.pathname.startsWith(
-          `/${cloudName}/image/upload/avatars/${userId}/`,
-        )
+        url.pathname.startsWith(`/${cloudName}/image/upload/avatars/${userId}/`)
       );
     } catch {
       return false;

@@ -16,7 +16,7 @@ async function getRoom(slug: string): Promise<RoomDetail | null> {
 async function getSimilarRooms(city: string, roomType: string, currentRoomId: number) {
   try {
     const res = await serverFetch<RoomSearchResult>(
-      `/rooms?city=${encodeURIComponent(city)}&roomType=${roomType}&pageSize=5`,
+      `/rooms?city=${encodeURIComponent(city)}&roomType=${roomType}&pageSize=6`,
       { revalidate: 120 },
     );
     return (res.rooms ?? []).filter((r) => r.id !== currentRoomId).slice(0, 4);
@@ -28,10 +28,10 @@ async function getSimilarRooms(city: string, roomType: string, currentRoomId: nu
 async function getRecommendedRooms(city: string, currentRoomId: number) {
   try {
     const res = await serverFetch<RoomSearchResult>(
-      `/rooms?city=${encodeURIComponent(city)}&sort=newest&pageSize=6`,
+      `/rooms?city=${encodeURIComponent(city)}&sort=newest&pageSize=10`,
       { revalidate: 120 },
     );
-    return (res.rooms ?? []).filter((r) => r.id !== currentRoomId).slice(0, 4);
+    return (res.rooms ?? []).filter((r) => r.id !== currentRoomId).slice(0, 7);
   } catch {
     return [];
   }

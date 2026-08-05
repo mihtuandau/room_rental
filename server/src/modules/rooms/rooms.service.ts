@@ -21,7 +21,18 @@ const OWNER_PUBLIC_SELECT = {
   id: true,
   fullName: true,
   avatarUrl: true,
+  createdAt: true,
+  phone: true,
+  contactPhone: true,
 } as const;
+
+/** Keep a useful hint visible without exposing a landlord's full number. */
+function maskPhone(phone: string | null | undefined) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 6) return '******';
+  return `${digits.slice(0, 2)}${'*'.repeat(digits.length - 5)}${digits.slice(-3)}`;
+}
 
 const COVER_IMAGE_INCLUDE = {
   images: {
@@ -223,8 +234,14 @@ export class RoomsService {
     });
     if (!room) throw new NotFoundException('Listing not found.');
 
+    const { phone, contactPhone, ...publicOwner } = room.owner;
+
     return {
       ...room,
+      owner: {
+        ...publicOwner,
+        contactPhoneMasked: maskPhone(contactPhone ?? phone),
+      },
       // flatten the join rows — the client only cares about the amenities themselves
       amenities: room.amenities.map((ra) => ra.amenity),
     };

@@ -123,8 +123,11 @@ describe('RoomsService', () => {
         viewCount: 3,
         owner: {
           id: 'owner-1',
+          phone: '0912345678',
+          contactPhone: null,
           fullName: 'Nguyễn Văn A',
           avatarUrl: null,
+          createdAt: new Date('2025-01-15T00:00:00.000Z'),
         },
         images: [],
         amenities: [],
@@ -161,6 +164,9 @@ describe('RoomsService', () => {
               id: true,
               fullName: true,
               avatarUrl: true,
+              createdAt: true,
+              phone: true,
+              contactPhone: true,
             },
           },
           amenities: { include: { amenity: true } },
@@ -170,6 +176,8 @@ describe('RoomsService', () => {
         id: 'owner-1',
         fullName: 'Nguyễn Văn A',
         avatarUrl: null,
+        createdAt: new Date('2025-01-15T00:00:00.000Z'),
+        contactPhoneMasked: '09*****678',
       });
       expect(result.owner).not.toHaveProperty('contactPhone');
       expect(result.owner).not.toHaveProperty('zaloUrl');

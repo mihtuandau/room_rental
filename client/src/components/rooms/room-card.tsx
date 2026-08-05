@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BedDouble, Heart, LoaderCircle, MapPin, Ruler } from 'lucide-react';
+import { BedDouble, Clock3, Eye, Heart, LoaderCircle, MapPin, Ruler } from 'lucide-react';
 import { VerifiedBadge } from '@/components/ui/badge';
 import { ROOM_TYPE_LABELS, type RoomType } from '@/lib/constants';
 import { cn, formatPrice } from '@/lib/utils';
@@ -30,10 +30,28 @@ export interface RoomCardItem {
   latitude: number | null;
   longitude: number | null;
   createdAt: string;
+  /** Last listing update, when returned by the rooms endpoint. */
+  updatedAt?: string;
+  /** Public view count, when returned by the rooms endpoint. */
+  viewCount?: number;
   images: { url: string }[];
 }
 
 export const PLACEHOLDER_IMAGE = '/room1.jpg';
+
+function freshnessLabel(date: string | undefined, now: number) {
+  if (!date) return null;
+  const timestamp = new Date(date).getTime();
+  if (!Number.isFinite(timestamp)) return null;
+  const days = Math.max(0, Math.floor((now - timestamp) / (24 * 60 * 60 * 1000)));
+  if (days === 0) return 'Cập nhật hôm nay';
+  if (days === 1) return 'Cập nhật hôm qua';
+  if (days < 7) return `Cập nhật ${days} ngày trước`;
+  return `Cập nhật ${new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(new Date(timestamp))}`;
+}
 const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // "Mới": posted within the last 3 days
 
 export function RoomCard({
@@ -62,6 +80,7 @@ export function RoomCard({
   const [now] = useState(() => Date.now());
   const [imageLoaded, setImageLoaded] = useState(false);
   const isNew = now - new Date(room.createdAt).getTime() < NEW_WINDOW_MS;
+  const freshness = freshnessLabel(room.updatedAt, now);
 
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault(); // this button sits over the card's stretched link
@@ -141,8 +160,8 @@ export function RoomCard({
           <MapPin className="h-3 w-3 shrink-0" aria-hidden />
           {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city}
         </p>
-        {(room.bedrooms !== null || room.area !== null) && (
-          <div className="mt-auto flex items-center gap-3 pt-2 text-xs text-zinc-500">
+        {(room.bedrooms !== null || room.area !== null || freshness || room.viewCount != null) && (
+          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-[11px] text-zinc-500">
             {room.bedrooms !== null && (
               <span className="flex items-center gap-1">
                 <BedDouble className="h-3.5 w-3.5" aria-hidden />
@@ -153,6 +172,18 @@ export function RoomCard({
               <span className="flex items-center gap-1">
                 <Ruler className="h-3.5 w-3.5" aria-hidden />
                 {room.area} m²
+              </span>
+            )}
+            {freshness && (
+              <span className="flex items-center gap-1">
+                <Clock3 className="h-3.5 w-3.5" aria-hidden />
+                {freshness}
+              </span>
+            )}
+            {room.viewCount != null && room.viewCount > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="h-3.5 w-3.5" aria-hidden />
+                {room.viewCount.toLocaleString('vi-VN')} lượt xem
               </span>
             )}
           </div>

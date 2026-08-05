@@ -11,7 +11,7 @@ import { AuthPageTransition } from '@/features/auth/components/auth-page-transit
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <GoogleAuthProvider>
-      <div className="flex min-h-full flex-col items-center px-4 py-6 sm:py-12">
+      <div className="flex min-h-screen flex-col items-center px-4 py-6 sm:py-12 bg-zinc-50">
         <Link
           href="/"
           className="mb-8 flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"

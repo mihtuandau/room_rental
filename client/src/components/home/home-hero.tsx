@@ -430,7 +430,7 @@ export function HomeHero({
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:gap-10">
         <div className="max-w-xl">
-          <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
+          <h1 className="mt-4 text-balance text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl">
             Tìm phòng nhanh hơn,
             <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
           </h1>
