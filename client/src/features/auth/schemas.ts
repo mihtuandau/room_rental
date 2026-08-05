@@ -27,15 +27,9 @@ const registerBaseSchema = loginSchema
       .max(100, 'Họ tên tối đa 100 ký tự.')
       .optional()
       .or(z.literal('')),
-    confirmPassword: z.string(),
     otpCode: z
       .string()
       .regex(/^\d{6}$/, 'Mã xác minh gồm 6 chữ số.'),
-  })
-  // There is no role picker at signup — any signed-in user can post a listing.
-  .refine((v) => v.password === v.confirmPassword, {
-    message: 'Mật khẩu nhập lại không khớp.',
-    path: ['confirmPassword'],
   });
 
 export const registerSchema = registerBaseSchema.safeExtend({
@@ -43,7 +37,7 @@ export const registerSchema = registerBaseSchema.safeExtend({
     (value) =>
       z.string().email().safeParse(value.trim()).success ||
       VN_PHONE.test(value.trim()),
-    'Nháº­p email hoáº·c sá»‘ Ä‘iá»‡n thoáº¡i há»£p lá»‡.',
+    'Nhập email hoặc số điện thoại hợp lệ.',
   ),
 });
 

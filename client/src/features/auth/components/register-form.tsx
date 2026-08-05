@@ -38,7 +38,7 @@ export function RegisterForm() {
   });
 
   async function sendOtp() {
-    if (!(await trigger(['fullName', 'identifier', 'password', 'confirmPassword'], { shouldFocus: true }))) return;
+    if (!(await trigger(['fullName', 'identifier', 'password'], { shouldFocus: true }))) return;
     try {
       await sendOtpMutation.mutateAsync(getValues('identifier'));
       setStepDirection('forward');
@@ -73,7 +73,6 @@ export function RegisterForm() {
           <Field id="identifier" label="Email hoặc số điện thoại" autoComplete="username" placeholder="ban@example.com hoặc 0912345678" error={errors.identifier?.message} {...register('identifier')} />
           <Field id="password" label="Mật khẩu" type="password" autoComplete="new-password" error={errors.password?.message} {...register('password')} />
           <PasswordRequirements value={passwordValue} />
-          <Field id="confirmPassword" label="Nhập lại mật khẩu" type="password" autoComplete="new-password" error={errors.confirmPassword?.message} {...register('confirmPassword')} />
           {errors.root && <p role="alert" className="rounded-md bg-danger-50 p-3 text-sm text-danger-600">{errors.root.message}</p>}
           <Button type="button" size="lg" className="w-full" disabled={sendOtpMutation.isPending} onClick={() => void sendOtp()}>{sendOtpMutation.isPending ? 'Đang đăng ký…' : 'Đăng ký'}</Button>
         </>
