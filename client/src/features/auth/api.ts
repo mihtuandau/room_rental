@@ -6,6 +6,10 @@ function toContact(identifier: string) {
   return VN_PHONE.test(value) ? { phone: value } : { email: value.toLowerCase() };
 }
 
+function toEmail(identifier: string) {
+  return { email: identifier.trim().toLowerCase() };
+}
+
 /**
  * These four hit the dedicated /api/auth/* Route Handlers (not the generic
  * proxy) because they are the only place allowed to set or clear the session
@@ -28,13 +32,13 @@ export function register(input: {
   fullName?: string;
   otpCode: string;
 }) {
-  return authRequest<{ ok: true }>('/register', { ...toContact(input.identifier), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
+  return authRequest<{ ok: true }>('/register', { ...toEmail(input.identifier), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
 }
 
 export function sendRegisterOtp(identifier: string) {
   return apiRequest<{ success: true }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ ...toContact(identifier), purpose: 'register' }),
+    body: JSON.stringify({ ...toEmail(identifier), purpose: 'register' }),
   });
 }
 
@@ -53,13 +57,12 @@ export function logout() {
 export function sendResetOtp(identifier: string) {
   return apiRequest<{ success: true }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ ...toContact(identifier), purpose: 'reset_password' }),
+    body: JSON.stringify({ ...toEmail(identifier), purpose: 'reset_password' }),
   });
 }
 
 export function resetPassword(input: {
-  phone?: string;
-  email?: string;
+  email: string;
   code: string;
   newPassword: string;
 }) {
@@ -69,7 +72,7 @@ export function resetPassword(input: {
   });
 }
 
-export function verifyResetOtp(input: { email?: string; phone?: string; code: string }) {
+export function verifyResetOtp(input: { email: string; code: string }) {
   return apiRequest<{ success: true }>('/auth/otp/verify-reset', {
     method: 'POST',
     body: JSON.stringify({ ...input, purpose: 'reset_password' }),

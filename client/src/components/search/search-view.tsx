@@ -75,6 +75,7 @@ export function SearchView({
               activeId={search.activeId}
               hasActiveFilters={search.hasActiveFilters}
               isPending={query.isPending}
+              isFetching={query.isFetching}
               isError={query.isError}
               isPlaceholderData={query.isPlaceholderData}
               state={search.state}

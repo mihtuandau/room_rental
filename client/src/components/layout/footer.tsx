@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
 import { serverFetch } from '@/lib/server-api';
 import type { RoomSearchResult } from '@/features/rooms/api';
 
@@ -124,21 +125,41 @@ export async function Footer() {
         </div>
 
         {linkGroups.map((group) => (
-          <nav key={group.title} aria-label={group.title} className="space-y-3">
-            <h2 className="text-sm font-semibold text-zinc-900">{group.title}</h2>
-            <ul className="space-y-2">
-              {group.links.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="rounded-md text-sm text-zinc-600 transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div key={group.title}>
+            <nav aria-label={group.title} className="hidden space-y-3 sm:block">
+              <h2 className="text-sm font-semibold text-zinc-900">{group.title}</h2>
+              <ul className="space-y-2">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="rounded-md text-sm text-zinc-600 transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <details className="group sm:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between border-b border-brand-100/80 py-3 text-sm font-semibold text-zinc-900 [&::-webkit-details-marker]:hidden">
+                {group.title}
+                <ChevronDown className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <ul className="space-y-2 py-3">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="rounded-md text-sm text-zinc-600 transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
         ))}
       </div>
 

@@ -14,6 +14,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = loginSchema
   .extend({
+    identifier: z.string().email('Nhập email hợp lệ để nhận mã xác minh.'),
     password: z
       .string()
       .min(8, 'Mật khẩu cần tối thiểu 8 ký tự.')
@@ -38,7 +39,7 @@ export const registerSchema = loginSchema
   });
 
 export const forgotPasswordSchema = z.object({
-  identifier: z.string().min(1, 'Nhập email hoặc số điện thoại.'),
+  identifier: z.string().email('Nhập email đã đăng ký.'),
 });
 
 export const resetPasswordSchema = z

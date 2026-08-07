@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
-
-const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin', 'vietnamese'],
-});
+import { PageTransition } from '@/components/layout/page-transition';
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -51,12 +47,13 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="vi"
-      className={`${inter.variable} h-full`}
-    >
+    <html lang="vi" className="h-full">
       <body className="flex min-h-full flex-col antialiased">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <Suspense fallback={null}>
+            <PageTransition>{children}</PageTransition>
+          </Suspense>
+        </AppProviders>
       </body>
     </html>
   );

@@ -103,7 +103,11 @@ export class NotificationsProcessor extends WorkerHost {
 
     // BullMQ retries transient database failures. Recipients already completed
     // are skipped by the unique notification log on the next run.
-    if (transientFailure) throw transientFailure;
+    if (transientFailure) {
+      throw transientFailure instanceof Error
+        ? transientFailure
+        : new Error('Notification processing failed.');
+    }
   }
 
   private async sendNotification(

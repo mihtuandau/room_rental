@@ -320,7 +320,7 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30 pb-8 pt-10 sm:pb-10 sm:pt-16 lg:min-h-[520px] lg:py-16"
+      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30 pb-6 pt-8 sm:pb-10 sm:pt-14 lg:min-h-[500px] lg:py-12"
     >
       {/* Decorative blurred background blobs for premium aesthetic */}
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
@@ -330,14 +330,14 @@ export function HomeHero({
         <div className="relative right-0 aspect-[1155/678] w-[30rem] translate-x-1/3 bg-gradient-to-br from-indigo-200 to-brand-300 opacity-20 sm:w-[50rem]" />
       </div>
 
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12">
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:gap-10">
         <div className="max-w-xl">
           <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
             Tìm phòng nhanh hơn,
             <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
           </h1>
-          <p className="mt-4 max-w-prose text-base leading-7 text-zinc-600">
-            Nhập khu vực, tên đường hoặc dùng vị trí hiện tại để xem các tin đăng phù hợp.
+          <p className="mt-3 max-w-prose text-base leading-7 text-zinc-600">
+            Nhập khu vực hoặc chọn <span className="font-medium text-zinc-800">Gần tôi</span> để xem tin đăng phù hợp.
           </p>
 
           <form
@@ -348,7 +348,12 @@ export function HomeHero({
             }}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-medium text-zinc-900">Bạn muốn tìm ở đâu?</p>
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Bạn muốn tìm ở đâu?</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Tìm theo khu vực hoặc trong bán kính quanh vị trí hiện tại.
+                </p>
+              </div>
               <Button
                 type="button"
                 variant={centerMode === 'nearby' ? 'primary' : 'outline'}
@@ -409,7 +414,7 @@ export function HomeHero({
               {centerMode === 'nearby' ? (
                 <Field label="Bán kính" icon={<CircleDotDashed className="h-4 w-4" aria-hidden />}>
                   <Select value={String(radiusKm)} onValueChange={(value) => setRadiusKm(Number(value))}>
-                    <SelectTrigger className="mt-1 h-11 w-full">
+                    <SelectTrigger aria-label="Bán kính tìm kiếm" className="mt-1 h-11 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -424,7 +429,7 @@ export function HomeHero({
               ) : (
                 <Field label="Lọc giá" icon={<Banknote className="h-4 w-4" aria-hidden />}>
                   <Select value={priceRangeValue} onValueChange={setPriceRangeValue}>
-                    <SelectTrigger className="mt-1 h-11 w-full">
+                    <SelectTrigger aria-label="Mức giá" className="mt-1 h-11 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

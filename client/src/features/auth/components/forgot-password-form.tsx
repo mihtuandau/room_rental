@@ -15,7 +15,7 @@ import { PasswordRequirements } from './password-requirements';
 import { AuthStepTransition } from './auth-step-transition';
 
 const RESEND_SECONDS = 60;
-type Contact = { phone?: string; email?: string };
+type Contact = { email: string };
 const otpOnlySchema = z.object({ code: z.string().regex(/^\d{6}$/, 'Mã xác minh gồm 6 chữ số.') });
 
 export function ForgotPasswordForm() {
@@ -34,8 +34,7 @@ function ContactStep({ onSent }: { onSent: (contact: Contact) => void }) {
   const onSubmit = handleSubmit(async ({ identifier }) => {
     try {
       await sendOtp.mutateAsync(identifier);
-      const isPhone = /^(0|\+84)(3|5|7|8|9)\d{8}$/.test(identifier.trim());
-      onSent(isPhone ? { phone: identifier.trim() } : { email: identifier.trim().toLowerCase() });
+      onSent({ email: identifier.trim().toLowerCase() });
       toast.success('Nếu thông tin đã đăng ký, mã xác minh sẽ được gửi đến bạn.');
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) setError('root', { message: 'Bạn thao tác hơi nhanh. Vui lòng thử lại sau.' });
@@ -43,8 +42,8 @@ function ContactStep({ onSent }: { onSent: (contact: Contact) => void }) {
     }
   });
   return <form onSubmit={onSubmit} className="space-y-4" noValidate>
-    <p className="text-sm text-zinc-600">Nhập email hoặc số điện thoại đã đăng ký để nhận mã xác minh.</p>
-    <Field id="identifier" label="Email hoặc số điện thoại" autoComplete="username" placeholder="ban@example.com hoặc 0912345678" error={errors.identifier?.message} {...register('identifier')} />
+    <p className="text-sm text-zinc-600">Nhập email đã đăng ký để nhận mã xác minh.</p>
+    <Field id="identifier" label="Email" type="email" autoComplete="email" placeholder="ban@example.com" error={errors.identifier?.message} {...register('identifier')} />
     {errors.root && <p role="alert" className="rounded-md bg-danger-50 p-3 text-sm text-danger-600">{errors.root.message}</p>}
     <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>{isSubmitting ? 'Đang gửi…' : 'Gửi mã xác minh'}</Button>
   </form>;
@@ -56,9 +55,9 @@ function OtpStep({ contact, onVerified }: { contact: Contact; onVerified: (code:
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<{ code: string }>({ resolver: zodResolver(otpOnlySchema) });
   useEffect(() => { if (cooldown > 0) { const id = setTimeout(() => setCooldown((s) => s - 1), 1000); return () => clearTimeout(id); } }, [cooldown]);
   const onSubmit = handleSubmit(({ code }) => onVerified(code));
-  const onResend = async () => { try { await resendOtp.mutateAsync(contact.email ?? contact.phone ?? ''); setCooldown(RESEND_SECONDS); toast.success('Đã gửi lại mã xác minh.'); } catch (err) { if (err instanceof ApiError && err.status === 429) setError('code', { message: 'Bạn gửi mã quá nhanh.' }); else toast.error('Không gửi lại được mã.'); } };
+  const onResend = async () => { try { await resendOtp.mutateAsync(contact.email); setCooldown(RESEND_SECONDS); toast.success('Đã gửi lại mã xác minh.'); } catch (err) { if (err instanceof ApiError && err.status === 429) setError('code', { message: 'Bạn gửi mã quá nhanh.' }); else toast.error('Không gửi lại được mã.'); } };
   return <form onSubmit={onSubmit} className="space-y-4" noValidate>
-    <div className="rounded-xl bg-brand-50 p-4 text-sm text-brand-900">Nhập mã xác minh đã gửi tới <strong>{contact.email ?? contact.phone}</strong>.</div>
+    <div className="rounded-xl bg-brand-50 p-4 text-sm text-brand-900">Nhập mã xác minh đã gửi tới <strong>{contact.email}</strong>.</div>
     <Field id="code" label="Mã xác minh" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" error={errors.code?.message} {...register('code')} />
     <button type="button" onClick={() => void onResend()} disabled={cooldown > 0 || resendOtp.isPending} className="text-sm text-brand-700 disabled:text-zinc-400">{cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : 'Gửi lại mã'}</button>
     <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>Tiếp tục</Button>

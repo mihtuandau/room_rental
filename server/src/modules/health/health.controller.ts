@@ -32,12 +32,9 @@ export class HealthController {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
       return { database: { status: 'up' } };
-    } catch (err) {
+    } catch {
       throw new HealthCheckError('Database check failed', {
-        database: {
-          status: 'down',
-          message: err instanceof Error ? err.message : 'unknown error',
-        },
+        database: { status: 'down' },
       });
     }
   }
