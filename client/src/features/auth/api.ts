@@ -32,13 +32,13 @@ export function register(input: {
   fullName?: string;
   otpCode: string;
 }) {
-  return authRequest<{ ok: true }>('/register', { ...toEmail(input.identifier), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
+  return authRequest<{ ok: true }>('/register', { ...toContact(input.identifier), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
 }
 
 export function sendRegisterOtp(identifier: string) {
   return apiRequest<{ success: true }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ ...toEmail(identifier), purpose: 'register' }),
+    body: JSON.stringify({ ...toContact(identifier), purpose: 'register' }),
   });
 }
 

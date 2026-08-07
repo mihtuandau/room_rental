@@ -12,7 +12,7 @@ export const loginSchema = z.object({
     .max(72, 'Mật khẩu tối đa 72 ký tự.'),
 });
 
-export const registerSchema = loginSchema
+const registerBaseSchema = loginSchema
   .extend({
     identifier: z.string().email('Nhập email hợp lệ để nhận mã xác minh.'),
     password: z
@@ -37,6 +37,15 @@ export const registerSchema = loginSchema
     message: 'Mật khẩu nhập lại không khớp.',
     path: ['confirmPassword'],
   });
+
+export const registerSchema = registerBaseSchema.safeExtend({
+  identifier: z.string().refine(
+    (value) =>
+      z.string().email().safeParse(value.trim()).success ||
+      VN_PHONE.test(value.trim()),
+    'Nháº­p email hoáº·c sá»‘ Ä‘iá»‡n thoáº¡i há»£p lá»‡.',
+  ),
+});
 
 export const forgotPasswordSchema = z.object({
   identifier: z.string().email('Nhập email đã đăng ký.'),

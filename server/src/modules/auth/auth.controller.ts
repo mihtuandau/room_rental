@@ -116,7 +116,7 @@ export class AuthController {
   @Post('otp/send')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) // anti SMS-spam
-  @ApiOperation({ summary: 'Send a one-time OTP code by email' })
+  @ApiOperation({ summary: 'Send a one-time OTP code by email or phone' })
   async sendOtp(@Body() dto: SendOtpDto) {
     await this.authService.sendOtp(dto, dto.purpose);
     return { success: true };
@@ -126,8 +126,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
-    summary:
-      'Verify an OTP code (marks the selected contact as verified when purpose = register)',
+    summary: 'Verify an OTP code (email registration or phone verification)',
   })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     await this.authService.verifyOtp(dto, dto.purpose, dto.code);

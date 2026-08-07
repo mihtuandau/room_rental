@@ -6,6 +6,7 @@ import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { AuthService } from './auth.service';
 import { EmailService } from './email/email.service';
 import { GoogleTokenService } from './google/google-token.service';
+import { SmsService } from './sms/sms.service';
 
 describe('AuthService registration OTP', () => {
   it('atomically consumes a valid OTP and creates a verified account', async () => {
@@ -56,6 +57,7 @@ describe('AuthService registration OTP', () => {
       jwt as unknown as JwtService,
       config as unknown as ConfigService,
       {} as EmailService,
+      {} as SmsService,
       {} as GoogleTokenService,
     );
 
@@ -111,8 +113,9 @@ describe('AuthService registration OTP', () => {
     const service = new AuthService(
       prisma as unknown as PrismaService,
       {} as JwtService,
-      {} as ConfigService,
+      { get: jest.fn() } as unknown as ConfigService,
       {} as EmailService,
+      {} as SmsService,
       {} as GoogleTokenService,
     );
 
@@ -139,8 +142,9 @@ describe('AuthService registration OTP', () => {
     const service = new AuthService(
       prisma as unknown as PrismaService,
       {} as JwtService,
-      {} as ConfigService,
+      { get: jest.fn() } as unknown as ConfigService,
       email as unknown as EmailService,
+      {} as SmsService,
       {} as GoogleTokenService,
     );
 
@@ -163,8 +167,9 @@ describe('AuthService registration OTP', () => {
     const service = new AuthService(
       prisma as unknown as PrismaService,
       {} as JwtService,
-      {} as ConfigService,
+      { get: jest.fn() } as unknown as ConfigService,
       email as unknown as EmailService,
+      {} as SmsService,
       {} as GoogleTokenService,
     );
 
@@ -185,17 +190,40 @@ describe('AuthService registration OTP', () => {
     );
   });
 
-  it('rejects phone-only OTP requests', async () => {
+  it('sends phone OTP through the development SMS transport', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(null) },
+      otpCode: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const sms = { send: jest.fn().mockResolvedValue(undefined) };
     const service = new AuthService(
-      {} as PrismaService,
+      prisma as unknown as PrismaService,
       {} as JwtService,
-      {} as ConfigService,
+      {
+        get: jest.fn((key: string) =>
+          key === 'NODE_ENV'
+            ? 'development'
+            : key === 'DEV_OTP_CODE'
+              ? '123456'
+              : undefined,
+        ),
+      } as unknown as ConfigService,
       {} as EmailService,
+      sms as unknown as SmsService,
       {} as GoogleTokenService,
     );
 
-    await expect(
-      service.sendOtp({ phone: '0912345678' }, OtpPurpose.register),
-    ).rejects.toThrow('OTP is available by email only.');
+    await service.sendOtp({ phone: '0912345678' }, OtpPurpose.change_phone);
+    expect(prisma.otpCode.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        phone: '0912345678',
+        purpose: OtpPurpose.change_phone,
+        codeHash: expect.any(String),
+      }),
+    });
+    expect(sms.send).toHaveBeenCalledWith(
+      '0912345678',
+      expect.stringContaining('123456'),
+    );
   });
 });

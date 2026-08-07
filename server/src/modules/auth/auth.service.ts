@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,6 +13,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { EmailService } from './email/email.service';
+import { SmsService } from './sms/sms.service';
 import {
   GoogleProfile,
   GoogleTokenService,
@@ -21,6 +23,7 @@ const PASSWORD_HASH_COST = 12;
 const OTP_HASH_COST = 10;
 const OTP_TTL_MS = 5 * 60_000;
 const OTP_MAX_ATTEMPTS = 5;
+const DEV_OTP_CODE = /^\d{6}$/;
 type Identifier = { phone?: string; email?: string };
 
 @Injectable()
@@ -30,11 +33,20 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private emailService: EmailService,
+    private smsService: SmsService,
     private googleToken: GoogleTokenService,
   ) {}
 
   async register(dto: RegisterDto) {
     const identifier = this.normalizeIdentifier(dto);
+    if (!identifier.email && !identifier.phone) {
+      throw new BadRequestException('Email or phone number is required.');
+    }
+    if (identifier.email && identifier.phone) {
+      throw new BadRequestException(
+        'Provide only one registration identifier.',
+      );
+    }
     const existing = await this.findByIdentifier(identifier);
     if (existing)
       throw new ConflictException('This contact is already registered.');
@@ -59,11 +71,12 @@ export class AuthService {
         throw new ForbiddenException('OTP code is invalid or has expired.');
       return tx.user.create({
         data: {
-          email: identifier.email!,
+          ...(identifier.email
+            ? { email: identifier.email, isEmailVerified: true }
+            : { phone: identifier.phone, isPhoneVerified: true }),
           passwordHash,
           fullName: dto.fullName,
           role: Role.user,
-          isEmailVerified: true,
         },
       });
     });
@@ -170,8 +183,16 @@ export class AuthService {
 
   async sendOtp(rawIdentifier: Identifier, purpose: OtpPurpose) {
     const identifier = this.normalizeIdentifier(rawIdentifier);
-    if (!identifier.email) {
-      throw new ForbiddenException('OTP is available by email only.');
+    if (!identifier.email && !identifier.phone) {
+      throw new BadRequestException('Email or phone number is required.');
+    }
+    if (identifier.email && identifier.phone) {
+      throw new BadRequestException('Provide only one OTP destination.');
+    }
+    if (identifier.phone && purpose === OtpPurpose.reset_password) {
+      throw new ForbiddenException(
+        'Password reset OTP is available by email only.',
+      );
     }
     const user = await this.findByIdentifier(identifier);
     if (purpose === OtpPurpose.reset_password) {
@@ -180,21 +201,38 @@ export class AuthService {
     if (purpose === OtpPurpose.register && user && !user.deletedAt)
       throw new ConflictException('This contact is already registered.');
 
-    const code = randomInt(100000, 1_000_000).toString();
+    const configuredDevCode = this.config.get<string>('DEV_OTP_CODE');
+    const code =
+      identifier.phone &&
+      this.config.get<string>('NODE_ENV') !== 'production' &&
+      configuredDevCode &&
+      DEV_OTP_CODE.test(configuredDevCode)
+        ? configuredDevCode
+        : randomInt(100000, 1_000_000).toString();
     const codeHash = await bcrypt.hash(code, OTP_HASH_COST);
     await this.prisma.otpCode.create({
       data: {
-        email: identifier.email,
+        ...(identifier.email
+          ? { email: identifier.email }
+          : { phone: identifier.phone }),
         codeHash,
         purpose,
         expiresAt: new Date(Date.now() + OTP_TTL_MS),
       },
     });
-    await this.emailService.send(
-      identifier.email,
-      'Mã xác minh Trọ Ơi',
-      `Mã xác minh của bạn là ${code}. Mã có hiệu lực trong 5 phút.`,
-    );
+    if (identifier.email) {
+      await this.emailService.send(
+        identifier.email,
+        'Mã xác minh Trọ Ơi',
+        `Mã xác minh của bạn là ${code}. Mã có hiệu lực trong 5 phút.`,
+      );
+    } else {
+      await this.smsService.send(
+        identifier.phone!,
+        // eslint-disable-next-line no-irregular-whitespace
+        `MÃ£ xÃ¡c minh Trá» Æ i: ${code}`,
+      );
+    }
   }
 
   async verifyOtp(
@@ -203,6 +241,12 @@ export class AuthService {
     code: string,
   ) {
     const identifier = this.normalizeIdentifier(rawIdentifier);
+    if (!identifier.email && !identifier.phone) {
+      throw new BadRequestException('Email or phone number is required.');
+    }
+    if (identifier.email && identifier.phone) {
+      throw new BadRequestException('Provide only one OTP destination.');
+    }
     const otp = await this.validateOtp(identifier, purpose, code);
     const consumed = await this.prisma.otpCode.updateMany({
       where: {
@@ -221,10 +265,15 @@ export class AuthService {
           where: { email: identifier.email },
           data: { isEmailVerified: true },
         });
+    } else if (purpose === OtpPurpose.change_phone && identifier.phone) {
+      await this.prisma.user.updateMany({
+        where: { phone: identifier.phone },
+        data: { isPhoneVerified: true },
+      });
     }
   }
 
-  async verifyResetOtp(dto: { email: string; code: string }) {
+  async verifyResetOtp(dto: { email?: string; code: string }) {
     const identifier = this.normalizeIdentifier(dto);
     if (!identifier.email)
       throw new ForbiddenException('A verified email is required.');
