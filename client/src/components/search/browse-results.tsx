@@ -9,7 +9,7 @@ export function BrowseResults({
 }) {
   return (
     <div
-      id="ket-qua"
+      id="search-results"
       className="mx-auto w-full max-w-7xl pb-16 pt-7 sm:pt-10 sm:pb-20"
     >
       <div className="flex flex-col gap-12 sm:gap-16">

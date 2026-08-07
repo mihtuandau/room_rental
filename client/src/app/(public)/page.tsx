@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { createLoader } from 'nuqs/server';
-import { CategorySection } from '@/components/home/category-section';
+import { CategoryBar } from '@/components/home/category-bar';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
 import { LandlordCta } from '@/components/home/landlord-cta';
+import { PopularLocations } from '@/components/home/popular-locations';
 import { WhyChooseUs } from '@/components/home/why-choose-us';
 import { SearchView } from '@/components/search/search-view';
 import type { Amenity } from '@/features/amenities/api';
@@ -92,17 +93,36 @@ export default async function HomePage({ searchParams }: Props) {
         { revalidate: 60 },
       ),
   });
-  const [, amenities, provinces] = await Promise.all([
+
+  const popularDistricts = ['Quận 7', 'Bình Thạnh', 'Thủ Đức', 'Quận 10'];
+  const countsPromise = Promise.all(
+    popularDistricts.map(async (district) => {
+      try {
+        const data = await serverFetch<RoomSearchResult>(
+          `/rooms?city=${encodeURIComponent('Hồ Chí Minh')}&district=${encodeURIComponent(district)}&pageSize=1`,
+          { next: { revalidate: 60 } }
+        );
+        return { district, count: data.total };
+      } catch {
+        return { district, count: 0 };
+      }
+    })
+  );
+
+  const [counts, , amenities, provinces] = await Promise.all([
+    countsPromise,
     roomsPromise,
     serverFetch<Amenity[]>('/amenities', { revalidate: 3600 }).catch(
       () => [],
     ),
     fetchProvinces(),
   ]);
+
   const initialRooms = queryClient.getQueryData<RoomSearchResult>(roomQueryKey);
   return (
     <>
       <HydrationBoundary state={dehydrate(queryClient)}>
+        <CategoryBar />
         <HomeHero
           provinces={provinces}
           rooms={initialRooms?.rooms ?? []}
@@ -112,7 +132,7 @@ export default async function HomePage({ searchParams }: Props) {
           provinces={provinces}
           browseTop={
             <div className="flex flex-col gap-12 sm:gap-16">
-              <CategorySection />
+              <PopularLocations counts={counts} />
               <FeaturedSection />
             </div>
           }

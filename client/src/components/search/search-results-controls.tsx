@@ -58,31 +58,14 @@ export function SearchResultsControls({
   onChange: ApplyFilter;
   onClear: () => void;
 }) {
-  const locationContext = [state.ward, state.district, state.city, state.keyword]
-    .filter(Boolean)
-    .join(', ');
+
 
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{heading}</h1>
-          {state.mode === 'nearby' ? (
-            <p className="mt-2 max-w-2xl text-xs text-zinc-500">
-              Đang lọc theo vị trí đã ghim. Bản đồ chỉ hiển thị những tin có tọa độ hợp lệ.
-              {state.city
-                ? ` Khu vực tham chiếu: ${
-                    state.ward ? `${state.ward}, ` : ''
-                  }${state.district ? `${state.district}, ` : ''}${state.city}.`
-                : ''}
-            </p>
-          ) : null}
-          {state.mode !== 'nearby' && locationContext ? (
-            <p className="mt-2 max-w-2xl text-xs text-zinc-500">
-              Đang tìm tại {locationContext}. Bạn có thể thay đổi khu vực ngay trên thanh tìm kiếm.
-            </p>
-          ) : null}
-          <p className="mt-1 text-sm text-zinc-600" aria-live="polite" role="status">
+          <p className="mt-1 text-sm text-zinc-500" aria-live="polite" role="status">
             {total === undefined
               ? 'Đang tải…'
               : total === 0

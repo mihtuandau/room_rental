@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -71,6 +73,75 @@ export function Header() {
   // (its own "Tìm kiếm" button already goes to the same expanded results).
 
   const [, setUrlState] = useQueryStates(searchParsers);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [activeSection, setActiveSection] = useState<string>('');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  useEffect(() => {
+    if (pathname !== '/') {
+      const timer = setTimeout(() => setActiveSection(''), 0);
+      return () => clearTimeout(timer);
+    }
+
+    const handleScroll = () => {
+      const sectionIds = ['tim-phong', 'kham-pha', 'tin-moi'];
+      const offset = 140; // Combined height of header and category bar + padding
+      const scrollPosition = window.scrollY;
+
+      let currentSection = '';
+
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const top = rect.top + window.scrollY - offset;
+          const bottom = top + rect.height;
+          if (scrollPosition >= top && scrollPosition < bottom) {
+            currentSection = id;
+          }
+        }
+      }
+
+      // Near top of page fallback
+      if (scrollPosition < 50) {
+        currentSection = 'tim-phong';
+      }
+
+      // Reached bottom of page fallback
+      if (window.innerHeight + scrollPosition >= document.documentElement.scrollHeight - 100) {
+        currentSection = 'tin-moi';
+      }
+
+      if (currentSection) {
+        setActiveSection(currentSection);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const initialTimer = setTimeout(handleScroll, 0);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(initialTimer);
+    };
+  }, [pathname]);
 
   const handleHomeLinkClick = (anchorId?: string) => (e: React.MouseEvent) => {
     if (pathname === '/') {
@@ -108,8 +179,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 shadow-card backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
+    <header className={cn(
+      "sticky top-0 z-40 bg-white/95 backdrop-blur transition-all duration-300 ease-in-out",
+      pathname === '/' ? "border-b border-transparent shadow-none" : "border-b border-zinc-200 shadow-card",
+      isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+    )}>
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/"
           onClick={handleHomeLinkClick()}
@@ -128,23 +203,32 @@ export function Header() {
 
         <nav
           aria-label="Điều hướng chính"
-          className="hidden items-center gap-1 lg:flex"
+          className="hidden items-center justify-center gap-1 lg:flex"
         >
-          {PUBLIC_NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={handleHomeLinkClick(item.id)}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {PUBLIC_NAV_ITEMS.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleHomeLinkClick(item.id)}
+                className={cn(
+                  "relative rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
+                  isActive
+                    ? "text-brand-600 font-semibold"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                )}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-brand-600" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="flex-1" />
-
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {isBootstrapped && isSignedIn && (
             <>
               <HeaderIconLink href="/notifications" label="Thông báo" count={unreadCount}>
