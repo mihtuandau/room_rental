@@ -140,7 +140,7 @@ export function AccountSecurityView() {
       <section className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div>
           <h2 className="font-semibold text-zinc-900">Tổng quan bảo mật</h2>
-          <p className="mt-1 text-sm text-zinc-600">Các phương thức bạn có thể dùng để đăng nhập và khôi phục tài khoản.</p>
+          <p className="mt-1 text-sm text-zinc-600">Các phương  thức bạn có thể dùng để đăng nhập và khôi phục tài khoản.</p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <StatusItem icon={<Smartphone className="h-4 w-4" />} label="Số điện thoại" value={profile.phone ?? 'Chưa thêm số'} verified={Boolean(profile.phone && profile.isPhoneVerified)} />
@@ -150,35 +150,35 @@ export function AccountSecurityView() {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] lg:items-start">
-      <div role="tablist" aria-label="Cài đặt bảo mật" className="flex gap-1 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-1 lg:flex-col lg:overflow-visible">
-        {[
-          ['password', 'Đổi mật khẩu', <KeyRound className="h-4 w-4" key="password-icon" />],
-          ['two-factor', 'Xác thực 2 lớp', <LockKeyhole className="h-4 w-4" key="two-factor-icon" />],
-          ['devices', 'Thiết bị', <Laptop className="h-4 w-4" key="devices-icon" />],
-          ['privacy', 'Quyền riêng tư', <Eye className="h-4 w-4" key="privacy-icon" />],
-        ].map(([value, label, icon]) => (
-          <button key={String(value)} type="button" role="tab" aria-selected={activeTab === value} onClick={() => setActiveTab(value as typeof activeTab)} className={`flex min-h-10 shrink-0 items-center justify-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === value ? 'bg-white text-brand-700 shadow-sm' : 'text-zinc-600 hover:bg-white/70'}`}>
-            {icon}<span>{label}</span>
-          </button>
-        ))}
-      </div>
+        <div role="tablist" aria-label="Cài đặt bảo mật" className="flex gap-1 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-1 lg:flex-col lg:overflow-visible">
+          {[
+            ['password', 'Đổi mật khẩu', <KeyRound className="h-4 w-4" key="password-icon" />],
+            ['two-factor', 'Xác thực 2 lớp', <LockKeyhole className="h-4 w-4" key="two-factor-icon" />],
+            ['devices', 'Thiết bị', <Laptop className="h-4 w-4" key="devices-icon" />],
+            ['privacy', 'Quyền riêng tư', <Eye className="h-4 w-4" key="privacy-icon" />],
+          ].map(([value, label, icon]) => (
+            <button key={String(value)} type="button" role="tab" aria-selected={activeTab === value} onClick={() => setActiveTab(value as typeof activeTab)} className={`flex min-h-10 shrink-0 items-center justify-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === value ? 'bg-white text-brand-700 shadow-sm' : 'text-zinc-600 hover:bg-white/70'}`}>
+              {icon}<span>{label}</span>
+            </button>
+          ))}
+        </div>
 
-      <div className="min-w-0">{activeTab === 'password' ? (profile.hasPassword ? <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700"><KeyRound className="h-4 w-4" aria-hidden /></span><div className="min-w-0"><h2 className="font-semibold text-zinc-900">Đổi mật khẩu</h2><p className="text-sm text-zinc-600">Cập nhật định kỳ để bảo vệ tài khoản.</p></div></div>
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
-          <div><label htmlFor="currentPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu hiện tại</label><Input id="currentPassword" type="password" autoComplete="current-password" error={Boolean(errors.currentPassword)} {...register('currentPassword')} />{errors.currentPassword && <p className="mt-1 text-xs text-danger-600">{errors.currentPassword.message}</p>}</div>
-          <div><label htmlFor="newPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu mới</label><Input id="newPassword" type="password" autoComplete="new-password" error={Boolean(errors.newPassword)} {...register('newPassword')} />{errors.newPassword && <p className="mt-1 text-xs text-danger-600">{errors.newPassword.message}</p>}<PasswordRequirements value={newPassword} /></div>
-          <div><label htmlFor="confirmNewPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Nhập lại mật khẩu mới</label><Input id="confirmNewPassword" type="password" autoComplete="new-password" error={Boolean(errors.confirmNewPassword)} {...register('confirmNewPassword')} />{errors.confirmNewPassword && <p className="mt-1 text-xs text-danger-600">{errors.confirmNewPassword.message}</p>}</div>
-          <div className="flex justify-end"><Button type="submit" disabled={changePassword.isPending}>{changePassword.isPending ? 'Đang cập nhật…' : 'Lưu mật khẩu mới'}</Button></div>
-        </form>
-      </section> : <CreatePasswordPanel email={profile.email && profile.isEmailVerified ? profile.email : null} />) : null}
+        <div className="min-w-0">{activeTab === 'password' ? (profile.hasPassword ? <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700"><KeyRound className="h-4 w-4" aria-hidden /></span><div className="min-w-0"><h2 className="font-semibold text-zinc-900">Đổi mật khẩu</h2><p className="text-sm text-zinc-600">Cập nhật định kỳ để bảo vệ tài khoản.</p></div></div>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+            <div><label htmlFor="currentPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu hiện tại</label><Input id="currentPassword" type="password" autoComplete="current-password" error={Boolean(errors.currentPassword)} {...register('currentPassword')} />{errors.currentPassword && <p className="mt-1 text-xs text-danger-600">{errors.currentPassword.message}</p>}</div>
+            <div><label htmlFor="newPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu mới</label><Input id="newPassword" type="password" autoComplete="new-password" error={Boolean(errors.newPassword)} {...register('newPassword')} />{errors.newPassword && <p className="mt-1 text-xs text-danger-600">{errors.newPassword.message}</p>}<PasswordRequirements value={newPassword} /></div>
+            <div><label htmlFor="confirmNewPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Nhập lại mật khẩu mới</label><Input id="confirmNewPassword" type="password" autoComplete="new-password" error={Boolean(errors.confirmNewPassword)} {...register('confirmNewPassword')} />{errors.confirmNewPassword && <p className="mt-1 text-xs text-danger-600">{errors.confirmNewPassword.message}</p>}</div>
+            <div className="flex justify-end"><Button type="submit" disabled={changePassword.isPending}>{changePassword.isPending ? 'Đang cập nhật…' : 'Lưu mật khẩu mới'}</Button></div>
+          </form>
+        </section> : <CreatePasswordPanel email={profile.email && profile.isEmailVerified ? profile.email : null} />) : null}
 
-      {activeTab === 'two-factor' && <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5"><div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500"><LockKeyhole className="h-4 w-4" aria-hidden /></span><div><h2 className="font-semibold text-zinc-900">Xác thực 2 lớp</h2><p className="mt-1 text-sm text-zinc-600">Tính năng này chưa được triển khai. Bạn sẽ có thể thêm một lớp bảo vệ bằng ứng dụng xác thực trong phiên bản sắp tới.</p><span className="mt-3 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">Sắp ra mắt</span></div></div></section>}
+          {activeTab === 'two-factor' && <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5"><div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500"><LockKeyhole className="h-4 w-4" aria-hidden /></span><div><h2 className="font-semibold text-zinc-900">Xác thực 2 lớp</h2><p className="mt-1 text-sm text-zinc-600">Tính năng này chưa được triển khai. Bạn sẽ có thể thêm một lớp bảo vệ bằng ứng dụng xác thực trong phiên bản sắp tới.</p><span className="mt-3 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">Sắp ra mắt</span></div></div></section>}
 
-      {activeTab === 'devices' && <DeviceManagementPanel />}
+          {activeTab === 'devices' && <DeviceManagementPanel />}
 
-      {activeTab === 'privacy' && <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5"><div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700"><Eye className="h-4 w-4" aria-hidden /></span><div><h2 className="font-semibold text-zinc-900">Cài đặt quyền riêng tư</h2><p className="mt-1 text-sm text-zinc-600">Bạn có thể kiểm soát thông tin liên hệ hiển thị trên tin đăng trong trang Hồ sơ cá nhân. Các tuỳ chọn nâng cao sẽ được bổ sung sau.</p><ul className="mt-3 space-y-1.5 text-sm text-zinc-600"><li>Không chia sẻ mã OTP hoặc mật khẩu cho bất kỳ ai.</li><li>Chỉ cung cấp thông tin liên hệ cần thiết khi đăng tin.</li></ul></div></div></section>}
-      </div>
+          {activeTab === 'privacy' && <section role="tabpanel" className="rounded-2xl border border-zinc-200 bg-white p-5"><div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700"><Eye className="h-4 w-4" aria-hidden /></span><div><h2 className="font-semibold text-zinc-900">Cài đặt quyền riêng tư</h2><p className="mt-1 text-sm text-zinc-600">Bạn có thể kiểm soát thông tin liên hệ hiển thị trên tin đăng trong trang Hồ sơ cá nhân. Các tuỳ chọn nâng cao sẽ được bổ sung sau.</p><ul className="mt-3 space-y-1.5 text-sm text-zinc-600"><li>Không chia sẻ mã OTP hoặc mật khẩu cho bất kỳ ai.</li><li>Chỉ cung cấp thông tin liên hệ cần thiết khi đăng tin.</li></ul></div></div></section>}
+        </div>
       </div>
     </div>
   );

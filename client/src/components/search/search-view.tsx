@@ -33,7 +33,7 @@ export function SearchView({
   }
 
   return (
-    <div id="ket-qua" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+    <div id="search-results" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <SearchToolbar
         state={search.state}
         provinces={provinces}
