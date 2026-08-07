@@ -18,6 +18,10 @@ import {
   GoogleProfile,
   GoogleTokenService,
 } from './google/google-token.service';
+import {
+  FacebookProfile,
+  FacebookTokenService,
+} from './facebook/facebook-token.service';
 
 const PASSWORD_HASH_COST = 12;
 const OTP_HASH_COST = 10;
@@ -35,6 +39,7 @@ export class AuthService {
     private emailService: EmailService,
     private smsService: SmsService,
     private googleToken: GoogleTokenService,
+    private facebookToken: FacebookTokenService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -138,6 +143,57 @@ export class AuthService {
         googleId: profile.googleId,
         email: profile.email,
         isEmailVerified: true,
+        fullName: profile.fullName,
+        avatarUrl: profile.avatarUrl,
+        role: Role.user,
+      },
+    });
+  }
+
+  async loginWithFacebook(accessToken: string) {
+    const profile = await this.facebookToken.verify(accessToken);
+    const user = await this.findOrCreateFacebookUser(profile);
+    if (user.deletedAt)
+      throw new ForbiddenException('This account has been suspended.');
+    return this.issueTokens(user.id, user.role, user.tokenVersion);
+  }
+
+  async findOrCreateFacebookUser(profile: FacebookProfile) {
+    const byFacebookId = await this.prisma.user.findUnique({
+      where: { facebookId: profile.facebookId },
+    });
+    if (byFacebookId) {
+      return this.prisma.user.update({
+        where: { id: byFacebookId.id },
+        data: {
+          email: byFacebookId.email ?? profile.email,
+          isEmailVerified: !!(byFacebookId.email || profile.email),
+        },
+      });
+    }
+    
+    if (profile.email) {
+      const byEmail = await this.prisma.user.findUnique({
+        where: { email: profile.email },
+      });
+      if (byEmail) {
+        return this.prisma.user.update({
+          where: { id: byEmail.id },
+          data: {
+            facebookId: profile.facebookId,
+            isEmailVerified: true,
+            fullName: byEmail.fullName ?? profile.fullName,
+            avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl,
+          },
+        });
+      }
+    }
+    
+    return this.prisma.user.create({
+      data: {
+        facebookId: profile.facebookId,
+        email: profile.email,
+        isEmailVerified: !!profile.email,
         fullName: profile.fullName,
         avatarUrl: profile.avatarUrl,
         role: Role.user,

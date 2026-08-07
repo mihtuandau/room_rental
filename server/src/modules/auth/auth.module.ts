@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { GoogleTokenService } from './google/google-token.service';
+import { FacebookTokenService } from './facebook/facebook-token.service';
 import { EmailService } from './email/email.service';
 import { SmsService } from './sms/sms.service';
 
@@ -19,6 +20,7 @@ import { SmsService } from './sms/sms.service';
     JwtAccessStrategy,
     JwtRefreshStrategy,
     GoogleTokenService,
+    FacebookTokenService,
     EmailService,
     SmsService,
   ],

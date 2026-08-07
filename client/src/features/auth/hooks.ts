@@ -7,6 +7,7 @@ import {
   login,
   register,
   googleLogin,
+  facebookLogin,
   logout,
   sendResetOtp,
   resetPassword,
@@ -46,6 +47,14 @@ export function useGoogleLogin() {
   const onAuth = useAuthSuccess();
   return useMutation({
     mutationFn: googleLogin,
+    onSuccess: ({ accessToken }) => onAuth(accessToken),
+  });
+}
+
+export function useFacebookLogin() {
+  const onAuth = useAuthSuccess();
+  return useMutation({
+    mutationFn: facebookLogin,
     onSuccess: ({ accessToken }) => onAuth(accessToken),
   });
 }

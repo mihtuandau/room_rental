@@ -19,6 +19,8 @@ export const envSchema = z
     // Only the client id is needed: we verify Google ID tokens sent by the
     // frontend, we never run the redirect flow that would require the secret.
     GOOGLE_CLIENT_ID: z.string().min(1),
+    FACEBOOK_APP_ID: z.string().min(1),
+    FACEBOOK_APP_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM: z.string().min(1).optional(),
     MAIL_HOST: z.string().min(1).optional(),

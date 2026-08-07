@@ -46,6 +46,10 @@ export function googleLogin(input: { idToken: string }) {
   return authRequest<AuthResult>('/google', input);
 }
 
+export function facebookLogin(input: { accessToken: string }) {
+  return authRequest<AuthResult>('/facebook', input);
+}
+
 export function logout() {
   return authRequest<{ success: true }>('/logout');
 }
