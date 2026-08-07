@@ -13,6 +13,9 @@ export interface RoomOwner {
   id: string;
   fullName: string | null;
   avatarUrl: string | null;
+  createdAt: string;
+  /** Masked contact returned by the public detail endpoint. */
+  contactPhoneMasked: string | null;
 }
 
 export interface RoomAmenity {
@@ -44,6 +47,8 @@ export interface RoomDetail {
   longitude: number | null;
   isVerified: boolean;
   viewCount: number;
+  createdAt: string;
+  updatedAt: string;
   images: RoomImage[];
   owner: RoomOwner;
   amenities: RoomAmenity[];

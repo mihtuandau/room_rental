@@ -217,9 +217,43 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  width: 200px;
-  padding: 10px 12px;
+  box-sizing: border-box;
   text-decoration: none;
+}
+.rr-popup--room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  padding: 7px;
+}
+.rr-popup:not(.rr-popup--user) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  padding: 7px;
+}
+.rr-popup--room > * {
+  min-width: 0;
+}
+.rr-popup:not(.rr-popup--user) > * {
+  min-width: 0;
+}
+.rr-popup--user {
+  min-width: 190px;
+  padding: 11px 12px;
+}
+.rr-popup-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: 108px;
+  margin: 0 0 10px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--color-zinc-100);
 }
 .rr-popup-title {
   font: 500 13.5px / 1.35 var(--font-sans);
@@ -233,10 +267,30 @@ body {
   font: 400 12px / 1.4 var(--font-sans);
   color: var(--color-zinc-500);
 }
+.rr-popup--room .rr-popup-title {
+  min-height: 36px;
+}
+.rr-popup--room .rr-popup-meta {
+  min-height: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rr-popup-price {
   font: 600 14px / 1.4 var(--font-sans);
   font-variant-numeric: tabular-nums;
   color: var(--color-zinc-900);
+}
+.rr-popup-action {
+  margin-top: 5px;
+  font: 600 11px / 1.4 var(--font-sans);
+  color: var(--color-brand-700);
+}
+.rr-popup:hover .rr-popup-action,
+.rr-popup:focus-visible .rr-popup-action {
+  color: var(--color-brand-900);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Non-essential motion is opt-out for users who ask for less of it */

@@ -3,7 +3,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
-import type { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MlMap, Marker, Popup } from 'maplibre-gl';
 import type { RoomCardItem } from '@/components/rooms/room-card';
 import { PLACEHOLDER_IMAGE } from '@/components/rooms/room-card';
 import { HOME_MAP_COLORS, OSM_STYLE } from '@/lib/map-style';
@@ -274,7 +274,7 @@ export function HomeMap({
       markerButton.appendChild(dot);
 
       const popupContent = document.createElement('div');
-      popupContent.className = 'rr-popup';
+      popupContent.className = 'rr-popup rr-popup--user';
       const title = document.createElement('strong');
       title.className = 'rr-popup-title';
       title.textContent = 'Vị trí của bạn';
@@ -298,11 +298,21 @@ export function HomeMap({
     const map = mapRef.current;
     if (!map || !ready) return;
     let cancelled = false;
+    let closePopupOnMapClick: (() => void) | null = null;
     void import('maplibre-gl').then(({ Marker, Popup }) => {
       if (cancelled) return;
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       const renderedPoints = new Map<string, number>();
+      let activePopup: Popup | null = null;
+      let pinnedPopup: Popup | null = null;
+      let closeTimer: ReturnType<typeof setTimeout> | null = null;
+      closePopupOnMapClick = () => {
+        activePopup?.remove();
+        activePopup = null;
+        pinnedPopup = null;
+      };
+      map.on('click', closePopupOnMapClick);
 
       for (const room of visibleRooms) {
         const roomPoint: [number, number] = [room.longitude as number, room.latitude as number];
@@ -335,8 +345,17 @@ export function HomeMap({
         price.textContent = formatPriceShort(room.price);
         markerButton.appendChild(price);
 
-        const popupContent = document.createElement('div');
-        popupContent.className = 'rr-popup';
+        const popupLink = document.createElement('a');
+        popupLink.className = 'rr-popup rr-popup--room';
+        popupLink.href = `/room/${encodeURIComponent(room.slug)}`;
+        const popupImage = document.createElement('img');
+        popupImage.className = 'rr-popup-image';
+        popupImage.src = getRoomImageUrl(room);
+        popupImage.alt = '';
+        popupImage.addEventListener('error', () => {
+          popupImage.src = PLACEHOLDER_IMAGE;
+        });
+        popupLink.appendChild(popupImage);
         const title = document.createElement('strong');
         title.className = 'rr-popup-title';
         title.textContent = room.title;
@@ -346,12 +365,46 @@ export function HomeMap({
         const popupPrice = document.createElement('span');
         popupPrice.className = 'rr-popup-price';
         popupPrice.textContent = `${formatPriceShort(room.price)}/tháng`;
-        popupContent.append(title, meta, popupPrice);
+        const popupAction = document.createElement('span');
+        popupAction.className = 'rr-popup-action';
+        popupAction.textContent = 'Xem chi tiết phòng →';
+        popupLink.append(title, meta, popupPrice, popupAction);
+
+        // Leaving anchor unset uses MapLibre's automatic edge-aware placement.
+        const popup = new Popup({ offset: 32, closeButton: false, closeOnClick: false }).setDOMContent(popupLink);
+        const cancelClose = () => {
+          if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+          }
+        };
+        const scheduleClose = () => {
+          if (pinnedPopup === popup) return;
+          cancelClose();
+          closeTimer = setTimeout(() => {
+            popup.remove();
+            if (activePopup === popup) activePopup = null;
+            closeTimer = null;
+          }, 180);
+        };
+        const openPopup = () => {
+          cancelClose();
+          activePopup?.remove();
+          activePopup = popup;
+          pinnedPopup = popup;
+          popup.setLngLat(markerPoint).addTo(map);
+        };
+        markerButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openPopup();
+        });
+        markerButton.addEventListener('mouseleave', scheduleClose);
+        popupLink.addEventListener('mouseenter', cancelClose);
+        popupLink.addEventListener('mouseleave', scheduleClose);
 
         markersRef.current.push(
           new Marker({ element: markerButton, anchor: 'bottom' })
             .setLngLat(markerPoint)
-            .setPopup(new Popup({ offset: 32, closeButton: false }).setDOMContent(popupContent))
             .addTo(map),
         );
       }
@@ -359,6 +412,7 @@ export function HomeMap({
 
     return () => {
       cancelled = true;
+      if (closePopupOnMapClick) map.off('click', closePopupOnMapClick);
     };
   }, [ready, userCenter, visibleRooms]);
 

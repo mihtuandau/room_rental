@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Bell,
@@ -77,6 +78,7 @@ export function Header() {
       void setUrlState({
         keyword: null,
         city: null,
+        district: null,
         ward: null,
         roomType: null,
         priceMin: null,
@@ -170,20 +172,28 @@ export function Header() {
             )
           )}
 
-          {!inManageMode && <Button className="hidden lg:inline-flex" asChild>
-            {/* /manage/* is also gated at the edge by middleware.ts, but that's
-                a coarse cookie check — this client-side redirect is what
-                actually fires reliably regardless of environment quirks there. */}
-            <Link
-              href={
-                isSignedIn
-                  ? '/manage/listings/new'
-                  : `/login?next=${encodeURIComponent('/manage/listings/new')}`
-              }
-            >
-              Đăng tin
-            </Link>
-          </Button>}
+          {!inManageMode && (
+            isSignedIn ? (
+              <Button className="hidden lg:inline-flex" asChild>
+                <Link href="/manage/listings/new">
+                  Đăng tin
+                </Link>
+              </Button>
+            ) : (
+              <Button 
+                className="hidden lg:inline-flex" 
+                onClick={() => toast('Vui lòng đăng nhập để có thể đăng tin phòng trọ.', {
+                  style: {
+                    background: 'var(--color-brand-50)',
+                    color: 'var(--color-brand-900)',
+                    borderColor: 'var(--color-brand-100)'
+                  }
+                })}
+              >
+                Đăng tin
+              </Button>
+            )
+          )}
 
           {!isBootstrapped ? (
             <Skeleton className="h-10 w-10 rounded-full" />
@@ -273,9 +283,6 @@ function MobileNavigation({
   inManageMode: boolean;
   onHomeLinkClick: (anchorId?: string) => (e: React.MouseEvent) => void;
 }) {
-  const postHref = isSignedIn
-    ? '/manage/listings/new'
-    : `/login?next=${encodeURIComponent('/manage/listings/new')}`;
 
   return (
     <Sheet>
@@ -335,11 +342,28 @@ function MobileNavigation({
               )
             )}
 
-            {!inManageMode && <SheetClose asChild>
-              <Link href={postHref} className={cn(buttonVariants(), 'w-full')}>
-                Đăng tin
-              </Link>
-            </SheetClose>}
+            {!inManageMode && (
+              isSignedIn ? (
+                <SheetClose asChild>
+                  <Link href="/manage/listings/new" className={cn(buttonVariants(), 'w-full')}>
+                    Đăng tin
+                  </Link>
+                </SheetClose>
+              ) : (
+                <Button 
+                  className="w-full" 
+                  onClick={() => toast('Vui lòng đăng nhập để có thể đăng tin phòng trọ.', {
+                    style: {
+                      background: 'var(--color-brand-50)',
+                      color: 'var(--color-brand-900)',
+                      borderColor: 'var(--color-brand-100)'
+                    }
+                  })}
+                >
+                  Đăng tin
+                </Button>
+              )
+            )}
           </div>
         </SheetBody>
       </SheetContent>

@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { MapPin } from 'lucide-react';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { BackButton } from '@/components/ui/back-button';
 import { ReportDialog } from '@/components/rooms/report-dialog';
 import { RoomContactCard } from '@/components/rooms/room-contact-card';
@@ -49,9 +52,9 @@ export function RoomDetailContent({
       <RoomViewTracker room={room} />
       <div className="flex items-center justify-between gap-4">
         <BackButton />
-        <RoomTitleActions roomId={room.id} roomSlug={room.slug} />
       </div>
-      <header className="mb-5 mt-4">
+      <header className="mb-4 mt-2 flex items-start justify-between gap-4 sm:mt-3">
+        <div className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
           {room.title}
         </h1>
@@ -70,64 +73,125 @@ export function RoomDetailContent({
         <p className="mt-3 text-lg font-semibold text-zinc-900 lg:hidden">
           {formatPrice(room.price)}/tháng
         </p>
-      </header>
-      <RoomGallery
-        title={room.title}
-        images={room.images}
-        isVerified={room.isVerified}
-      />
-      <div className="mt-8 lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-8">
-        <div className="space-y-6">
-          <RoomFacts room={room} />
-          <RoomAmenities room={room} />
-          {room.description ? (
-            <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-              <h2 className="text-lg font-semibold">Mô tả</h2>
-              <p className="mt-3 max-w-prose whitespace-pre-line text-base leading-relaxed text-zinc-700">
-                {room.description}
-              </p>
-            </section>
-          ) : null}
-          <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-            <RoomLocationMap
-              address={room.address}
-              ward={room.ward}
-              district={room.district}
-              city={room.city}
-              latitude={room.latitude}
-              longitude={room.longitude}
-            />
-          </div>
-          <div className="flex justify-center border-t border-zinc-200 pt-6">
-            <ReportDialog roomId={room.id} roomSlug={room.slug} variant="link" />
-          </div>
         </div>
-        <div className="mt-8 lg:sticky lg:top-20 lg:mt-0">
+        <div className="pt-0.5">
+          <RoomTitleActions roomId={room.id} roomSlug={room.slug} />
+        </div>
+      </header>
+      <div className="mt-3 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+        <RoomGallery
+          title={room.title}
+          images={room.images}
+          isVerified={room.isVerified}
+        />
+        <div className="mt-6 lg:sticky lg:top-20 lg:mt-4">
           <RoomContactCard
             roomId={room.id}
             roomSlug={room.slug}
             price={room.price}
             deposit={room.deposit}
+            listedAt={room.createdAt}
+            updatedAt={room.updatedAt}
+            viewCount={room.viewCount}
             isVerified={room.isVerified}
             owner={room.owner}
           />
         </div>
       </div>
 
+      <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+        <div className="space-y-6">
+          <ScrollReveal>
+            <RoomFacts room={room} />
+          </ScrollReveal>
+          <ScrollReveal delay={100}>
+            <RoomAmenities room={room} />
+          </ScrollReveal>
+          {room.description ? (
+            <ScrollReveal delay={150}>
+              <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+                <h2 className="text-lg font-semibold">Mô tả</h2>
+                <p className="mt-3 max-w-prose whitespace-pre-line text-base leading-relaxed text-zinc-700">
+                  {room.description}
+                </p>
+              </section>
+            </ScrollReveal>
+          ) : null}
+          <ScrollReveal delay={200}>
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+              <RoomLocationMap
+                address={room.address}
+                ward={room.ward}
+                district={room.district}
+                city={room.city}
+                latitude={room.latitude}
+                longitude={room.longitude}
+              />
+            </div>
+          </ScrollReveal>
+          <div className="flex justify-center border-t border-zinc-200 pt-6">
+            <ReportDialog roomId={room.id} roomSlug={room.slug} variant="link" />
+          </div>
+        </div>
+        <aside className="mt-8 space-y-6 lg:mt-0">
+          {recommendedRooms.length > 0 && (
+            <ScrollReveal delay={250}>
+              <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+                <h2 className="text-lg font-semibold text-zinc-900">Tin nổi bật</h2>
+                <p className="mt-1 text-sm text-zinc-500">Gợi ý mới nhất tại khu vực này</p>
+                <div className="mt-4 space-y-3">
+                {recommendedRooms.slice(0, 3).map((featured) => (
+                  <Link
+                    key={featured.id}
+                    href={`/room/${featured.slug}`}
+                    className="flex gap-3 rounded-lg border border-zinc-200 p-2 transition-colors hover:border-brand-300 hover:bg-brand-50/40"
+                  >
+                    <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                      <Image
+                        src={featured.images[0]?.url ?? '/room1.jpg'}
+                        alt=""
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 py-0.5">
+                      <p className="text-sm font-semibold text-brand-700">{formatPrice(featured.price)}</p>
+                      <h3 className="mt-0.5 line-clamp-2 text-sm font-medium text-zinc-900">{featured.title}</h3>
+                      <p className="mt-1 flex items-center gap-1 truncate text-xs text-zinc-500">
+                        <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+                        {featured.district}, {featured.city}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+            </ScrollReveal>
+          )}
+        </aside>
+      </div>
+
       {similarRooms.length > 0 && (
-        <section className="mt-12 border-t border-zinc-200 pt-8">
-          <h2 className="text-xl font-semibold text-zinc-900">Tin đăng tương tự</h2>
-          <p className="mt-1 text-sm text-zinc-500 mb-6">Các tin đăng cùng khu vực và loại hình phòng</p>
-          <RoomGrid rooms={similarRooms} />
-        </section>
+        <ScrollReveal className="mt-12 border-t border-zinc-200 pt-8">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Tin đăng theo khu vực</h2>
+              <p className="mt-1 text-sm text-zinc-500">Các tin cùng khu vực và loại hình phòng</p>
+            </div>
+          </div>
+          <RoomGrid rooms={similarRooms.slice(0, 4)} className="lg:grid-cols-4" />
+        </ScrollReveal>
       )}
 
-      {recommendedRooms.length > 0 && (
-        <section className="mt-12 border-t border-zinc-200 pt-8">
-          <h2 className="text-xl font-semibold text-zinc-900">Có thể bạn cũng thích</h2>
-          <p className="mt-1 text-sm text-zinc-500 mb-6">Gợi ý phòng trọ mới nhất tại khu vực của bạn</p>
-          <RoomGrid rooms={recommendedRooms} />
-        </section>
+      {recommendedRooms.length > 3 && (
+        <ScrollReveal className="mt-12 border-t border-zinc-200 pt-8">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Có thể bạn cũng thích</h2>
+            <p className="mt-1 text-sm text-zinc-500">Một số tin mới đáng chú ý trong cùng thành phố</p>
+          </div>
+          <RoomGrid rooms={recommendedRooms.slice(3, 7)} className="lg:grid-cols-4" />
+        </ScrollReveal>
       )}
 
       {/* Sticky mobile contact bar */}
@@ -154,6 +218,9 @@ export function RoomDetailContent({
                 roomSlug={room.slug}
                 price={room.price}
                 deposit={room.deposit}
+                listedAt={room.createdAt}
+                updatedAt={room.updatedAt}
+                viewCount={room.viewCount}
                 isVerified={room.isVerified}
                 owner={room.owner}
               />

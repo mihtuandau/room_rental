@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { serverFetch } from '@/lib/server-api';
 import { RoomCard } from '@/components/rooms/room-card';
 import type { RoomSearchResult } from '@/features/rooms/api';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
 async function getFeaturedListings() {
   return serverFetch<RoomSearchResult>('/rooms?pageSize=3', {
@@ -21,12 +22,12 @@ export async function FeaturedSection() {
       className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 sm:px-6"
     >
       {/* Header */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <ScrollReveal className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="hidden">
             ✦ Mới nhất &amp; nổi bật
           </span>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Tin đăng dành cho <span className="text-brand-700">bạn</span>
           </h2>
           <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
@@ -44,12 +45,14 @@ export async function FeaturedSection() {
             aria-hidden
           />
         </Link>
-      </div>
+      </ScrollReveal>
 
       {/* 3-column grid */}
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room, i) => (
-          <RoomCard key={room.id} room={room} priority={i === 0} />
+          <ScrollReveal key={room.id} delay={i * 150}>
+            <RoomCard room={room} priority={i === 0} />
+          </ScrollReveal>
         ))}
       </div>
     </section>
