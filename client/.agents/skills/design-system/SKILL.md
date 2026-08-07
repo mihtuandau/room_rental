@@ -159,6 +159,25 @@ drift into unrelated layouts:
 - The landlord CTA is a single horizontal brand panel on desktop and stacks on
   mobile.
 
+## Auth composition
+
+- Login, register, and password-recovery screens share one centered card inside a
+  `zinc-50` page shell. Keep the card width constrained (`max-w-sm`), use the
+  existing `zinc-200` border and `shadow-card`, and let long states scroll on
+  mobile instead of shrinking the form.
+- Keep the order stable: heading and supporting copy, compact social row, divider,
+  existing form, then the route link. Social controls use the supplied assets in
+  `public/`, show the provider name beside its logo, and keep a minimum `h-10` tap
+  target. Unsupported providers must be visibly
+  disabled or announce that support is coming; never imply a successful login.
+- The Google control may use a visual wrapper around the existing OAuth control,
+  but the real provider interaction and mutation remain the source of truth.
+- On desktop, auth may use a two-panel split shell: a brand/photo panel and a
+  form panel. Login places the brand panel left; register reverses the panels.
+  Collapse to one column on mobile and keep the form panel readable.
+- Auth route transitions may animate only opacity and transform, and the outgoing
+  form must be inert so only the active form can receive focus.
+
 ## Accessibility floor
 
 - Text contrast ≥ 4.5:1. `brand-600` on white passes; `brand-500` on white does not — don't use it for text.

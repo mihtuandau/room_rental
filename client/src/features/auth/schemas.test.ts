@@ -7,7 +7,6 @@ describe('auth registration OTP contracts', () => {
       registerSchema.safeParse({
         identifier: '0912345678',
         password: 'StrongPass1',
-        confirmPassword: 'StrongPass1',
         otpCode: '123456',
       }).success,
     ).toBe(true);
@@ -16,7 +15,6 @@ describe('auth registration OTP contracts', () => {
       registerSchema.safeParse({
         identifier: 'owner@example.com',
         password: 'StrongPass1',
-        confirmPassword: 'StrongPass1',
         otpCode: '123456',
       }).success,
     ).toBe(true);
