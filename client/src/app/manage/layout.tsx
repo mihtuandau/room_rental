@@ -1,5 +1,6 @@
 import { Header } from '@/components/layout/header';
 import { ManageShell } from '@/components/layout/manage-shell';
+import { AuthRequired } from '@/components/auth/auth-required';
 
 /**
  * "My listings" mode — any signed-in user, gated at the edge by middleware.ts
@@ -14,7 +15,9 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
   return (
     <>
       <Header />
-      <ManageShell>{children}</ManageShell>
+      <AuthRequired>
+        <ManageShell>{children}</ManageShell>
+      </AuthRequired>
     </>
   );
 }
