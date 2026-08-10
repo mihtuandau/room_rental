@@ -21,15 +21,19 @@ const PROFILE_SELECT = {
   createdAt: true,
 } as const;
 
-function toPublicProfile(profile: {
-  googleId: string | null;
-  passwordHash: string | null;
-  email: string | null;
-  [key: string]: unknown;
-}) {
+function toPublicProfile(
+  profile: {
+    googleId: string | null;
+    passwordHash: string | null;
+    email: string | null;
+    [key: string]: unknown;
+  },
+  safeAvatarUrl: string | null,
+) {
   const { googleId, passwordHash, ...safeProfile } = profile;
   return {
     ...safeProfile,
+    avatarUrl: safeAvatarUrl,
     googleLinked: Boolean(googleId),
     hasPassword: Boolean(passwordHash),
   };
@@ -47,7 +51,10 @@ export class UsersService {
       where: { id: userId },
       select: PROFILE_SELECT,
     });
-    return toPublicProfile(profile);
+    return toPublicProfile(
+      profile,
+      this.sanitizeCloudinaryAvatar(profile.avatarUrl, userId),
+    );
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
@@ -90,20 +97,40 @@ export class UsersService {
       data,
       select: PROFILE_SELECT,
     });
-    return toPublicProfile(profile);
+    return toPublicProfile(
+      profile,
+      this.sanitizeCloudinaryAvatar(profile.avatarUrl, userId),
+    );
   }
 
   private isOwnedCloudinaryAvatar(urlValue: string, userId: string) {
     try {
       const url = new URL(urlValue);
       const cloudName = this.config.getOrThrow<string>('CLOUDINARY_CLOUD_NAME');
+      const uploadPrefix = `/${cloudName}/image/upload/`;
+      const relativePath = url.pathname.startsWith(uploadPrefix)
+        ? url.pathname.slice(uploadPrefix.length)
+        : '';
+      const pathSegments = relativePath.split('/').filter(Boolean);
+      const avatarFolderIndex = pathSegments.indexOf('avatars');
       return (
         url.protocol === 'https:' &&
         url.hostname === 'res.cloudinary.com' &&
-        url.pathname.startsWith(`/${cloudName}/image/upload/avatars/${userId}/`)
+        avatarFolderIndex >= 0 &&
+        pathSegments[avatarFolderIndex + 1] === userId &&
+        pathSegments.length > avatarFolderIndex + 2
       );
     } catch {
       return false;
     }
+  }
+
+  private sanitizeCloudinaryAvatar(
+    avatarUrl: string | null | undefined,
+    userId: string,
+  ) {
+    return avatarUrl && this.isOwnedCloudinaryAvatar(avatarUrl, userId)
+      ? avatarUrl
+      : null;
   }
 }

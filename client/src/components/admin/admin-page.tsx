@@ -51,7 +51,7 @@ export function AdminMetricCard({
   return (
     <article
       className={cn(
-        "min-h-28 rounded-lg border border-zinc-200 bg-white p-3 sm:min-h-32 sm:p-5",
+        "min-h-28 rounded-xl border border-zinc-200 bg-white p-4 sm:min-h-32 sm:p-5",
         className,
       )}
     >
@@ -89,7 +89,7 @@ export function AdminPanel({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-zinc-200 bg-white",
+        "overflow-hidden rounded-xl border border-zinc-200 bg-white",
         className,
       )}
     >

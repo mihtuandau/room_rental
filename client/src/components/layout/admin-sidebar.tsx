@@ -6,7 +6,7 @@ import { AdminNavLinks } from "./admin-navigation";
 
 export function AdminSidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-zinc-200 bg-zinc-100 md:flex md:flex-col md:justify-between md:py-6">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white md:flex md:flex-col md:justify-between md:py-6">
       <div className="space-y-8">
         <Link
           href="/admin"
@@ -26,7 +26,7 @@ export function AdminSidebar() {
         <AdminNavLinks className="px-2" />
       </div>
 
-      <div className="border-t border-zinc-200 px-4 pt-6 text-xs text-zinc-500">
+      <div className="border-t border-zinc-100 px-4 pt-6 text-xs text-zinc-500">
         Trọ Ơi Admin
       </div>
     </aside>

@@ -4,8 +4,8 @@ import { createLoader } from 'nuqs/server';
 import { CategoryBar } from '@/components/home/category-bar';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
-import { HowItWorks } from '@/components/home/how-it-works';
 import { LandlordCta } from '@/components/home/landlord-cta';
+import { WhyChooseUs } from '@/components/home/why-choose-us';
 import {
   PopularLocations,
   type FeaturedLocation,
@@ -124,14 +124,16 @@ export default async function HomePage({ searchParams }: Props) {
           amenities={amenities}
           provinces={provinces}
           browseTop={
-            <div className="flex flex-col gap-12 sm:gap-16">
+            <div className="flex flex-col gap-10 sm:gap-12">
               <FeaturedSection />
               <PopularLocations locations={locations} />
-              <HowItWorks />
+              <WhyChooseUs />
             </div>
           }
           browseBottom={
-            <LandlordCta />
+            <div className="pt-4 sm:pt-6">
+              <LandlordCta />
+            </div>
           }
         />
       </HydrationBoundary>

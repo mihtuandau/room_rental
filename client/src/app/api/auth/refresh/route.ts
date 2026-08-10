@@ -14,12 +14,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Chưa đăng nhập.' }, { status: 401 });
   }
 
-  const beRes = await fetch(`${API_URL}/auth/refresh`, {
+  let beRes: Response;
+  try {
+    beRes = await fetch(`${API_URL}/auth/refresh`, {
     method: 'POST',
     // the backend reads its own refresh_token cookie — not a bearer token,
     // and not a JSON body
     headers: { Cookie: `refresh_token=${refreshToken}` },
-  });
+    signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    const res = NextResponse.json(
+      { message: 'Dịch vụ phiên đăng nhập tạm thời không khả dụng.' },
+      { status: 503 },
+    );
+    clearSessionCookies(res);
+    return res;
+  }
 
   if (!beRes.ok) {
     // revoked elsewhere (logout, password change, ban) — clear ours too so the

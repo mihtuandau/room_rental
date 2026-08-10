@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
     await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
       headers: { Cookie: `refresh_token=${refreshToken}` },
+      signal: AbortSignal.timeout(15_000),
     }).catch(() => undefined);
   }
 

@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SavedSearchesService } from './saved-searches.service';
 import { CreateSavedSearchDto } from './dto/create-saved-search.dto';
+import { UpdateSavedSearchDto } from './dto/update-saved-search.dto';
 
 @ApiTags('saved-searches')
 @ApiBearerAuth()
@@ -41,5 +43,15 @@ export class SavedSearchesController {
   @ApiOperation({ summary: "Delete one of the current user's saved searches" })
   remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.savedSearchesService.remove(userId, id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: "Update one of the current user's saved searches" })
+  update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateSavedSearchDto,
+  ) {
+    return this.savedSearchesService.update(userId, id, dto);
   }
 }

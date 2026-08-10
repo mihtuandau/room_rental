@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +15,7 @@ import { OtpPurpose, Role } from '../../../generated/prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { EmailService } from './email/email.service';
 import { SmsService } from './sms/sms.service';
+import { CloudinaryService } from '../storage/cloudinary.service';
 import {
   GoogleProfile,
   GoogleTokenService,
@@ -40,6 +42,7 @@ export class AuthService {
     private smsService: SmsService,
     private googleToken: GoogleTokenService,
     private facebookToken: FacebookTokenService,
+    @Optional() private cloudinary?: CloudinaryService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -116,38 +119,48 @@ export class AuthService {
       where: { googleId: profile.googleId },
     });
     if (byGoogleId) {
-      return this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id: byGoogleId.id },
         data: {
           email: byGoogleId.email ?? profile.email,
           isEmailVerified: true,
+          avatarUrl: this.getOwnedAvatarUrl(
+            byGoogleId.avatarUrl,
+            byGoogleId.id,
+          ),
         },
       });
+      return this.attachProviderAvatar(user, profile.avatarUrl);
     }
     const byEmail = await this.prisma.user.findUnique({
       where: { email: profile.email },
     });
     if (byEmail) {
-      return this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id: byEmail.id },
         data: {
           googleId: profile.googleId,
           isEmailVerified: true,
           fullName: byEmail.fullName ?? profile.fullName,
-          avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl,
+          avatarUrl: this.getOwnedAvatarUrl(byEmail.avatarUrl, byEmail.id),
         },
       });
+      return this.attachProviderAvatar(user, profile.avatarUrl);
     }
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         googleId: profile.googleId,
         email: profile.email,
         isEmailVerified: true,
         fullName: profile.fullName,
-        avatarUrl: profile.avatarUrl,
+        // Provider avatars are external URLs. Avatars stored by RoomRent
+        // must be Cloudinary-owned so they remain controllable and safe to
+        // render from the configured image origin.
+        avatarUrl: null,
         role: Role.user,
       },
     });
+    return this.attachProviderAvatar(user, profile.avatarUrl);
   }
 
   async loginWithFacebook(accessToken: string) {
@@ -163,13 +176,18 @@ export class AuthService {
       where: { facebookId: profile.facebookId },
     });
     if (byFacebookId) {
-      return this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id: byFacebookId.id },
         data: {
           email: byFacebookId.email ?? profile.email,
           isEmailVerified: !!(byFacebookId.email || profile.email),
+          avatarUrl: this.getOwnedAvatarUrl(
+            byFacebookId.avatarUrl,
+            byFacebookId.id,
+          ),
         },
       });
+      return this.attachProviderAvatar(user, profile.avatarUrl);
     }
 
     if (profile.email) {
@@ -177,28 +195,30 @@ export class AuthService {
         where: { email: profile.email },
       });
       if (byEmail) {
-        return this.prisma.user.update({
+        const user = await this.prisma.user.update({
           where: { id: byEmail.id },
           data: {
             facebookId: profile.facebookId,
             isEmailVerified: true,
             fullName: byEmail.fullName ?? profile.fullName,
-            avatarUrl: byEmail.avatarUrl ?? profile.avatarUrl,
+            avatarUrl: this.getOwnedAvatarUrl(byEmail.avatarUrl, byEmail.id),
           },
         });
+        return this.attachProviderAvatar(user, profile.avatarUrl);
       }
     }
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         facebookId: profile.facebookId,
         email: profile.email,
         isEmailVerified: !!profile.email,
         fullName: profile.fullName,
-        avatarUrl: profile.avatarUrl,
+        avatarUrl: null,
         role: Role.user,
       },
     });
+    return this.attachProviderAvatar(user, profile.avatarUrl);
   }
 
   async issueTokens(userId: string, role: string, tokenVersion: number) {
@@ -221,6 +241,48 @@ export class AuthService {
       },
     );
     return { accessToken, refreshToken };
+  }
+
+  private getOwnedAvatarUrl(
+    avatarUrl: string | null | undefined,
+    userId: string,
+  ) {
+    if (!avatarUrl) return null;
+    try {
+      const url = new URL(avatarUrl);
+      const cloudName = this.config.get<string>('CLOUDINARY_CLOUD_NAME');
+      if (!cloudName) return null;
+      const uploadPrefix = `/${cloudName}/image/upload/`;
+      const relativePath = url.pathname.startsWith(uploadPrefix)
+        ? url.pathname.slice(uploadPrefix.length)
+        : '';
+      const pathSegments = relativePath.split('/').filter(Boolean);
+      const avatarFolderIndex = pathSegments.indexOf('avatars');
+      return url.protocol === 'https:' &&
+        url.hostname === 'res.cloudinary.com' &&
+        avatarFolderIndex >= 0 &&
+        pathSegments[avatarFolderIndex + 1] === userId &&
+        pathSegments.length > avatarFolderIndex + 2
+        ? avatarUrl
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async attachProviderAvatar<
+    T extends { id: string; avatarUrl: string | null },
+  >(user: T, providerAvatarUrl: string | undefined) {
+    if (!providerAvatarUrl || user.avatarUrl || !this.cloudinary) return user;
+    const cloudinaryUrl = await this.cloudinary.importProviderAvatar(
+      providerAvatarUrl,
+      user.id,
+    );
+    if (!cloudinaryUrl) return user;
+    return this.prisma.user.update({
+      where: { id: user.id },
+      data: { avatarUrl: cloudinaryUrl },
+    });
   }
 
   async refresh(userId: string, tokenVersion: number) {
@@ -352,7 +414,9 @@ export class AuthService {
       select: { id: true },
     });
     if (loginOwner && loginOwner.id !== userId) {
-      throw new ConflictException('This phone is already used by another account.');
+      throw new ConflictException(
+        'This phone is already used by another account.',
+      );
     }
 
     const configuredDevCode = this.config.get<string>('DEV_OTP_CODE');
@@ -413,7 +477,9 @@ export class AuthService {
         data: { contactPhoneVerified: true },
       });
       if (updated.count !== 1) {
-        throw new BadRequestException('Contact phone changed. Request a new OTP.');
+        throw new BadRequestException(
+          'Contact phone changed. Request a new OTP.',
+        );
       }
     });
   }

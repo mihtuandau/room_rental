@@ -53,10 +53,10 @@ export function ScrollReveal({
     <div
       ref={ref}
       className={cn(
-        'transition-all duration-700 ease-out-soft',
+        'transition-all duration-300 ease-out-soft',
         isVisible
           ? 'animate-fade-up opacity-100'
-          : 'translate-y-8 opacity-0',
+          : 'translate-y-4 opacity-0',
         className,
       )}
       style={{ animationDelay: `${delay}ms` }}

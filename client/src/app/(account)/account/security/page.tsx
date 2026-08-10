@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { BackButton } from '@/components/ui/back-button';
 import { AuthRequired } from '@/components/auth/auth-required';
 import { PageContainer, PageHeader } from '@/components/layout/page-shell';
-import { AccountSecurityView } from '@/features/users/account-security-view';
+import { AccountHubView } from '@/features/users/account-hub-view';
 
 export const metadata: Metadata = {
   title: 'Bảo mật tài khoản',
@@ -11,14 +11,11 @@ export const metadata: Metadata = {
 
 export default function AccountSecurityPage() {
   return (
-    <PageContainer size="narrow" className="space-y-6">
+    <PageContainer size="wide" className="max-w-4xl space-y-6">
       <BackButton label="Về tài khoản" className="sm:hidden" />
-      <PageHeader
-        title="Bảo mật tài khoản"
-        description="Quản lý phương thức đăng nhập và trạng thái xác minh."
-      />
+      <PageHeader title="Tài khoản của bạn" description="Quản lý hồ sơ, bảo mật và các thiết lập cá nhân." />
       <AuthRequired nextPath="/account/security">
-        <AccountSecurityView />
+        <AccountHubView initialTab="security" />
       </AuthRequired>
     </PageContainer>
   );

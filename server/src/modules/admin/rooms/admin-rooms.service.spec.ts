@@ -151,6 +151,7 @@ describe('AdminRoomsService', () => {
       tx.room.findUnique.mockResolvedValue({
         id: 42,
         isVerified: false,
+        status: 'pending',
         deletedAt: null,
       });
       tx.room.updateMany.mockResolvedValue({ count: 1 });
@@ -175,6 +176,7 @@ describe('AdminRoomsService', () => {
       const verifiedRoom = {
         id: 42,
         isVerified: true,
+        status: 'active',
         deletedAt: null,
       };
       tx.room.findUnique.mockResolvedValue(verifiedRoom);

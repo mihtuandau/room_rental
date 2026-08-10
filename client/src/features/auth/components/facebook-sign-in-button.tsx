@@ -15,6 +15,7 @@ export function FacebookSignInButton({
 }) {
   const router = useRouter();
   const facebookLoginMutation = useFacebookLogin();
+  const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
 
   const handleSuccess = async (response: { accessToken: string }) => {
     if (!response.accessToken) {
@@ -30,6 +31,19 @@ export function FacebookSignInButton({
     }
   };
 
+  if (!facebookAppId) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 text-sm font-medium text-zinc-500"
+      >
+        <Image src="/logofacebook.png" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+        {label} (chưa cấu hình)
+      </button>
+    );
+  }
+
   return (
     <div className="relative h-11 w-full overflow-hidden rounded-md">
       <div
@@ -41,7 +55,7 @@ export function FacebookSignInButton({
       </div>
       <div className="absolute inset-0 opacity-0 [&>button]:h-full [&>button]:w-full">
         <FacebookLogin
-          appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!}
+          appId={facebookAppId}
           onSuccess={handleSuccess}
           onFail={() => toast.error('Đăng nhập Facebook thất bại.')}
           initParams={{

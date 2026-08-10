@@ -384,16 +384,8 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/60 via-white to-zinc-50/30 pb-6 pt-8 sm:pb-10 sm:pt-14 lg:min-h-[500px] lg:py-12"
+      className="relative isolate scroll-mt-20 overflow-visible bg-brand-50/35 pb-6 pt-8 sm:pb-10 sm:pt-12 lg:min-h-[480px] lg:py-10"
     >
-      {/* Decorative blurred background blobs for premium aesthetic */}
-      <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-100 to-zinc-200 opacity-35 sm:left-[calc(50%-30rem)] sm:w-[72rem]" />
-      </div>
-      <div className="absolute inset-x-0 -bottom-40 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
-        <div className="relative right-0 aspect-[1155/678] w-[30rem] translate-x-1/3 bg-gradient-to-br from-zinc-200 to-brand-200 opacity-25 sm:w-[50rem]" />
-      </div>
-
       <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:gap-10">
         <div className="max-w-xl">
           <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
@@ -405,7 +397,7 @@ export function HomeHero({
           </p>
 
           <form
-            className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-card sm:p-5"
+            className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5"
             onSubmit={(event) => {
               event.preventDefault();
               submit();
@@ -440,6 +432,7 @@ export function HomeHero({
               <Field label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
                 <div className="relative mt-1">
                 <Input
+                  aria-label="Từ khóa hoặc khu vực"
                   value={keyword}
                   onFocus={() => setShowLocationSuggestions(true)}
                   onBlur={() => window.setTimeout(() => setShowLocationSuggestions(false), 120)}

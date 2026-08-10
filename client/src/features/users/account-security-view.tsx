@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { Eye, KeyRound, Laptop, LockKeyhole, LogOut, Mail, Smartphone } from 'lucide-react';
+import Image from 'next/image';
+import { Eye, KeyRound, Laptop, LockKeyhole, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,17 +15,27 @@ import { changePasswordSchema, resetPasswordSchema, type ChangePasswordInput, ty
 import { PasswordRequirements } from '@/features/auth/components/password-requirements';
 import { useProfile } from '@/features/users/hooks';
 
+export type SecurityTab = 'password' | 'two-factor' | 'devices' | 'privacy';
+
+const SECURITY_TAB_ITEMS: Array<{ value: SecurityTab; label: string; icon: React.ReactNode }> = [
+  { value: 'password', label: 'Đổi mật khẩu', icon: <KeyRound className="h-4 w-4" aria-hidden /> },
+  { value: 'two-factor', label: 'Xác thực 2 lớp', icon: <LockKeyhole className="h-4 w-4" aria-hidden /> },
+  { value: 'devices', label: 'Thiết bị', icon: <Laptop className="h-4 w-4" aria-hidden /> },
+  { value: 'privacy', label: 'Quyền riêng tư', icon: <Eye className="h-4 w-4" aria-hidden /> },
+];
+
 function StatusItem({ icon, label, value, verified }: { icon: React.ReactNode; label: string; value: string; verified: boolean }) {
   return (
-    <div className={`min-w-0 rounded-lg border p-3.5 transition-colors ${verified ? 'border-brand-100 bg-brand-50/40' : 'border-zinc-200 bg-zinc-50/70'}`}>
-      <div className="flex items-center justify-between gap-2">
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${verified ? 'bg-brand-100 text-brand-700' : 'bg-white text-zinc-500'}`} aria-hidden>{icon}</span>
-        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${verified ? 'bg-brand-100 text-brand-700' : 'bg-zinc-200 text-zinc-600'}`}>
-          {verified ? 'Đã xác minh' : 'Chưa xác minh'}
-        </span>
+    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-3">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${verified ? 'bg-brand-100 text-brand-700' : 'bg-zinc-200 text-zinc-600'}`} aria-hidden>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-zinc-500">{label}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-zinc-900" title={value}>{value}</p>
       </div>
-      <p className="mt-3 text-xs text-zinc-500">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-semibold text-zinc-900" title={value}>{value}</p>
+      <span className={`flex shrink-0 items-center gap-1.5 text-[11px] font-medium ${verified ? 'text-brand-700' : 'text-zinc-500'}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${verified ? 'bg-brand-600' : 'bg-zinc-400'}`} aria-hidden />
+        {verified ? 'Đã xác minh' : 'Chưa xác minh'}
+      </span>
     </div>
   );
 }
@@ -75,9 +86,9 @@ function CreatePasswordPanel({ email }: { email: string | null }) {
   }
 
   return (
-    <section role="tabpanel" className="rounded-lg border border-zinc-200 bg-white p-5">
+    <section role="tabpanel" className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700"><KeyRound className="h-4 w-4" aria-hidden /></span><div className="min-w-0"><h2 className="font-semibold text-zinc-900">Tạo mật khẩu</h2><p className="text-sm text-zinc-600">Tài khoản Google của bạn chưa có mật khẩu Trọ Ơi.</p></div></div>
-      {!email ? <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Hãy thêm email và xác minh email trước khi tạo mật khẩu.</p> : <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+      {!email ? <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Hãy thêm email và xác minh email trước khi tạo mật khẩu.</p> : <form onSubmit={handleSubmit(onSubmit)} className="mt-4 w-full space-y-3 border-t border-zinc-100 pt-4">
         {step === 'start' && <><p className="text-sm text-zinc-600">Chúng tôi sẽ gửi mã xác minh đến <strong className="font-medium text-zinc-900">{email}</strong>.</p><Button type="button" onClick={() => void requestOtp()} disabled={sendOtp.isPending}>{sendOtp.isPending ? 'Đang gửi mã…' : 'Gửi mã xác minh'}</Button></>}
         {step === 'verify' && <><div><label htmlFor="setupCode" className="mb-1.5 block text-sm font-medium text-zinc-700">Mã xác minh</label><Input id="setupCode" inputMode="numeric" autoComplete="one-time-code" error={Boolean(errors.code)} {...register('code')} />{errors.code && <p className="mt-1 text-xs text-danger-600">{errors.code.message}</p>}</div><div className="flex flex-wrap items-center justify-between gap-2"><Button type="button" variant="ghost" size="sm" onClick={() => setStep('start')}>Gửi lại mã</Button><Button type="button" onClick={() => void verifyCode()} disabled={verifyOtp.isPending}>{verifyOtp.isPending ? 'Đang xác minh…' : 'Xác minh mã'}</Button></div></>}
         {step === 'password' && <><p className="text-sm text-brand-700">Mã đã được xác minh. Tạo mật khẩu riêng cho Trọ Ơi.</p><div><label htmlFor="setupNewPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu mới</label><Input id="setupNewPassword" type="password" autoComplete="new-password" error={Boolean(errors.newPassword)} {...register('newPassword')} />{errors.newPassword && <p className="mt-1 text-xs text-danger-600">{errors.newPassword.message}</p>}<PasswordRequirements value={newPassword} /></div><div><label htmlFor="setupConfirmPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Nhập lại mật khẩu mới</label><Input id="setupConfirmPassword" type="password" autoComplete="new-password" error={Boolean(errors.confirmNewPassword)} {...register('confirmNewPassword')} />{errors.confirmNewPassword && <p className="mt-1 text-xs text-danger-600">{errors.confirmNewPassword.message}</p>}</div><div className="flex justify-end"><Button type="submit" disabled={resetPassword.isPending}>{resetPassword.isPending ? 'Đang tạo…' : 'Tạo mật khẩu'}</Button></div></>}
@@ -112,7 +123,15 @@ function DeviceManagementPanel() {
   );
 }
 
-export function AccountSecurityView() {
+export function AccountSecurityView({
+  section,
+  showOverview = true,
+  navigationTabs = SECURITY_TAB_ITEMS.map((item) => item.value),
+}: {
+  section?: SecurityTab;
+  showOverview?: boolean;
+  navigationTabs?: SecurityTab[];
+} = {}) {
   const { data: profile, isPending, isError, refetch } = useProfile();
   const changePassword = useChangePassword();
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<ChangePasswordInput>({
@@ -120,7 +139,7 @@ export function AccountSecurityView() {
     defaultValues: { currentPassword: '', newPassword: '', confirmNewPassword: '' },
   });
   const newPassword = useWatch({ control, name: 'newPassword', defaultValue: '' });
-  const [activeTab, setActiveTab] = useState<'password' | 'two-factor' | 'devices' | 'privacy'>('password');
+  const [activeTab, setActiveTab] = useState<SecurityTab>(section ?? 'password');
 
   if (isPending) return <Skeleton className="h-64 w-full rounded-lg" />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
@@ -136,40 +155,35 @@ export function AccountSecurityView() {
   }
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+    <div className="space-y-5">
+      {showOverview && <section className="border-b border-zinc-200 pb-4">
         <div>
           <h2 className="font-semibold text-zinc-900">Tổng quan bảo mật</h2>
           <p className="mt-1 text-sm text-zinc-600">Các phương  thức bạn có thể dùng để đăng nhập và khôi phục tài khoản.</p>
         </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <StatusItem icon={<Smartphone className="h-4 w-4" />} label="Số điện thoại" value={profile.phone ?? 'Chưa thêm số'} verified={Boolean(profile.phone && profile.isPhoneVerified)} />
-          <StatusItem icon={<Mail className="h-4 w-4" />} label="Email" value={profile.email ?? 'Chưa thêm email'} verified={Boolean(profile.email && profile.isEmailVerified)} />
-          <StatusItem icon={<span className="font-bold">G</span>} label="Google" value={profile.googleLinked ? 'Đã liên kết' : 'Chưa liên kết'} verified={profile.googleLinked} />
+        <div className="mt-4 grid sm:grid-cols-3 sm:gap-x-5">
+          <StatusItem icon={<Image src="/logophone.png" alt="" width={22} height={22} className="h-5 w-5 object-contain" />} label="Số điện thoại" value={profile.phone ?? 'Chưa thêm số'} verified={Boolean(profile.phone && profile.isPhoneVerified)} />
+          <StatusItem icon={<Image src="/logogmail.webp" alt="" width={22} height={22} className="h-5 w-5 object-contain" />} label="Email" value={profile.email ?? 'Chưa thêm email'} verified={Boolean(profile.email && profile.isEmailVerified)} />
+          <StatusItem icon={<Image src="/logogoogle.webp" alt="" width={22} height={22} className="h-5 w-5 object-contain" />} label="Google" value={profile.googleLinked ? 'Đã liên kết' : 'Chưa liên kết'} verified={profile.googleLinked} />
         </div>
-      </section>
+      </section>}
 
-      <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] lg:items-start">
-        <div role="tablist" aria-label="Cài đặt bảo mật" className="flex gap-1 overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-1 lg:flex-col lg:overflow-visible">
-          {[
-            ['password', 'Đổi mật khẩu', <KeyRound className="h-4 w-4" key="password-icon" />],
-            ['two-factor', 'Xác thực 2 lớp', <LockKeyhole className="h-4 w-4" key="two-factor-icon" />],
-            ['devices', 'Thiết bị', <Laptop className="h-4 w-4" key="devices-icon" />],
-            ['privacy', 'Quyền riêng tư', <Eye className="h-4 w-4" key="privacy-icon" />],
-          ].map(([value, label, icon]) => (
-            <button key={String(value)} type="button" role="tab" aria-selected={activeTab === value} onClick={() => setActiveTab(value as typeof activeTab)} className={`flex min-h-10 shrink-0 items-center justify-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === value ? 'bg-white text-brand-700 shadow-sm' : 'text-zinc-600 hover:bg-white/70'}`}>
+      <div className="space-y-4">
+        {navigationTabs.length > 0 && <div role="tablist" aria-label="Cài đặt bảo mật" className="flex gap-1 overflow-x-auto border-b border-zinc-200">
+          {SECURITY_TAB_ITEMS.filter((item) => navigationTabs.includes(item.value)).map(({ value, label, icon }) => (
+            <button key={value} type="button" role="tab" aria-selected={activeTab === value} onClick={() => setActiveTab(value)} className={`flex min-h-11 shrink-0 items-center justify-start gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${activeTab === value ? 'border-brand-600 text-brand-700' : 'border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900'}`}>
               {icon}<span>{label}</span>
             </button>
           ))}
-        </div>
+        </div>}
 
-        <div className="min-w-0">{activeTab === 'password' ? (profile.hasPassword ? <section role="tabpanel" className="rounded-lg border border-zinc-200 bg-white p-5">
+        <div className="min-w-0">{activeTab === 'password' ? (profile.hasPassword ? <section role="tabpanel" className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700"><KeyRound className="h-4 w-4" aria-hidden /></span><div className="min-w-0"><h2 className="font-semibold text-zinc-900">Đổi mật khẩu</h2><p className="text-sm text-zinc-600">Cập nhật định kỳ để bảo vệ tài khoản.</p></div></div>
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3 border-t border-zinc-100 pt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 grid w-full gap-4 border-t border-zinc-100 pt-4 sm:grid-cols-2">
             <div><label htmlFor="currentPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu hiện tại</label><Input id="currentPassword" type="password" autoComplete="current-password" error={Boolean(errors.currentPassword)} {...register('currentPassword')} />{errors.currentPassword && <p className="mt-1 text-xs text-danger-600">{errors.currentPassword.message}</p>}</div>
             <div><label htmlFor="newPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Mật khẩu mới</label><Input id="newPassword" type="password" autoComplete="new-password" error={Boolean(errors.newPassword)} {...register('newPassword')} />{errors.newPassword && <p className="mt-1 text-xs text-danger-600">{errors.newPassword.message}</p>}<PasswordRequirements value={newPassword} /></div>
             <div><label htmlFor="confirmNewPassword" className="mb-1.5 block text-sm font-medium text-zinc-700">Nhập lại mật khẩu mới</label><Input id="confirmNewPassword" type="password" autoComplete="new-password" error={Boolean(errors.confirmNewPassword)} {...register('confirmNewPassword')} />{errors.confirmNewPassword && <p className="mt-1 text-xs text-danger-600">{errors.confirmNewPassword.message}</p>}</div>
-            <div className="flex justify-end"><Button type="submit" disabled={changePassword.isPending}>{changePassword.isPending ? 'Đang cập nhật…' : 'Lưu mật khẩu mới'}</Button></div>
+            <div className="flex justify-start sm:col-span-2"><Button type="submit" disabled={changePassword.isPending}>{changePassword.isPending ? 'Đang cập nhật…' : 'Lưu mật khẩu mới'}</Button></div>
           </form>
         </section> : <CreatePasswordPanel email={profile.email && profile.isEmailVerified ? profile.email : null} />) : null}
 

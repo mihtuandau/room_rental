@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BarChart3, ListChecks, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BarChart3, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ManageShell({ children }: { children: React.ReactNode }) {
@@ -17,9 +16,9 @@ export function ManageShell({ children }: { children: React.ReactNode }) {
 
 export function ManageNavigation({ pathname }: { pathname: string }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white">
-      <div className="flex items-center gap-4 overflow-x-auto px-3">
-        <nav aria-label="Điều hướng quản lý tin đăng" className="flex min-h-16 shrink-0 items-center gap-1">
+    <div className="border-b border-zinc-200">
+      <div className="flex items-center gap-4 overflow-x-auto">
+        <nav aria-label="Điều hướng quản lý tin đăng" className="flex min-h-12 shrink-0 items-center gap-1">
           <Link href="/manage/dashboard" className={cn('inline-flex min-h-10 items-center gap-2 rounded-md border-b-2 px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2', pathname.startsWith('/manage/dashboard') ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-transparent text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900')}>
             <BarChart3 className="h-4 w-4" aria-hidden />
             Tổng quan
@@ -29,9 +28,6 @@ export function ManageNavigation({ pathname }: { pathname: string }) {
             Tin của tôi
           </Link>
         </nav>
-        {!pathname.startsWith('/manage/listings') && <Button size="sm" className="ml-auto shrink-0" asChild>
-          <Link href="/manage/listings/new"><Plus className="h-4 w-4" aria-hidden />Đăng tin mới</Link>
-        </Button>}
       </div>
     </div>
   );

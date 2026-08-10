@@ -73,10 +73,10 @@ export function AdminNavLinks({
             aria-current={active ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "flex min-h-10 items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
+              "flex min-h-10 items-center gap-3 border-l-2 border-transparent px-3 py-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
               active
-                ? "bg-brand-600 font-medium text-white"
-                : "text-zinc-700 hover:bg-white",
+                ? "border-brand-600 bg-brand-50 font-medium text-brand-800"
+                : "text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
             )}
           >
             <item.icon className="h-[18px] w-[18px]" aria-hidden />
