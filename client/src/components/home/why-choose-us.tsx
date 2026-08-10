@@ -11,19 +11,19 @@ const REASONS = [
     icon: BadgeCheck,
     title: 'Tin đăng rõ ràng',
     description:
-      'Chúng tôi kiểm duyệt thông tin và hình ảnh thực tế nghiêm ngặt trước khi hiển thị công khai. Bạn hoàn toàn yên tâm tìm kiếm mà không sợ lừa đảo.',
+      'Thông tin và hình ảnh được kiểm tra trước khi hiển thị công khai.',
   },
   {
     icon: CircleDollarSign,
     title: 'Liên hệ trực tiếp',
     description:
-      'Trao đổi thẳng với chủ trọ, không qua môi giới và hoàn toàn không phát sinh phí.',
+      'Kết nối trực tiếp với chủ trọ, không qua môi giới.',
   },
   {
     icon: RefreshCcw,
     title: 'Cập nhật liên tục',
     description:
-      'Trạng thái phòng được đồng bộ thời gian thực, giúp bạn không mất thời gian với phòng đã có người.',
+      'Biết tin còn trống để không mất thời gian với phòng đã cho thuê.',
   },
 ] as const;
 
