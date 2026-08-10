@@ -4,6 +4,7 @@
 import {
   parseAsArrayOf,
   parseAsBoolean,
+  parseAsFloat,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -30,8 +31,10 @@ export const searchParsers = {
   roomType: parseAsStringLiteral(ROOM_TYPE_VALUES),
   priceMin: parseAsInteger,
   priceMax: parseAsInteger,
-  areaMin: parseAsInteger,
-  areaMax: parseAsInteger,
+  // Listing/search APIs accept decimal square metres (e.g. 18.5), while the
+  // UI slider still uses a simpler 5 m² step for normal interactions.
+  areaMin: parseAsFloat,
+  areaMax: parseAsFloat,
   verifiedOnly: parseAsBoolean.withDefault(false),
   amenityIds: parseAsArrayOf(parseAsInteger).withDefault([]),
   sort: parseAsStringLiteral(SORT_VALUES).withDefault('newest'),

@@ -83,7 +83,7 @@ export function CategoryBar() {
                 type="button"
                 onClick={() => handleCategoryClick(value)}
                 className={cn(
-                  'group flex flex-row items-center gap-1.5 border-b-2 pb-2 pt-1.5 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 cursor-pointer',
+                  'group flex min-h-10 flex-row items-center gap-1.5 border-b-2 py-2 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 cursor-pointer',
                   isActive
                     ? 'border-brand-600 text-brand-600 font-semibold'
                     : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-900',

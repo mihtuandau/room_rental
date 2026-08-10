@@ -49,7 +49,7 @@ export function NewListingForm({
         }
       />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-6">
           <div className="mb-5">
             <p className="hidden text-xs font-semibold uppercase tracking-wide text-brand-700 sm:block">
               Bước {listing.step + 1} / {LISTING_STEPS.length}

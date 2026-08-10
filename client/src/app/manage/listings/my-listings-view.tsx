@@ -21,7 +21,7 @@ export function MyListingsView() {
   const [statusFilter, setStatusFilter] = useState(ALL_STATUS);
   const [page, setPage] = useState(1);
 
-  if (isPending) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (isPending) return <Skeleton className="h-96 w-full rounded-lg" />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
   if (rooms.length === 0) {
     return (
@@ -54,7 +54,7 @@ export function MyListingsView() {
   return (
     <div className="space-y-4">
       <ListingsStats rooms={rooms} />
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
       <ListingsToolbar
         keyword={keyword}
         status={statusFilter}
@@ -99,7 +99,7 @@ function ListingsStats({ rooms }: { rooms: MyRoomItem[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {items.map(({ label, value, icon: Icon, tone }) => (
-        <div key={label} className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-5">
+        <div key={label} className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-white p-5">
           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${tone}`}>
             <Icon className="h-5 w-5" aria-hidden />
           </span>

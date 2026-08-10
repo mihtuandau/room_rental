@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import { toast } from 'sonner';
 import { GoogleSignInButton } from './google-sign-in-button';
 import { FacebookSignInButton } from './facebook-sign-in-button';
 

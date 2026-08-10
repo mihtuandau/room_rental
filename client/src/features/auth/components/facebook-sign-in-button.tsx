@@ -16,7 +16,7 @@ export function FacebookSignInButton({
   const router = useRouter();
   const facebookLoginMutation = useFacebookLogin();
 
-  const handleSuccess = async (response: any) => {
+  const handleSuccess = async (response: { accessToken: string }) => {
     if (!response.accessToken) {
       toast.error('Đăng nhập Facebook thất bại.');
       return;
@@ -48,7 +48,6 @@ export function FacebookSignInButton({
             version: 'v18.0',
             xfbml: true,
           }}
-          useCustomButton
           render={(renderProps) => (
             <button onClick={renderProps.onClick} type="button" aria-label="Đăng nhập bằng Facebook" />
           )}

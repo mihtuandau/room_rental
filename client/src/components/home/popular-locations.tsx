@@ -4,21 +4,24 @@ import Image from 'next/image';
 import { useQueryStates } from 'nuqs';
 import { MapPin, ArrowUpRight } from 'lucide-react';
 import { searchParsers } from '@/features/rooms/search-params';
-import LOCATIONS from '@/config/popular-locations.json';
+import { PLACEHOLDER_IMAGE } from '@/components/rooms/room-card';
+import { formatPrice } from '@/lib/utils';
 
-export interface LocationCount {
+export interface FeaturedLocation {
+  city: string;
   district: string;
   count: number;
-  minPrice?: number;
+  minPrice: number | null;
+  imageUrl: string | null;
 }
 
-export function PopularLocations({ counts = [] }: { counts?: LocationCount[] }) {
+export function PopularLocations({ locations = [] }: { locations?: FeaturedLocation[] }) {
   const [, setQuery] = useQueryStates(searchParsers);
 
-  const handleLocationClick = (district: string) => {
+  const handleLocationClick = (location: FeaturedLocation) => {
     void setQuery({
-      city: 'Hồ Chí Minh',
-      district: district,
+      city: location.city,
+      district: location.district,
       all: true,
       page: 1,
     }).then(() => {
@@ -31,34 +34,39 @@ export function PopularLocations({ counts = [] }: { counts?: LocationCount[] }) 
   };
 
   return (
-    <section id="kham-pha" className="scroll-mt-28 py-4 sm:py-6">
+    <section
+      id="kham-pha"
+      className="mx-auto w-full max-w-7xl scroll-mt-28 px-4 py-4 sm:px-6 sm:py-6"
+    >
       <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
-          Khám phá khu vực nổi bật
+        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          Khu vực có nhiều tin
         </h2>
         <p className="max-w-2xl text-sm text-zinc-500">
-          Tìm nhanh phòng trọ, nhà nguyên căn, chung cư mini tại các quận trung tâm nhộn nhịp, gần các cụm trường đại học lớn.
+          Chọn nhanh nơi có nhiều tin đăng đang hoạt động, kèm mức giá tham khảo để dễ bắt đầu tìm kiếm.
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {LOCATIONS.map((loc) => {
-          const locationData = counts.find((c) => c.district === loc.district);
-          const activeCount = locationData?.count ?? 0;
+      {locations.length ? (
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {locations.map((loc, index) => {
+            const summary = loc.minPrice
+              ? `${loc.city} · Từ ${formatPrice(loc.minPrice)}/tháng`
+              : `${loc.city} · Tin đang hoạt động`;
           return (
             <button
-              key={loc.district}
+              key={`${loc.city}-${loc.district}`}
               type="button"
-              onClick={() => handleLocationClick(loc.district)}
-              className="group relative h-56 w-full overflow-hidden rounded-2xl border border-zinc-200 text-left shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 cursor-pointer"
+              onClick={() => handleLocationClick(loc)}
+              className="group relative h-56 w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-200 text-left transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
             >
               {/* Background Image */}
               <div className="absolute inset-0 z-0 transition-transform duration-500 group-hover:scale-105">
                 <Image
-                  src={loc.image}
-                  alt={`Phòng trọ tại ${loc.district}`}
+                  src={loc.imageUrl ?? PLACEHOLDER_IMAGE}
+                  alt={`Phòng trọ tại ${loc.district}, ${loc.city}`}
                   fill
-                  priority
+                  priority={index === 0}
                   className="object-cover"
                   sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 25vw"
                 />
@@ -67,8 +75,8 @@ export function PopularLocations({ counts = [] }: { counts?: LocationCount[] }) 
               </div>
 
               {/* Tag Badge / Real Count */}
-              <div className="absolute left-4 top-4 z-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 text-[10px] font-semibold tracking-wider text-white uppercase">
-                {activeCount > 0 ? `${activeCount} tin đăng` : loc.tag}
+              <div className="absolute left-4 top-4 z-10 rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
+                {loc.count} tin đăng
               </div>
 
               {/* Content Bottom */}
@@ -76,10 +84,10 @@ export function PopularLocations({ counts = [] }: { counts?: LocationCount[] }) 
                 <div className="space-y-1 pr-6">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4 text-brand-400 shrink-0" aria-hidden />
-                    <span className="text-lg font-bold tracking-tight">{loc.district}</span>
+                    <span className="text-lg font-semibold tracking-tight">{loc.district}</span>
                   </div>
                   <p className="text-xs text-zinc-200/90 line-clamp-2 leading-relaxed font-medium">
-                    {loc.subtext}
+                    {summary}
                   </p>
                 </div>
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 border border-white/20 backdrop-blur-xs text-white transition-all duration-300 group-hover:bg-brand-600 group-hover:border-brand-600 group-hover:scale-110">
@@ -88,8 +96,13 @@ export function PopularLocations({ counts = [] }: { counts?: LocationCount[] }) 
             </div>
           </button>
           );
-        })}
-      </div>
+          })}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-2xl border border-dashed border-zinc-200 px-6 py-10 text-center text-sm text-zinc-500">
+          Chưa có khu vực nào có tin đăng đang hiển thị.
+        </div>
+      )}
     </section>
   );
 }

@@ -1,10 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Bookmark, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { ShieldCheck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { cn, formatPriceShort } from '@/lib/utils';
@@ -13,10 +10,9 @@ import {
   ROOM_TYPE_OPTIONS,
   type AmenityType,
 } from '@/lib/constants';
-import { useIsSignedIn } from '@/stores/auth-store';
-import { useCreateSavedSearch } from '@/features/saved-searches/hooks';
 import type { Amenity } from '@/features/amenities/api';
 import type { SearchState } from '@/features/rooms/search-params';
+import { SaveSearchButton } from './save-search-button';
 
 interface FilterPanelProps {
   state: SearchState;
@@ -43,10 +39,6 @@ function areaLabel(v: number) {
 }
 
 export function FilterPanel({ state, amenities, onChange, onClear }: FilterPanelProps) {
-  const router = useRouter();
-  const isSignedIn = useIsSignedIn();
-  const createSavedSearch = useCreateSavedSearch();
-
   // Sliders update this local pair live while dragging; onChange (→ the URL)
   // only fires on release (onValueCommit), so dragging doesn't spam the router.
   const [priceRange, setPriceRange] = useState<[number, number]>([
@@ -89,30 +81,6 @@ export function FilterPanel({ state, amenities, onChange, onClear }: FilterPanel
     type,
     items: amenities.filter((a) => a.type === type),
   })).filter((g) => g.items.length > 0);
-
-  const handleSaveSearch = () => {
-    if (!isSignedIn) {
-      router.push(`/login?next=${encodeURIComponent('/')}`);
-      return;
-    }
-    createSavedSearch.mutate(
-      {
-        city: state.city || undefined,
-        district: state.district || undefined,
-        ward: state.ward || undefined,
-        roomType: state.roomType ?? undefined,
-        priceMin: state.priceMin ?? undefined,
-        priceMax: state.priceMax ?? undefined,
-        areaMin: state.areaMin ?? undefined,
-        areaMax: state.areaMax ?? undefined,
-      },
-      {
-        onSuccess: () =>
-          toast.success('Đã lưu tìm kiếm. Có tin mới phù hợp sẽ báo cho bạn.'),
-        onError: () => toast.error('Không lưu được, thử lại nhé.'),
-      },
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -262,15 +230,7 @@ export function FilterPanel({ state, amenities, onChange, onClear }: FilterPanel
         </div>
       </div>
 
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={handleSaveSearch}
-        disabled={createSavedSearch.isPending}
-      >
-        <Bookmark className="h-4 w-4" aria-hidden />
-        {createSavedSearch.isPending ? 'Đang lưu…' : 'Lưu tìm kiếm này'}
-      </Button>
+      <SaveSearchButton state={state} className="w-full" />
     </div>
   );
 }

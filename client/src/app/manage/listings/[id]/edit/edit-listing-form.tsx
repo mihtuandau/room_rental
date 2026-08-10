@@ -29,9 +29,9 @@ export function EditListingForm({
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-5">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Sửa tin đăng
           </h1>
           <p className="mt-1 truncate text-sm text-zinc-600">{room.title}</p>

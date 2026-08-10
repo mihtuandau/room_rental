@@ -4,9 +4,12 @@ import { createLoader } from 'nuqs/server';
 import { CategoryBar } from '@/components/home/category-bar';
 import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
+import { HowItWorks } from '@/components/home/how-it-works';
 import { LandlordCta } from '@/components/home/landlord-cta';
-import { PopularLocations } from '@/components/home/popular-locations';
-import { WhyChooseUs } from '@/components/home/why-choose-us';
+import {
+  PopularLocations,
+  type FeaturedLocation,
+} from '@/components/home/popular-locations';
 import { SearchView } from '@/components/search/search-view';
 import type { Amenity } from '@/features/amenities/api';
 import { fetchProvinces } from '@/features/locations/api';
@@ -94,23 +97,13 @@ export default async function HomePage({ searchParams }: Props) {
       ),
   });
 
-  const popularDistricts = ['Quận 7', 'Bình Thạnh', 'Thủ Đức', 'Quận 10'];
-  const countsPromise = Promise.all(
-    popularDistricts.map(async (district) => {
-      try {
-        const data = await serverFetch<RoomSearchResult>(
-          `/rooms?city=${encodeURIComponent('Hồ Chí Minh')}&district=${encodeURIComponent(district)}&pageSize=1`,
-          { next: { revalidate: 60 } }
-        );
-        return { district, count: data.total };
-      } catch {
-        return { district, count: 0 };
-      }
-    })
-  );
+  const locationsPromise = serverFetch<FeaturedLocation[]>(
+    '/rooms/featured-locations?limit=4',
+    { next: { revalidate: 60 } },
+  ).catch(() => []);
 
-  const [counts, , amenities, provinces] = await Promise.all([
-    countsPromise,
+  const [locations, , amenities, provinces] = await Promise.all([
+    locationsPromise,
     roomsPromise,
     serverFetch<Amenity[]>('/amenities', { revalidate: 3600 }).catch(
       () => [],
@@ -132,15 +125,13 @@ export default async function HomePage({ searchParams }: Props) {
           provinces={provinces}
           browseTop={
             <div className="flex flex-col gap-12 sm:gap-16">
-              <PopularLocations counts={counts} />
               <FeaturedSection />
+              <PopularLocations locations={locations} />
+              <HowItWorks />
             </div>
           }
           browseBottom={
-            <div className="flex flex-col gap-12 sm:gap-16">
-              <WhyChooseUs />
-              <LandlordCta />
-            </div>
+            <LandlordCta />
           }
         />
       </HydrationBoundary>
