@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -26,13 +27,19 @@ export class FavoritesController {
 
   @Post(':roomId')
   @ApiOperation({ summary: 'Favorite a room (idempotent)' })
-  add(@CurrentUser('id') userId: string, @Param('roomId') roomId: string) {
-    return this.favoritesService.add(userId, Number(roomId));
+  add(
+    @CurrentUser('id') userId: string,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.favoritesService.add(userId, roomId);
   }
 
   @Delete(':roomId')
   @ApiOperation({ summary: 'Unfavorite a room (idempotent)' })
-  remove(@CurrentUser('id') userId: string, @Param('roomId') roomId: string) {
-    return this.favoritesService.remove(userId, Number(roomId));
+  remove(
+    @CurrentUser('id') userId: string,
+    @Param('roomId', ParseIntPipe) roomId: number,
+  ) {
+    return this.favoritesService.remove(userId, roomId);
   }
 }

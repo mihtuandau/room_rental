@@ -14,6 +14,29 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
+  // Tokens, contact details, saved searches, and user-owned data must never
+  // be stored by a browser or shared intermediary cache.
+  const privatePrefixes = [
+    '/auth',
+    '/users',
+    '/favorites',
+    '/contact-logs',
+    '/saved-searches',
+    '/notifications',
+    '/reports',
+    '/rooms/mine',
+  ];
+  app.use((req, res, next) => {
+    if (
+      req.method !== 'GET' &&
+      req.method !== 'HEAD' ||
+      privatePrefixes.some((prefix) => req.path.startsWith(prefix))
+    ) {
+      res.setHeader('Cache-Control', 'private, no-store');
+    }
+    next();
+  });
+
   app.enableCors({
     origin: process.env.FRONTEND_URL,
     credentials: true, // required because the refresh token lives in an httpOnly cookie

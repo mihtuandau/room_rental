@@ -3,10 +3,12 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Prisma } from '../../../generated/prisma/client';
+import { RedisCacheService } from '@/common/cache/redis-cache.service';
+import { Prisma, RoomStatus } from '../../../generated/prisma/client';
 import { uniqueSlug } from '@/common/utils/slugify';
 import { CloudinaryService } from '../storage/cloudinary.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -48,12 +50,94 @@ const ROOM_IMAGE_ORDER = [
   { createdAt: 'asc' as const },
 ];
 
+type FeaturedLocation = {
+  city: string;
+  district: string;
+  count: number;
+  minPrice: number | null;
+  imageUrl: string | null;
+};
+
+type RoomSearchResult = {
+  rooms: unknown[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 @Injectable()
 export class RoomsService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
+    @Optional() private cache?: RedisCacheService,
   ) {}
+
+  /**
+   * Returns data-driven area cards for the public homepage. Only publicly
+   * visible listings count, and a disabled/deleted owner removes their rooms
+   * from the aggregate as well.
+   */
+  async featuredLocations(limit = 4) {
+    const safeLimit = Math.min(Math.max(Math.trunc(limit) || 4, 1), 12);
+    const cacheKey = `roomrent:cache:rooms:featured:${safeLimit}`;
+    const cached = await this.cache?.get<FeaturedLocation[]>(cacheKey);
+    if (cached) return cached;
+
+    const where = {
+      status: 'active' as const,
+      deletedAt: null,
+      owner: { is: { deletedAt: null } },
+    };
+    const grouped = await this.prisma.room.groupBy({
+      by: ['city', 'district'],
+      where,
+      _count: { _all: true },
+      _min: { price: true },
+    });
+
+    const topLocations = grouped
+      .sort((a, b) => {
+        const countDiff = b._count._all - a._count._all;
+        if (countDiff !== 0) return countDiff;
+        return `${a.city}/${a.district}`.localeCompare(
+          `${b.city}/${b.district}`,
+          'vi',
+        );
+      })
+      .slice(0, safeLimit);
+
+    const result: FeaturedLocation[] = await Promise.all(
+      topLocations.map(async (location) => {
+        const roomWithCover = await this.prisma.room.findFirst({
+          where: { ...where, city: location.city, district: location.district },
+          orderBy: [{ isVerified: 'desc' }, { createdAt: 'desc' }],
+          select: {
+            images: {
+              where: { isCover: true },
+              orderBy: { createdAt: 'asc' },
+              take: 1,
+              select: { url: true },
+            },
+          },
+        });
+
+        return {
+          city: location.city,
+          district: location.district,
+          count: location._count._all,
+          minPrice: location._min.price,
+          imageUrl: roomWithCover?.images[0]?.url ?? null,
+        };
+      }),
+    );
+    await this.cache?.set(cacheKey, result, 60);
+    return result;
+  }
+
+  private async invalidatePublicRoomCache() {
+    await this.cache?.deleteByPrefix('roomrent:cache:rooms:');
+  }
 
   async create(userId: string, dto: CreateRoomDto) {
     // A listing is useless without a way to reach the owner, and Google signups
@@ -64,6 +148,7 @@ export class RoomsService {
       select: {
         phone: true,
         contactPhone: true,
+        contactPhoneVerified: true,
         isPhoneVerified: true,
       },
     });
@@ -72,13 +157,17 @@ export class RoomsService {
         'Add a contact phone number to your profile before posting a listing.',
       );
     }
-    if (owner.phone && !owner.isPhoneVerified) {
+    const contactPhoneVerified = owner.contactPhone
+      ? owner.contactPhoneVerified ||
+        (owner.contactPhone === owner.phone && owner.isPhoneVerified)
+      : owner.isPhoneVerified;
+    if (!contactPhoneVerified) {
       throw new BadRequestException(
-        'Verify your phone number before posting a listing.',
+        'Verify your contact phone number before posting a listing.',
       );
     }
 
-    return this.prisma.room.create({
+    const room = await this.prisma.room.create({
       data: {
         ...dto,
         ownerId: userId,
@@ -86,9 +175,28 @@ export class RoomsService {
         status: 'pending',
       },
     });
+    await this.invalidatePublicRoomCache();
+    return room;
   }
 
-  async search(dto: SearchRoomsDto) {
+  async search(dto: SearchRoomsDto): Promise<RoomSearchResult> {
+    const normalizedKey = JSON.stringify(
+      Object.entries(dto)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, value]) => [key, value]),
+    );
+    const cacheKey = `roomrent:cache:rooms:search:${createHash('sha256')
+      .update(normalizedKey)
+      .digest('hex')}`;
+    const cached = await this.cache?.get<RoomSearchResult>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.searchUncached(dto);
+    await this.cache?.set(cacheKey, result, 15);
+    return result;
+  }
+
+  private async searchUncached(dto: SearchRoomsDto): Promise<RoomSearchResult> {
     const page = dto.page ?? 1;
     const pageSize = dto.pageSize ?? 20;
     const hasAnyGeoParam =
@@ -101,6 +209,13 @@ export class RoomsService {
       throw new BadRequestException(
         'Both latitude and longitude are required for radius search.',
       );
+    }
+
+    // Keep keyword/radius filtering, counting, ordering, and pagination in
+    // SQL. Fetching every matching id into Node makes popular searches grow
+    // without bound and turns intersecting two scopes into O(n²) work.
+    if (dto.keyword?.trim() || hasRadiusSearch) {
+      return this.searchWithRawScope(dto, page, pageSize, hasRadiusSearch);
     }
 
     // Prisma can't do accent-insensitive matching — narrow to matching ids via
@@ -125,6 +240,10 @@ export class RoomsService {
         Prisma.sql`
           SELECT id FROM rooms
           WHERE status = 'active' AND deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM users
+              WHERE users.id = rooms.owner_id AND users.deleted_at IS NULL
+            )
             AND ${Prisma.join(wordConditions, ' AND ')}
         `,
       );
@@ -143,6 +262,10 @@ export class RoomsService {
           FROM rooms
           WHERE status = 'active'
             AND deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM users
+              WHERE users.id = rooms.owner_id AND users.deleted_at IS NULL
+            )
             AND latitude IS NOT NULL
             AND longitude IS NOT NULL
             AND (
@@ -174,21 +297,22 @@ export class RoomsService {
     const where = {
       status: 'active' as const,
       deletedAt: null,
+      owner: { is: { deletedAt: null } },
       ...(scopedIds && { id: { in: scopedIds } }),
       ...(dto.city && { city: dto.city }),
       ...(dto.district && { district: dto.district }),
       ...(dto.ward && { ward: dto.ward }),
       ...(dto.roomType && { roomType: dto.roomType }),
-      ...((dto.priceMin ?? dto.priceMax) && {
+      ...((dto.priceMin !== undefined || dto.priceMax !== undefined) && {
         price: {
-          ...(dto.priceMin && { gte: dto.priceMin }),
-          ...(dto.priceMax && { lte: dto.priceMax }),
+          ...(dto.priceMin !== undefined && { gte: dto.priceMin }),
+          ...(dto.priceMax !== undefined && { lte: dto.priceMax }),
         },
       }),
-      ...((dto.areaMin ?? dto.areaMax) && {
+      ...((dto.areaMin !== undefined || dto.areaMax !== undefined) && {
         area: {
-          ...(dto.areaMin && { gte: dto.areaMin }),
-          ...(dto.areaMax && { lte: dto.areaMax }),
+          ...(dto.areaMin !== undefined && { gte: dto.areaMin }),
+          ...(dto.areaMax !== undefined && { lte: dto.areaMax }),
         },
       }),
       ...(dto.verifiedOnly && { isVerified: true }),
@@ -207,6 +331,7 @@ export class RoomsService {
       ...(!dto.sort || dto.sort === 'newest'
         ? [{ createdAt: 'desc' as const }]
         : []),
+      { id: 'desc' as const },
     ];
 
     const [rooms, total] = await this.prisma.$transaction([
@@ -223,9 +348,140 @@ export class RoomsService {
     return { rooms, total, page, pageSize };
   }
 
+  private async searchWithRawScope(
+    dto: SearchRoomsDto,
+    page: number,
+    pageSize: number,
+    hasRadiusSearch: boolean,
+  ) {
+    const predicates: Prisma.Sql[] = [
+      Prisma.sql`r.status = 'active'`,
+      Prisma.sql`r.deleted_at IS NULL`,
+      Prisma.sql`EXISTS (
+        SELECT 1 FROM users u
+        WHERE u.id = r.owner_id AND u.deleted_at IS NULL
+      )`,
+    ];
+
+    if (dto.city) predicates.push(Prisma.sql`r.city = ${dto.city}`);
+    if (dto.district)
+      predicates.push(Prisma.sql`r.district = ${dto.district}`);
+    if (dto.ward) predicates.push(Prisma.sql`r.ward = ${dto.ward}`);
+    if (dto.roomType) predicates.push(Prisma.sql`r.room_type = ${dto.roomType}`);
+    if (dto.priceMin !== undefined)
+      predicates.push(Prisma.sql`r.price >= ${dto.priceMin}`);
+    if (dto.priceMax !== undefined)
+      predicates.push(Prisma.sql`r.price <= ${dto.priceMax}`);
+    if (dto.areaMin !== undefined)
+      predicates.push(Prisma.sql`r.area >= ${dto.areaMin}`);
+    if (dto.areaMax !== undefined)
+      predicates.push(Prisma.sql`r.area <= ${dto.areaMax}`);
+    if (dto.verifiedOnly) predicates.push(Prisma.sql`r.is_verified = true`);
+
+    for (const amenityId of dto.amenityIds ?? []) {
+      predicates.push(Prisma.sql`EXISTS (
+        SELECT 1 FROM room_amenities ra
+        WHERE ra.room_id = r.id AND ra.amenity_id = ${amenityId}
+      )`);
+    }
+
+    const words = dto.keyword?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const textExpression = Prisma.sql`unaccent(
+      concat_ws(' ', r.title, r.description, r.district, r.ward, r.address, r.city)
+    )`;
+    for (const word of words) {
+      predicates.push(
+        Prisma.sql`${textExpression} ILIKE unaccent(${'%' + word + '%'})`,
+      );
+    }
+
+    let distanceExpression: Prisma.Sql | undefined;
+    if (hasRadiusSearch) {
+      const lat = dto.lat!;
+      const lng = dto.lng!;
+      const radiusKm = dto.radiusKm ?? 3;
+      const latDelta = radiusKm / 111.045;
+      const longitudeScale = Math.max(
+        Math.cos((lat * Math.PI) / 180),
+        0.01,
+      );
+      const lngDelta = radiusKm / (111.045 * longitudeScale);
+      predicates.push(
+        Prisma.sql`r.latitude BETWEEN ${lat - latDelta} AND ${lat + latDelta}`,
+        Prisma.sql`r.longitude BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}`,
+        Prisma.sql`r.latitude IS NOT NULL AND r.longitude IS NOT NULL`,
+      );
+      distanceExpression = Prisma.sql`6371 * 2 * asin(sqrt(
+        power(sin(radians((${lat} - r.latitude) / 2)), 2) +
+        cos(radians(${lat})) * cos(radians(r.latitude)) *
+        power(sin(radians((${lng} - r.longitude) / 2)), 2)
+      ))`;
+      predicates.push(Prisma.sql`${distanceExpression} <= ${radiusKm}`);
+    }
+
+    const whereSql = Prisma.join(predicates, ' AND ');
+    const orderBy = hasRadiusSearch && (!dto.sort || dto.sort === 'newest')
+      ? Prisma.sql`r.is_verified DESC, distance_km ASC, r.created_at DESC, r.id DESC`
+      : dto.sort === 'price_asc'
+        ? Prisma.sql`r.is_verified DESC, r.price ASC, r.id DESC`
+        : dto.sort === 'price_desc'
+          ? Prisma.sql`r.is_verified DESC, r.price DESC, r.id DESC`
+          : Prisma.sql`r.is_verified DESC, r.created_at DESC, r.id DESC`;
+    const distanceSelect = distanceExpression
+      ? Prisma.sql`, ${distanceExpression} AS distance_km`
+      : Prisma.empty;
+    const offset = (page - 1) * pageSize;
+
+    const [countRows, pageRows] = await this.prisma.$transaction([
+      this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+        SELECT COUNT(*)::bigint AS count
+        FROM rooms r
+        WHERE ${whereSql}
+      `),
+      this.prisma.$queryRaw<{ id: number }[]>(Prisma.sql`
+        SELECT r.id${distanceSelect}
+        FROM rooms r
+        WHERE ${whereSql}
+        ORDER BY ${orderBy}
+        OFFSET ${offset}
+        LIMIT ${pageSize}
+      `),
+    ]);
+
+    const ids = pageRows.map((row) => row.id);
+    if (ids.length === 0) {
+      return {
+        rooms: [],
+        total: Number(countRows[0]?.count ?? 0),
+        page,
+        pageSize,
+      };
+    }
+
+    const fetchedRooms = await this.prisma.room.findMany({
+      where: { id: { in: ids } },
+      include: COVER_IMAGE_INCLUDE,
+    });
+    const byId = new Map(fetchedRooms.map((room) => [room.id, room]));
+    return {
+      rooms: ids.flatMap((id) => {
+        const room = byId.get(id);
+        return room ? [room] : [];
+      }),
+      total: Number(countRows[0]?.count ?? 0),
+      page,
+      pageSize,
+    };
+  }
+
   async findActiveBySlug(slug: string) {
     const room = await this.prisma.room.findFirst({
-      where: { slug, status: 'active', deletedAt: null },
+      where: {
+        slug,
+        status: 'active',
+        deletedAt: null,
+        owner: { is: { deletedAt: null } },
+      },
       include: {
         images: { orderBy: ROOM_IMAGE_ORDER },
         owner: { select: OWNER_PUBLIC_SELECT },
@@ -249,7 +505,12 @@ export class RoomsService {
 
   async recordView(roomId: number, visitorId: string) {
     const room = await this.prisma.room.findFirst({
-      where: { id: roomId, status: 'active', deletedAt: null },
+      where: {
+        id: roomId,
+        status: 'active',
+        deletedAt: null,
+        owner: { is: { deletedAt: null } },
+      },
       select: { id: true },
     });
     if (!room) throw new NotFoundException('Listing not found.');
@@ -312,15 +573,47 @@ export class RoomsService {
 
   async update(userId: string, roomId: number, dto: UpdateRoomDto) {
     const room = await this.findOwned(userId, roomId);
-    return this.prisma.room.update({ where: { id: room.id }, data: dto });
+    const requiresReview =
+      room.status === RoomStatus.active || room.status === RoomStatus.rejected;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.room.updateMany({
+        where: {
+          id: room.id,
+          ownerId: userId,
+          deletedAt: null,
+          status: room.status,
+        },
+        data: {
+          ...dto,
+          ...(requiresReview
+            ? {
+                status: RoomStatus.pending,
+                publishedAt: null,
+                isVerified: false,
+                verifiedAt: null,
+              }
+            : {}),
+        },
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException(
+          'Listing changed while you were editing. Refresh and try again.',
+        );
+      }
+      return tx.room.findUniqueOrThrow({ where: { id: room.id } });
+    });
+    await this.invalidatePublicRoomCache();
+    return updated;
   }
 
   async softDelete(userId: string, roomId: number) {
     const room = await this.findOwned(userId, roomId);
-    return this.prisma.room.update({
+    const deleted = await this.prisma.room.update({
       where: { id: room.id },
       data: { deletedAt: new Date() },
     });
+    await this.invalidatePublicRoomCache();
+    return deleted;
   }
 
   // Client uploads to Cloudinary directly (see storage module) — this only
@@ -353,9 +646,53 @@ export class RoomsService {
     }
     // Repair legacy cover-less listings as soon as another image is attached.
     // A listing with images should always have exactly one public thumbnail.
-    const isCover = dto.isCover === true || currentCover === null;
-
-    return this.prisma.$transaction(async (tx) => {
+    const createdImage = await this.prisma.$transaction(async (tx) => {
+      // Serialize image-count/cover decisions per room. The partial unique
+      // index protects the cover invariant; this lock also protects the
+      // maximum-image count from concurrent confirmations.
+      if (typeof tx.$executeRaw === 'function') {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${room.id})`;
+      }
+      const lockedImageCount =
+        typeof tx.roomImage.count === 'function'
+          ? await tx.roomImage.count({ where: { roomId: room.id } })
+          : imageCount;
+      const lockedCurrentCover =
+        typeof tx.roomImage.findFirst === 'function'
+          ? await tx.roomImage.findFirst({
+              where: { roomId: room.id, isCover: true },
+            })
+          : currentCover;
+      if (lockedImageCount >= ROOM_IMAGE_MAX_COUNT) {
+        throw new BadRequestException(
+          `A listing can have at most ${ROOM_IMAGE_MAX_COUNT} images.`,
+        );
+      }
+      if (
+        room.status === RoomStatus.active ||
+        room.status === RoomStatus.rejected
+      ) {
+        const demoted = await tx.room.updateMany({
+          where: {
+            id: room.id,
+            ownerId: userId,
+            status: room.status,
+            deletedAt: null,
+          },
+          data: {
+            status: RoomStatus.pending,
+            publishedAt: null,
+            isVerified: false,
+            verifiedAt: null,
+          },
+        });
+        if (demoted.count !== 1) {
+          throw new BadRequestException(
+            'Listing changed while you were editing. Refresh and try again.',
+          );
+        }
+      }
+      const isCover = dto.isCover === true || lockedCurrentCover === null;
       if (isCover) {
         await tx.roomImage.updateMany({
           where: { roomId: room.id, isCover: true },
@@ -368,10 +705,12 @@ export class RoomsService {
           key: image.key,
           url: image.url,
           isCover,
-          position: imageCount,
+          position: lockedImageCount,
         },
       });
     });
+    await this.invalidatePublicRoomCache();
+    return createdImage;
   }
 
   async setCoverImage(userId: string, roomId: number, imageId: string) {
@@ -384,7 +723,31 @@ export class RoomsService {
     }
     if (image.isCover) return image;
 
-    return this.prisma.$transaction(async (tx) => {
+    const updatedImage = await this.prisma.$transaction(async (tx) => {
+      if (
+        room.status === RoomStatus.active ||
+        room.status === RoomStatus.rejected
+      ) {
+        const demoted = await tx.room.updateMany({
+          where: {
+            id: room.id,
+            ownerId: userId,
+            status: room.status,
+            deletedAt: null,
+          },
+          data: {
+            status: RoomStatus.pending,
+            publishedAt: null,
+            isVerified: false,
+            verifiedAt: null,
+          },
+        });
+        if (demoted.count !== 1) {
+          throw new BadRequestException(
+            'Listing changed while you were editing. Refresh and try again.',
+          );
+        }
+      }
       await tx.roomImage.updateMany({
         where: { roomId: room.id, isCover: true },
         data: { isCover: false },
@@ -394,18 +757,45 @@ export class RoomsService {
         data: { isCover: true },
       });
     });
+    await this.invalidatePublicRoomCache();
+    return updatedImage;
   }
 
   // Replaces the full amenity set (idempotent) rather than diffing — the form
   // always submits the complete selected list, same pattern as the seed script.
   async setAmenities(userId: string, roomId: number, amenityIds: number[]) {
     const room = await this.findOwned(userId, roomId);
-    await this.prisma.$transaction([
-      this.prisma.roomAmenity.deleteMany({ where: { roomId: room.id } }),
-      this.prisma.roomAmenity.createMany({
+    await this.prisma.$transaction(async (tx) => {
+      if (
+        room.status === RoomStatus.active ||
+        room.status === RoomStatus.rejected
+      ) {
+        const demoted = await tx.room.updateMany({
+          where: {
+            id: room.id,
+            ownerId: userId,
+            status: room.status,
+            deletedAt: null,
+          },
+          data: {
+            status: RoomStatus.pending,
+            publishedAt: null,
+            isVerified: false,
+            verifiedAt: null,
+          },
+        });
+        if (demoted.count !== 1) {
+          throw new BadRequestException(
+            'Listing changed while you were editing. Refresh and try again.',
+          );
+        }
+      }
+      await tx.roomAmenity.deleteMany({ where: { roomId: room.id } });
+      await tx.roomAmenity.createMany({
         data: amenityIds.map((amenityId) => ({ roomId: room.id, amenityId })),
-      }),
-    ]);
+      });
+    });
+    await this.invalidatePublicRoomCache();
     return { success: true };
   }
 
@@ -418,6 +808,30 @@ export class RoomsService {
       throw new NotFoundException('Image not found.');
 
     await this.prisma.$transaction(async (tx) => {
+      if (
+        room.status === RoomStatus.active ||
+        room.status === RoomStatus.rejected
+      ) {
+        const demoted = await tx.room.updateMany({
+          where: {
+            id: room.id,
+            ownerId: userId,
+            status: room.status,
+            deletedAt: null,
+          },
+          data: {
+            status: RoomStatus.pending,
+            publishedAt: null,
+            isVerified: false,
+            verifiedAt: null,
+          },
+        });
+        if (demoted.count !== 1) {
+          throw new BadRequestException(
+            'Listing changed while you were editing. Refresh and try again.',
+          );
+        }
+      }
       await tx.roomImage.delete({ where: { id: imageId } });
 
       if (image.isCover) {
@@ -433,6 +847,7 @@ export class RoomsService {
         }
       }
     });
+    await this.invalidatePublicRoomCache();
     if (
       this.cloudinaryService.isOwnedRoomImagePublicId(
         image.key,

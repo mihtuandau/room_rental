@@ -28,37 +28,59 @@ export class NotificationsProcessor extends WorkerHost {
   async process(job: Job<MatchRoomJobData>) {
     const room = await this.prisma.room.findUnique({
       where: { id: job.data.roomId },
-    });
-    if (!room || room.status !== RoomStatus.active || room.deletedAt) return;
-
-    const matches = await this.prisma.savedSearch.findMany({
-      where: {
-        AND: [
-          { OR: [{ city: null }, { city: room.city }] },
-          { OR: [{ district: null }, { district: room.district }] },
-          { OR: [{ roomType: null }, { roomType: room.roomType }] },
-          { OR: [{ priceMin: null }, { priceMin: { lte: room.price } }] },
-          { OR: [{ priceMax: null }, { priceMax: { gte: room.price } }] },
-          ...(room.area != null
-            ? [{ OR: [{ areaMin: null }, { areaMin: { lte: room.area } }] }]
-            : []),
-          ...(room.area != null
-            ? [{ OR: [{ areaMax: null }, { areaMax: { gte: room.area } }] }]
-            : []),
-        ],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        city: true,
+        district: true,
+        ward: true,
+        roomType: true,
+        price: true,
+        area: true,
+        status: true,
+        deletedAt: true,
+        owner: { select: { deletedAt: true } },
       },
-      include: { user: { select: { id: true, phone: true } } },
     });
+    if (
+      !room ||
+      room.status !== RoomStatus.active ||
+      room.deletedAt ||
+      room.owner.deletedAt
+    )
+      return;
 
     let transientFailure: unknown;
-    for (
-      let offset = 0;
-      offset < matches.length;
-      offset += RECIPIENT_BATCH_SIZE
-    ) {
-      const batch = matches.slice(offset, offset + RECIPIENT_BATCH_SIZE);
+    let cursorId: string | undefined;
+    do {
+      const matches = await this.prisma.savedSearch.findMany({
+        where: {
+          AND: [
+            { OR: [{ city: null }, { city: room.city }] },
+            { OR: [{ district: null }, { district: room.district }] },
+            { OR: [{ ward: null }, { ward: room.ward }] },
+            { OR: [{ roomType: null }, { roomType: room.roomType }] },
+            { OR: [{ priceMin: null }, { priceMin: { lte: room.price } }] },
+            { OR: [{ priceMax: null }, { priceMax: { gte: room.price } }] },
+            ...(room.area != null
+              ? [
+                  { OR: [{ areaMin: null }, { areaMin: { lte: room.area } }] },
+                  { OR: [{ areaMax: null }, { areaMax: { gte: room.area } }] },
+                ]
+              : [{ areaMin: null }, { areaMax: null }]),
+          ],
+          user: { deletedAt: null },
+        },
+        orderBy: { id: 'asc' },
+        take: RECIPIENT_BATCH_SIZE,
+        ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+        include: { user: { select: { id: true, phone: true } } },
+      });
+      if (matches.length === 0) break;
+
       const results = await Promise.allSettled(
-        batch.map(async (search) => {
+        matches.map(async (search) => {
           const created =
             await this.notificationsService.createSavedSearchMatchOnce({
               savedSearchId: search.id,
@@ -99,7 +121,8 @@ export class NotificationsProcessor extends WorkerHost {
           );
         }
       }
-    }
+      cursorId = matches[matches.length - 1]?.id;
+    } while (cursorId);
 
     // BullMQ retries transient database failures. Recipients already completed
     // are skipped by the unique notification log on the next run.

@@ -10,7 +10,10 @@ const validEnv = {
   CLOUDINARY_CLOUD_NAME: 'demo',
   CLOUDINARY_API_KEY: 'public-key',
   CLOUDINARY_API_SECRET: 'private-secret',
+  CLOUDINARY_UPLOAD_PRESET: 'roomrent-images',
   GOOGLE_CLIENT_ID: 'google-client-id',
+  FACEBOOK_APP_ID: 'facebook-app-id',
+  FACEBOOK_APP_SECRET: 'facebook-app-secret',
 };
 
 describe('validateEnv', () => {

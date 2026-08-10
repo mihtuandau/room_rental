@@ -13,6 +13,7 @@ export class AmenitiesService {
   // Public catalog — powers the search filter UI and the create-listing form.
   async list() {
     return this.prisma.amenity.findMany({
+      where: { isActive: true },
       orderBy: [{ type: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { rooms: true } } },
     });
@@ -30,7 +31,7 @@ export class AmenitiesService {
       );
     }
     const found = await this.prisma.amenity.count({
-      where: { id: { in: amenityIds } },
+      where: { id: { in: amenityIds }, isActive: true },
     });
     if (found !== new Set(amenityIds).size) {
       throw new BadRequestException('One or more amenity ids do not exist.');

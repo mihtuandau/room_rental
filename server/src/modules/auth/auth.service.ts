@@ -171,7 +171,7 @@ export class AuthService {
         },
       });
     }
-    
+
     if (profile.email) {
       const byEmail = await this.prisma.user.findUnique({
         where: { email: profile.email },
@@ -188,7 +188,7 @@ export class AuthService {
         });
       }
     }
-    
+
     return this.prisma.user.create({
       data: {
         facebookId: profile.facebookId,
@@ -244,6 +244,11 @@ export class AuthService {
     }
     if (identifier.email && identifier.phone) {
       throw new BadRequestException('Provide only one OTP destination.');
+    }
+    if (purpose === OtpPurpose.change_phone) {
+      throw new ForbiddenException(
+        'Contact-phone verification requires an authenticated account.',
+      );
     }
     if (identifier.phone && purpose === OtpPurpose.reset_password) {
       throw new ForbiddenException(
@@ -303,6 +308,11 @@ export class AuthService {
     if (identifier.email && identifier.phone) {
       throw new BadRequestException('Provide only one OTP destination.');
     }
+    if (purpose === OtpPurpose.change_phone) {
+      throw new ForbiddenException(
+        'Contact-phone verification requires an authenticated account.',
+      );
+    }
     const otp = await this.validateOtp(identifier, purpose, code);
     const consumed = await this.prisma.otpCode.updateMany({
       where: {
@@ -315,18 +325,97 @@ export class AuthService {
     });
     if (consumed.count !== 1)
       throw new ForbiddenException('OTP code is invalid or has expired.');
-    if (purpose === OtpPurpose.register) {
-      if (identifier.email)
-        await this.prisma.user.updateMany({
-          where: { email: identifier.email },
-          data: { isEmailVerified: true },
-        });
-    } else if (purpose === OtpPurpose.change_phone && identifier.phone) {
+    if (purpose === OtpPurpose.register && identifier.email) {
       await this.prisma.user.updateMany({
-        where: { phone: identifier.phone },
-        data: { isPhoneVerified: true },
+        where: { email: identifier.email },
+        data: { isEmailVerified: true },
       });
     }
+  }
+
+  async sendContactPhoneOtp(userId: string, rawPhone: string) {
+    const phone = this.normalizeIdentifier({ phone: rawPhone }).phone;
+    if (!phone) throw new BadRequestException('Phone number is required.');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { contactPhone: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt || user.contactPhone !== phone) {
+      throw new BadRequestException(
+        'The phone must match the contact phone in your profile.',
+      );
+    }
+
+    const loginOwner = await this.prisma.user.findUnique({
+      where: { phone },
+      select: { id: true },
+    });
+    if (loginOwner && loginOwner.id !== userId) {
+      throw new ConflictException('This phone is already used by another account.');
+    }
+
+    const configuredDevCode = this.config.get<string>('DEV_OTP_CODE');
+    const code =
+      this.config.get<string>('NODE_ENV') !== 'production' &&
+      configuredDevCode &&
+      DEV_OTP_CODE.test(configuredDevCode)
+        ? configuredDevCode
+        : randomInt(100000, 1_000_000).toString();
+    const codeHash = await bcrypt.hash(code, OTP_HASH_COST);
+    await this.prisma.otpCode.create({
+      data: {
+        phone,
+        codeHash,
+        purpose: OtpPurpose.change_phone,
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      },
+    });
+    await this.smsService.send(phone, `Mã xác minh Trọ Ơi: ${code}`);
+  }
+
+  async verifyContactPhoneOtp(userId: string, rawPhone: string, code: string) {
+    const phone = this.normalizeIdentifier({ phone: rawPhone }).phone;
+    if (!phone) throw new BadRequestException('Phone number is required.');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { contactPhone: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt || user.contactPhone !== phone) {
+      throw new BadRequestException(
+        'The phone must match the contact phone in your profile.',
+      );
+    }
+
+    const otp = await this.validateOtp(
+      { phone },
+      OtpPurpose.change_phone,
+      code,
+    );
+    await this.prisma.$transaction(async (tx) => {
+      const consumed = await tx.otpCode.updateMany({
+        where: {
+          id: otp.id,
+          phone,
+          purpose: OtpPurpose.change_phone,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+          attempts: { lt: OTP_MAX_ATTEMPTS },
+        },
+        data: { usedAt: new Date() },
+      });
+      if (consumed.count !== 1) {
+        throw new ForbiddenException('OTP code is invalid or has expired.');
+      }
+      const updated = await tx.user.updateMany({
+        where: { id: userId, contactPhone: phone, deletedAt: null },
+        data: { contactPhoneVerified: true },
+      });
+      if (updated.count !== 1) {
+        throw new BadRequestException('Contact phone changed. Request a new OTP.');
+      }
+    });
   }
 
   async verifyResetOtp(dto: { email?: string; code: string }) {

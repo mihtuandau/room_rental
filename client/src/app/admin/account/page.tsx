@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminPageHeader } from "@/components/admin/admin-page";
+import { PageContainer } from "@/components/layout/page-shell";
 import { AccountView } from "@/features/users/account-view";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AdminAccountPage() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+    <PageContainer>
       <div className="space-y-6">
         <AdminPageHeader
           title="Tài khoản cá nhân"
@@ -19,6 +20,6 @@ export default function AdminAccountPage() {
           <AccountView showLogout={false} />
         </section>
       </div>
-    </div>
+    </PageContainer>
   );
 }

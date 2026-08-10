@@ -23,7 +23,10 @@ export class SavedSearchCron {
       where: {
         status: RoomStatus.active,
         deletedAt: null,
-        publishedAt: { gte: new Date(Date.now() - 60 * 60_000) },
+        owner: { is: { deletedAt: null } },
+        // Cover outages longer than one scheduling interval. NotificationLog
+        // makes the replay idempotent, so a wider recovery window is safe.
+        publishedAt: { gte: new Date(Date.now() - 24 * 60 * 60_000) },
       },
       select: { id: true },
     });
@@ -33,7 +36,13 @@ export class SavedSearchCron {
         await this.queue.add(
           'match-room',
           { roomId: room.id },
-          { attempts: 3 },
+          {
+            jobId: `match-room:${room.id}:${Math.floor(Date.now() / 3_600_000)}`,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 5_000 },
+            removeOnComplete: { age: 86_400, count: 1_000 },
+            removeOnFail: { age: 7 * 86_400, count: 1_000 },
+          },
         );
       } catch (err) {
         this.logger.error(

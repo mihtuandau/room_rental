@@ -10,6 +10,7 @@ import { AdminDashboardController } from './dashboard/admin-dashboard.controller
 import { AdminDashboardService } from './dashboard/admin-dashboard.service';
 import { AdminAmenitiesController } from './amenities/admin-amenities.controller';
 import { AdminAmenitiesService } from './amenities/admin-amenities.service';
+import { RedisCacheService } from '@/common/cache/redis-cache.service';
 
 // Single "admin" module per CLAUDE.md §4 — split into per-resource
 // controller/service files internally rather than separate NestJS modules.
@@ -28,6 +29,7 @@ import { AdminAmenitiesService } from './amenities/admin-amenities.service';
     AdminUsersService,
     AdminDashboardService,
     AdminAmenitiesService,
+    RedisCacheService,
   ],
 })
 export class AdminModule {}

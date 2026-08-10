@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisCacheService } from '@/common/cache/redis-cache.service';
 import { NotificationsService } from '../../notifications/notifications.service';
 import {
   ModerationAction,
@@ -16,6 +18,7 @@ export class AdminRoomsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    @Optional() private cache?: RedisCacheService,
   ) {}
 
   async listPending(
@@ -35,12 +38,15 @@ export class AdminRoomsService {
               { title: { contains: search, mode: 'insensitive' } },
               { city: { contains: search, mode: 'insensitive' } },
               { district: { contains: search, mode: 'insensitive' } },
+              { ward: { contains: search, mode: 'insensitive' } },
+              { address: { contains: search, mode: 'insensitive' } },
               {
                 owner: {
                   is: {
                     OR: [
                       { fullName: { contains: search, mode: 'insensitive' } },
                       { phone: { contains: search, mode: 'insensitive' } },
+                      { email: { contains: search, mode: 'insensitive' } },
                     ],
                   },
                 },
@@ -66,7 +72,9 @@ export class AdminRoomsService {
           createdAt: true,
           isVerified: true,
           images: { where: { isCover: true }, take: 1, select: { url: true } },
-          owner: { select: { id: true, fullName: true, phone: true } },
+          owner: {
+            select: { id: true, fullName: true, phone: true, email: true },
+          },
         },
       }),
       this.prisma.room.count({ where }),
@@ -167,7 +175,7 @@ export class AdminRoomsService {
   }
 
   async setVerified(adminId: string, roomId: number, isVerified: boolean) {
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       const room = await tx.room.findUnique({ where: { id: roomId } });
       if (!room || room.deletedAt) {
         throw new NotFoundException('Listing not found.');
@@ -199,6 +207,8 @@ export class AdminRoomsService {
       });
       return tx.room.findUniqueOrThrow({ where: { id: roomId } });
     });
+    await this.cache?.deleteByPrefix('roomrent:cache:rooms:');
+    return updated;
   }
 
   async listModerationHistory(roomId: number) {
@@ -232,7 +242,7 @@ export class AdminRoomsService {
     note?: string,
     invalidStatusMessage = 'Listing cannot be changed from its current state.',
   ) {
-    return this.prisma.$transaction(async (tx) => {
+    const transitioned = await this.prisma.$transaction(async (tx) => {
       const room = await tx.room.findUnique({ where: { id: roomId } });
       if (!room || room.deletedAt) {
         throw new NotFoundException('Listing not found.');
@@ -256,5 +266,7 @@ export class AdminRoomsService {
       });
       return tx.room.findUniqueOrThrow({ where: { id: roomId } });
     });
+    await this.cache?.deleteByPrefix('roomrent:cache:rooms:');
+    return transitioned;
   }
 }

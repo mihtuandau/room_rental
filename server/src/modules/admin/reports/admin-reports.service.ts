@@ -11,8 +11,15 @@ import { ResolveReportDto } from './dto/resolve-report.dto';
 export class AdminReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async list(status: ReportStatus | undefined, page: number, pageSize: number) {
-    const where = { ...(status && { status }) };
+  async list(
+    status: ReportStatus | undefined,
+    page: number,
+    pageSize: number,
+    actionable = false,
+  ) {
+    const where = actionable
+      ? { status: { in: [ReportStatus.pending, ReportStatus.reviewing] } }
+      : { ...(status && { status }) };
     const [reports, total] = await this.prisma.$transaction([
       this.prisma.report.findMany({
         where,
@@ -28,6 +35,30 @@ export class AdminReportsService {
       this.prisma.report.count({ where }),
     ]);
     return { reports, total, page, pageSize };
+  }
+
+  async startReview(reportId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const report = await tx.report.findUnique({ where: { id: reportId } });
+      if (!report) throw new NotFoundException('Report not found.');
+      if (report.status !== ReportStatus.pending) {
+        throw new BadRequestException(
+          'Only a pending report can be moved to review.',
+        );
+      }
+
+      const result = await tx.report.updateMany({
+        where: { id: reportId, status: ReportStatus.pending },
+        data: { status: ReportStatus.reviewing },
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException(
+          'Report status changed. Refresh and try again.',
+        );
+      }
+
+      return tx.report.findUniqueOrThrow({ where: { id: reportId } });
+    });
   }
 
   async resolve(adminId: string, reportId: string, dto: ResolveReportDto) {

@@ -178,7 +178,7 @@ function RoomRow({
           {room.owner.fullName || 'Chưa cập nhật tên'}
         </p>
         <p className="mt-1 text-xs text-zinc-500">
-          {room.owner.phone || 'Chưa có số điện thoại'}
+          {room.owner.phone || room.owner.email || 'Chưa có thông tin liên hệ'}
         </p>
       </td>
       <td className="px-4 py-4">

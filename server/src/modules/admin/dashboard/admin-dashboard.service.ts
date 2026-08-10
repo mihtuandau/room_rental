@@ -21,7 +21,11 @@ export class AdminDashboardService {
       this.prisma.room.count({
         where: { status: RoomStatus.pending, deletedAt: null },
       }),
-      this.prisma.report.count({ where: { status: ReportStatus.pending } }),
+      this.prisma.report.count({
+        where: {
+          status: { in: [ReportStatus.pending, ReportStatus.reviewing] },
+        },
+      }),
       this.prisma.user.count({ where: { createdAt: { gte: startOfToday } } }),
     ]);
 

@@ -30,7 +30,13 @@ export class NotificationsService {
       await this.queue.add(
         'match-room',
         { roomId },
-        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+        {
+          jobId: `match-room:${roomId}:${Math.floor(Date.now() / 60_000)}`,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: { age: 86_400, count: 1_000 },
+          removeOnFail: { age: 7 * 86_400, count: 1_000 },
+        },
       );
     } catch (err) {
       this.logger.error(

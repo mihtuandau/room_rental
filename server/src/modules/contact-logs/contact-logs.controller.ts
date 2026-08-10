@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
@@ -20,15 +28,18 @@ export class ContactLogsController {
   })
   logContact(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: CreateContactLogDto,
   ) {
-    return this.contactLogsService.logContact(userId, Number(id), dto.type);
+    return this.contactLogsService.logContact(userId, id, dto.type);
   }
 
   @Get(':id/contact-logs/stats')
   @ApiOperation({ summary: 'Contact stats for your own listing (owner only)' })
-  getStats(@CurrentUser('id') userId: string, @Param('id') id: string) {
-    return this.contactLogsService.getStatsForOwner(userId, Number(id));
+  getStats(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.contactLogsService.getStatsForOwner(userId, id);
   }
 }

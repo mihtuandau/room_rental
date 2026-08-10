@@ -13,6 +13,7 @@ const PROFILE_SELECT = {
   fullName: true,
   avatarUrl: true,
   contactPhone: true,
+  contactPhoneVerified: true,
   zaloUrl: true,
   role: true,
   isPhoneVerified: true,
@@ -50,12 +51,43 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        contactPhone: true,
+        contactPhoneVerified: true,
+        phone: true,
+        isPhoneVerified: true,
+        deletedAt: true,
+      },
+    });
+    if (!current || current.deletedAt) {
+      throw new BadRequestException('Account is not available.');
+    }
     if (dto.avatarUrl && !this.isOwnedCloudinaryAvatar(dto.avatarUrl, userId)) {
       throw new BadRequestException('Avatar must be uploaded to Cloudinary.');
     }
+
+    const data = {
+      ...(dto.fullName !== undefined ? { fullName: dto.fullName } : {}),
+      ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+      ...(dto.zaloUrl !== undefined ? { zaloUrl: dto.zaloUrl } : {}),
+      ...(dto.contactPhone !== undefined
+        ? {
+            contactPhone: dto.contactPhone,
+            // A changed contact phone must be verified again. Reusing the
+            // already verified login phone is safe and keeps existing users
+            // backwards-compatible.
+            contactPhoneVerified:
+              dto.contactPhone === current.contactPhone
+                ? current.contactPhoneVerified
+                : dto.contactPhone === current.phone && current.isPhoneVerified,
+          }
+        : {}),
+    };
     const profile = await this.prisma.user.update({
       where: { id: userId },
-      data: dto,
+      data,
       select: PROFILE_SELECT,
     });
     return toPublicProfile(profile);

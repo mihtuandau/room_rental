@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,12 +15,25 @@ export class ContactLogsService {
   // be logged — anti-abuse data as well as landlord-facing stats.
   async logContact(userId: string, roomId: number, type: ContactType) {
     const room = await this.prisma.room.findFirst({
-      where: { id: roomId, status: RoomStatus.active, deletedAt: null },
+      where: {
+        id: roomId,
+        status: RoomStatus.active,
+        deletedAt: null,
+        owner: { is: { deletedAt: null } },
+      },
       include: {
         owner: { select: { phone: true, contactPhone: true, zaloUrl: true } },
       },
     });
     if (!room) throw new NotFoundException('Listing not found.');
+    if (room.ownerId === userId) {
+      throw new ForbiddenException('You cannot reveal contact details for your own listing.');
+    }
+    if (type === ContactType.message) {
+      throw new BadRequestException(
+        'Message contact is not available until messaging is implemented.',
+      );
+    }
 
     await this.prisma.$transaction([
       this.prisma.contactLog.create({ data: { userId, roomId, type } }),
@@ -29,10 +43,15 @@ export class ContactLogsService {
       }),
     ]);
 
-    return {
-      contactPhone: room.owner.contactPhone ?? room.owner.phone,
-      zaloUrl: room.owner.zaloUrl,
-    };
+    return type === ContactType.phone
+      ? {
+          contactPhone: room.owner.contactPhone ?? room.owner.phone,
+          zaloUrl: null,
+        }
+      : {
+          contactPhone: null,
+          zaloUrl: room.owner.zaloUrl,
+        };
   }
 
   async getStatsForOwner(userId: string, roomId: number) {

@@ -69,7 +69,7 @@ export function AdminTopbar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-2 text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-2 text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
               aria-label="Mở menu tài khoản quản trị"
             >
               <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-700">

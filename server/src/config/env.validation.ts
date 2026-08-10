@@ -16,6 +16,9 @@ export const envSchema = z
     CLOUDINARY_CLOUD_NAME: z.string().min(1),
     CLOUDINARY_API_KEY: z.string().min(1),
     CLOUDINARY_API_SECRET: z.string().min(1),
+    // The preset must enforce the same 5 MB / image-format limits in
+    // Cloudinary before bytes are accepted, not only after confirmation.
+    CLOUDINARY_UPLOAD_PRESET: z.string().min(1).optional(),
     // Only the client id is needed: we verify Google ID tokens sent by the
     // frontend, we never run the redirect flow that would require the secret.
     GOOGLE_CLIENT_ID: z.string().min(1),
@@ -42,7 +45,14 @@ export const envSchema = z
   .refine((env) => env.NODE_ENV !== 'production' || !env.DEV_OTP_CODE, {
     message: 'DEV_OTP_CODE must not be configured in production.',
     path: ['DEV_OTP_CODE'],
-  });
+  })
+  .refine(
+    (env) => env.NODE_ENV !== 'production' || Boolean(env.CLOUDINARY_UPLOAD_PRESET),
+    {
+      message: 'CLOUDINARY_UPLOAD_PRESET is required in production.',
+      path: ['CLOUDINARY_UPLOAD_PRESET'],
+    },
+  );
 
 export type EnvConfig = z.infer<typeof envSchema>;
 

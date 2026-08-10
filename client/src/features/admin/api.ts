@@ -19,7 +19,12 @@ export interface AdminPendingRoom {
   isVerified: boolean;
   images: { url: string }[];
   createdAt: string;
-  owner: { id: string; fullName: string | null; phone: string | null };
+  owner: {
+    id: string;
+    fullName: string | null;
+    phone: string | null;
+    email: string | null;
+  };
 }
 
 export interface AdminPendingRoomsParams {
@@ -69,6 +74,7 @@ export type AdminUserListingScope = 'none' | 'any' | 'active';
 export interface AdminUser {
   id: string;
   phone: string | null;
+  email: string | null;
   fullName: string | null;
   role: AdminUserRole;
   listingCount: number;
@@ -146,7 +152,7 @@ export function setAdminRoomVerified({ roomId, isVerified }: { roomId: number; i
 
 export function getPendingReports() {
   return apiRequest<{ reports: AdminReport[]; total: number; page: number; pageSize: number }>(
-    '/admin/reports?status=pending&page=1&pageSize=3',
+    '/admin/reports?actionable=true&page=1&pageSize=3',
   );
 }
 
@@ -158,6 +164,10 @@ export function getAdminReports({ status, page, pageSize }: AdminReportsParams) 
 
 export function resolveAdminReport({ id, status, resolutionNote }: { id: string; status: 'resolved' | 'dismissed'; resolutionNote: string }) {
   return apiRequest<AdminReport>(`/admin/reports/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ status, resolutionNote }) });
+}
+
+export function startAdminReportReview(reportId: string) {
+  return apiRequest<{ id: string; status: 'reviewing' }>(`/admin/reports/${reportId}/start-review`, { method: 'PATCH' });
 }
 
 export function getAdminAmenities() { return apiRequest<Amenity[]>('/admin/amenities'); }

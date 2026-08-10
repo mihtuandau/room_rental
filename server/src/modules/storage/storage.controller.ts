@@ -1,5 +1,7 @@
 import {
+  Body,
   Controller,
+  Delete,
   Param,
   ParseIntPipe,
   Post,
@@ -10,6 +12,7 @@ import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { StorageService } from './storage.service';
+import { DeleteUnconfirmedImageDto } from './dto/delete-unconfirmed-image.dto';
 
 @ApiTags('storage')
 @ApiBearerAuth()
@@ -37,5 +40,20 @@ export class StorageController {
   })
   presignAvatar(@CurrentUser('id') userId: string) {
     return this.storageService.createAvatarSignature(userId);
+  }
+
+  @Delete('room-image/:roomId/unconfirmed')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Delete an uploaded room image that was not confirmed' })
+  deleteUnconfirmedRoomImage(
+    @CurrentUser('id') userId: string,
+    @Param('roomId', ParseIntPipe) roomId: number,
+    @Body() dto: DeleteUnconfirmedImageDto,
+  ) {
+    return this.storageService.deleteUnconfirmedRoomImage(
+      userId,
+      roomId,
+      dto.publicId,
+    );
   }
 }

@@ -57,13 +57,13 @@ export class SearchRoomsDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ allowInfinity: false, allowNaN: false })
   @Min(0)
   areaMin?: number;
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber({ allowInfinity: false, allowNaN: false })
   @Min(0)
   areaMax?: number;
 
@@ -138,6 +138,7 @@ export class SearchRoomsDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(10_000)
   page?: number = 1;
   @ApiPropertyOptional({ default: 20 })
   @IsOptional()

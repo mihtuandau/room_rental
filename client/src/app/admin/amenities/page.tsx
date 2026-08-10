@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { PageContainer } from '@/components/layout/page-shell';
 import { AdminAmenitiesView } from './amenities-view';
 export const metadata: Metadata = {
   title: 'Tiện ích',
   robots: { index: false, follow: false },
 };
-export default function AdminAmenitiesPage() { return <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:px-8 xl:px-10"><AdminAmenitiesView /></div>; }
+export default function AdminAmenitiesPage() { return <PageContainer><AdminAmenitiesView /></PageContainer>; }

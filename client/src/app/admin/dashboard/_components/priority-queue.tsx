@@ -54,8 +54,8 @@ function QueueLink({
 }) {
   const toneClasses =
     tone === 'warning'
-      ? 'hover:border-warning-300 hover:bg-warning-50'
-      : 'hover:border-danger-300 hover:bg-danger-50';
+      ? 'hover:border-zinc-300 hover:bg-warning-50'
+      : 'hover:border-zinc-300 hover:bg-danger-50';
   const iconClasses =
     tone === 'warning'
       ? 'bg-warning-50 text-warning-600'
@@ -64,7 +64,7 @@ function QueueLink({
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-3 rounded-md border border-zinc-200 p-3 transition-colors ${toneClasses}`}
+      className={`group flex items-center gap-3 rounded-md border border-zinc-200 p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 ${toneClasses}`}
     >
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconClasses}`}

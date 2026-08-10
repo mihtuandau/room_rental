@@ -30,7 +30,7 @@ export function AuthRequired({
     return (
       <div className="space-y-4" aria-busy="true" aria-label="Đang kiểm tra phiên đăng nhập">
         <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-lg" />
       </div>
     );
   }
