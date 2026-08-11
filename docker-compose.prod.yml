@@ -1,0 +1,88 @@
+version: "2.4"
+
+# Production stack for a single VPS behind CloudPanel's Nginx reverse proxy.
+#
+# Required secret file on the VPS:
+#   server/.env.production
+#
+# It must contain both the backend variables and these PostgreSQL variables:
+#   POSTGRES_DB=rental_room
+#   POSTGRES_USER=roomrent
+#   POSTGRES_PASSWORD=<long-random-password>
+#
+# The file is intentionally not committed. CloudPanel should proxy
+# http://127.0.0.1:3000 for the public API domain.
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.production
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roomrent -d rental_room"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *default-logging
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: runtime
+      network: host
+    image: roomrent-server:prod
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.production
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging: *default-logging
+
+  # Prisma CLI is intentionally excluded from the runtime image. Run this
+  # one-off service before starting/restarting the backend after a release.
+  migrate:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: build
+      network: host
+    image: roomrent-migrator:prod
+    env_file:
+      - ./server/.env.production
+    command: pnpm exec prisma migrate deploy
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+    name: roomrent-postgres-data
+  redis-data:
+    name: roomrent-redis-data

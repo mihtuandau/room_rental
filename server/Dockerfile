@@ -8,11 +8,13 @@ ARG NODE_VERSION=22-alpine
 # --- deps: everything, for building ------------------------------------------
 FROM node:${NODE_VERSION} AS deps
 WORKDIR /app
+# Some VPS networks resolve npm to IPv6 before IPv4 while the Docker bridge
+# has no usable IPv6 route. Prefer IPv4 for Corepack and pnpm downloads.
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm config set store-dir /pnpm/store && \
+RUN pnpm config set store-dir /pnpm/store && \
     pnpm install --frozen-lockfile
 
 # --- prod-deps: a clean production-only tree ----------------------------------
@@ -21,11 +23,11 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # CLI, TypeScript and Studio (~160MB) in the image.
 FROM node:${NODE_VERSION} AS prod-deps
 WORKDIR /app
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm config set store-dir /pnpm/store && \
+RUN pnpm config set store-dir /pnpm/store && \
     pnpm install --frozen-lockfile --prod
 
 # @prisma/client declares `prisma` and `typescript` as OPTIONAL peers, but pnpm
@@ -44,6 +46,7 @@ RUN rm -rf node_modules/.pnpm/prisma@* \
 # --- build: generate the Prisma client, then compile TypeScript ---------------
 FROM node:${NODE_VERSION} AS build
 WORKDIR /app
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 RUN corepack enable
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -58,6 +61,7 @@ RUN pnpm run build
 FROM node:${NODE_VERSION} AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 # Run as a non-root user; node:alpine already ships one
 USER node
