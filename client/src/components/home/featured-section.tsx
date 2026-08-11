@@ -6,7 +6,7 @@ import type { RoomSearchResult } from '@/features/rooms/api';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
 async function getFeaturedListings() {
-  return serverFetch<RoomSearchResult>('/rooms?pageSize=3', {
+  return serverFetch<RoomSearchResult>('/rooms?sort=newest&pageSize=3', {
     revalidate: 60,
   }).catch(() => null);
 }
@@ -28,10 +28,10 @@ export async function FeaturedSection() {
             ✦ Mới nhất &amp; nổi bật
           </span>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            Tin đăng dành cho <span className="text-brand-700">bạn</span>
+            Tin mới được <span className="text-brand-700">duyệt</span>
           </h2>
           <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
-            Không gian sống chất lượng từ chủ trọ đã xác minh, cập nhật liên tục.
+            Những tin đăng mới nhất đã qua kiểm duyệt, cập nhật liên tục mỗi ngày.
           </p>
         </div>
 

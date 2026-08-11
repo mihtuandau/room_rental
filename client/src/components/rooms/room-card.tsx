@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { BedDouble, Clock3, Eye, Heart, LoaderCircle, MapPin, Ruler } from 'lucide-react';
 import { VerifiedBadge } from '@/components/ui/badge';
 import { ROOM_TYPE_LABELS, type RoomType } from '@/lib/constants';
@@ -70,6 +70,8 @@ export function RoomCard({
   onDeactivate?: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isSignedIn = useIsSignedIn();
   const { isFavorited } = useIsFavorited(room.id);
   const toggleFavorite = useToggleFavorite(room.id);
@@ -85,7 +87,9 @@ export function RoomCard({
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault(); // this button sits over the card's stretched link
     if (!isSignedIn) {
-      router.push(`/login?next=${encodeURIComponent('/')}`);
+      const query = searchParams.toString();
+      const nextPath = `${pathname}${query ? `?${query}` : ''}`;
+      router.push(`/login?next=${encodeURIComponent(nextPath)}`);
       return;
     }
     toggleFavorite.mutate(isFavorited);
@@ -136,7 +140,7 @@ export function RoomCard({
           disabled={toggleFavorite.isPending}
           aria-pressed={isFavorited}
           aria-label={isFavorited ? 'Bỏ lưu tin' : 'Lưu tin'}
-          className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-zinc-600 shadow-card transition-colors hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:cursor-wait disabled:opacity-70"
+          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-md bg-white/90 text-zinc-600 shadow-card transition-colors hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:cursor-wait disabled:opacity-70"
         >
           {toggleFavorite.isPending ? (
             <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
