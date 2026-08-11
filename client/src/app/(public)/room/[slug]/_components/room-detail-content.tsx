@@ -47,6 +47,19 @@ export function RoomDetailContent({
     ),
   ).join(', ');
 
+  // Keep the recommendation hierarchy useful without repeating the same room
+  // in multiple sections. Featured rooms stay in the sidebar; the lower grid
+  // combines nearby/type matches and remaining city recommendations uniquely.
+  const featuredRooms = recommendedRooms.slice(0, 3);
+  const featuredIds = new Set(featuredRooms.map((item) => item.id));
+  const relatedRooms = [...similarRooms, ...recommendedRooms.slice(3)]
+    .filter((item) => !featuredIds.has(item.id))
+    .filter(
+      (item, index, items) =>
+        items.findIndex((candidate) => candidate.id === item.id) === index,
+    )
+    .slice(0, 4);
+
   return (
     <div className="pb-24 lg:pb-6">
       <RoomViewTracker room={room} />
@@ -134,13 +147,13 @@ export function RoomDetailContent({
           </div>
         </div>
         <aside className="mt-8 space-y-6 lg:mt-0">
-          {recommendedRooms.length > 0 && (
+          {featuredRooms.length > 0 && (
             <ScrollReveal delay={250}>
               <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
                 <h2 className="text-lg font-semibold text-zinc-900">Tin nổi bật</h2>
                 <p className="mt-1 text-sm text-zinc-500">Gợi ý mới nhất tại khu vực này</p>
                 <div className="mt-4 space-y-3">
-                {recommendedRooms.slice(0, 3).map((featured) => (
+                {featuredRooms.map((featured) => (
                   <Link
                     key={featured.id}
                     href={`/room/${featured.slug}`}
@@ -172,25 +185,15 @@ export function RoomDetailContent({
         </aside>
       </div>
 
-      {similarRooms.length > 0 && (
+      {relatedRooms.length > 0 && (
         <ScrollReveal className="mt-12 border-t border-zinc-200 pt-8">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Tin đăng theo khu vực</h2>
-              <p className="mt-1 text-sm text-zinc-500">Các tin cùng khu vực và loại hình phòng</p>
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Tin tương tự</h2>
+              <p className="mt-1 text-sm text-zinc-500">Các tin cùng khu vực hoặc loại hình phòng</p>
             </div>
           </div>
-          <RoomGrid rooms={similarRooms.slice(0, 4)} className="lg:grid-cols-4" />
-        </ScrollReveal>
-      )}
-
-      {recommendedRooms.length > 3 && (
-        <ScrollReveal className="mt-12 border-t border-zinc-200 pt-8">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Có thể bạn cũng thích</h2>
-            <p className="mt-1 text-sm text-zinc-500">Một số tin mới đáng chú ý trong cùng thành phố</p>
-          </div>
-          <RoomGrid rooms={recommendedRooms.slice(3, 7)} className="lg:grid-cols-4" />
+          <RoomGrid rooms={relatedRooms} className="lg:grid-cols-4" />
         </ScrollReveal>
       )}
 
