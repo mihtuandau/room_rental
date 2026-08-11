@@ -27,40 +27,6 @@ const ALL = '__all__';
 const DEFAULT_RADIUS_KM = 3;
 type SearchCenterMode = 'province' | 'nearby';
 
-function AnimatedStat({
-  value,
-  label,
-  suffix = '',
-}: {
-  value: number;
-  label: string;
-  suffix?: string;
-}) {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    const startedAt = window.performance.now();
-    let frame = 0;
-    const animate = (timestamp: number) => {
-      const progress = Math.min((timestamp - startedAt) / 900, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayValue(Math.round(value * eased));
-      if (progress < 1) frame = window.requestAnimationFrame(animate);
-    };
-    frame = window.requestAnimationFrame(animate);
-    return () => window.cancelAnimationFrame(frame);
-  }, [value]);
-
-  return (
-    <div className="text-center sm:text-left">
-      <p className="text-lg font-bold tabular-nums text-brand-700">
-        {displayValue.toLocaleString('vi-VN')}{suffix}
-      </p>
-      <p className="mt-0.5 text-[11px] text-zinc-500 sm:text-xs">{label}</p>
-    </div>
-  );
-}
-
 interface ReverseGeocodeResponse {
   display_name?: string;
   address?: {
@@ -422,15 +388,15 @@ export function HomeHero({
     >
       {/* Decorative blurred background blobs for premium aesthetic */}
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-200 to-indigo-300 opacity-25 sm:left-[calc(50%-30rem)] sm:w-[72rem]" />
+        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-brand-100 to-zinc-200 opacity-35 sm:left-[calc(50%-30rem)] sm:w-[72rem]" />
       </div>
       <div className="absolute inset-x-0 -bottom-40 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
-        <div className="relative right-0 aspect-[1155/678] w-[30rem] translate-x-1/3 bg-gradient-to-br from-indigo-200 to-brand-300 opacity-20 sm:w-[50rem]" />
+        <div className="relative right-0 aspect-[1155/678] w-[30rem] translate-x-1/3 bg-gradient-to-br from-zinc-200 to-brand-200 opacity-25 sm:w-[50rem]" />
       </div>
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:gap-10">
         <div className="max-w-xl">
-          <h1 className="mt-4 text-balance text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
             Tìm phòng nhanh hơn,
             <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
           </h1>
@@ -550,17 +516,6 @@ export function HomeHero({
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
           </form>
 
-          <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-200 border-t border-zinc-200/80 pt-4">
-            <div className="pr-3 text-center sm:text-left">
-              <AnimatedStat value={rooms.length} label="tin đang hiển thị" suffix="+" />
-            </div>
-            <div className="px-3 text-center sm:text-left">
-              <AnimatedStat value={provinces.length} label="tỉnh, thành phố" />
-            </div>
-            <div className="pl-3 text-center sm:text-left">
-              <AnimatedStat value={0} label="phí đăng tin" suffix=" ₫" />
-            </div>
-          </div>
         </div>
 
         <HomeMap

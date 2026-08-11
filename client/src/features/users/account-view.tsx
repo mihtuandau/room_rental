@@ -5,12 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Camera, LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { Camera, Check, LogOut, ShieldCheck, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/states';
 import { Field } from '@/features/auth/components/field';
-import { useLogout } from '@/features/auth/hooks';
+import {
+  useLogout,
+  useSendContactPhoneOtp,
+  useVerifyContactPhoneOtp,
+} from '@/features/auth/hooks';
 import { useProfile, useUpdateProfile } from '@/features/users/hooks';
 import { updateProfileSchema, type UpdateProfileFormInput } from '@/features/users/schemas';
 import { uploadToCloudinary } from '@/features/storage/api';
@@ -28,7 +33,7 @@ export function AccountView({ showLogout = true }: { showLogout?: boolean }) {
     <div className="space-y-8">
       <AvatarSection avatarUrl={profile.avatarUrl} fullName={profile.fullName} />
 
-      <div className="space-y-1 rounded-2xl border border-zinc-200 p-5">
+      <div className="space-y-1 rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <span className="text-sm text-zinc-600">Số điện thoại đăng nhập</span>
           <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-900">
@@ -52,6 +57,12 @@ export function AccountView({ showLogout = true }: { showLogout?: boolean }) {
         zaloUrl={profile.zaloUrl}
       />
 
+      <ContactPhoneVerification
+        key={`${profile.contactPhone ?? 'none'}-${profile.contactPhoneVerified}`}
+        phone={profile.contactPhone}
+        verified={profile.contactPhoneVerified}
+      />
+
       {showLogout ? <LogoutButton /> : null}
     </div>
   );
@@ -64,7 +75,7 @@ function AccountSkeleton() {
         <Skeleton className="h-20 w-20 rounded-full" />
         <Skeleton className="h-5 w-32" />
       </div>
-      <Skeleton className="h-24 w-full rounded-2xl" />
+      <Skeleton className="h-24 w-full rounded-lg" />
       <div className="space-y-4">
         <Skeleton className="h-16 w-full rounded-md" />
         <Skeleton className="h-16 w-full rounded-md" />
@@ -257,6 +268,134 @@ function ProfileForm({
         {isSubmitting ? 'Đang lưu…' : 'Lưu thay đổi'}
       </Button>
     </form>
+  );
+}
+
+function ContactPhoneVerification({
+  phone,
+  verified,
+}: {
+  phone: string | null;
+  verified: boolean;
+}) {
+  const [step, setStep] = useState<'start' | 'verify'>('start');
+  const [code, setCode] = useState('');
+  const sendOtp = useSendContactPhoneOtp();
+  const verifyOtp = useVerifyContactPhoneOtp();
+
+  if (!phone) {
+    return (
+      <p className="rounded-md border border-dashed border-zinc-200 px-4 py-3 text-sm text-zinc-600">
+        Thêm số điện thoại liên hệ và xác minh trước khi đăng tin.
+      </p>
+    );
+  }
+
+  if (verified) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm text-brand-800">
+        <Check className="h-4 w-4 shrink-0" aria-hidden />
+        Số điện thoại liên hệ đã được xác minh.
+      </div>
+    );
+  }
+
+  const contactPhone = phone;
+
+  async function requestOtp() {
+    try {
+      await sendOtp.mutateAsync(contactPhone);
+      setStep('verify');
+      setCode('');
+      toast.success('Đã gửi mã xác minh đến số điện thoại liên hệ.');
+    } catch {
+      toast.error('Không gửi được mã xác minh. Bạn thử lại nhé.');
+    }
+  }
+
+  async function verifyCode() {
+    if (!/^\d{6}$/.test(code)) {
+      toast.error('Mã xác minh gồm 6 chữ số.');
+      return;
+    }
+
+    try {
+      await verifyOtp.mutateAsync({ phone: contactPhone, code });
+      toast.success('Đã xác minh số điện thoại liên hệ.');
+    } catch {
+      toast.error('Mã xác minh không đúng hoặc đã hết hạn.');
+    }
+  }
+
+  return (
+    <section className="rounded-lg border border-warning-50 bg-warning-50/40 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-zinc-900">
+            Xác minh số điện thoại liên hệ
+          </p>
+          <p className="mt-1 text-xs text-zinc-600">
+            {step === 'verify'
+              ? `Nhập mã 6 chữ số đã gửi đến ${contactPhone}.`
+              : 'Bạn cần xác minh để đăng tin và giúp người thuê liên hệ an toàn hơn.'}
+          </p>
+        </div>
+        {step === 'start' ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void requestOtp()}
+            disabled={sendOtp.isPending}
+          >
+            {sendOtp.isPending ? 'Đang gửi mã…' : 'Gửi mã xác minh'}
+          </Button>
+        ) : null}
+      </div>
+
+      {step === 'verify' ? (
+        <div className="mt-4 flex flex-col gap-3 border-t border-warning-100 pt-4 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor="contactPhoneOtp"
+              className="mb-1.5 block text-sm font-medium text-zinc-700"
+            >
+              Mã xác minh
+            </label>
+            <Input
+              id="contactPhoneOtp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/g, '').slice(0, 6))
+              }
+              placeholder="123456"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => void requestOtp()}
+              disabled={sendOtp.isPending || verifyOtp.isPending}
+            >
+              Gửi lại mã
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void verifyCode()}
+              disabled={verifyOtp.isPending || code.length !== 6}
+            >
+              {verifyOtp.isPending ? 'Đang xác minh…' : 'Xác minh số điện thoại'}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

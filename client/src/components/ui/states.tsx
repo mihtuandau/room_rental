@@ -31,7 +31,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50/50 px-6 py-20 text-center sm:px-12',
+        'relative flex flex-col items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-white px-6 py-16 text-center sm:px-12 sm:py-20',
         className
       )}
     >
@@ -42,14 +42,14 @@ export function EmptyState({
 
       <div className="relative z-10 flex flex-col items-center">
         {icon ? (
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-zinc-200/50">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-50 ring-1 ring-zinc-200/70">
             <div className="text-zinc-400">
               {icon}
             </div>
           </div>
         ) : (
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-zinc-200/50">
-            <SearchX className="h-8 w-8 text-zinc-300" aria-hidden />
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-50 ring-1 ring-zinc-200/70">
+            <SearchX className="h-7 w-7 text-zinc-300" aria-hidden />
           </div>
         )}
         <h3 className="text-lg font-medium text-zinc-900">{title}</h3>
@@ -61,11 +61,11 @@ export function EmptyState({
         {action && (
           <div className="mt-8">
             {action.href ? (
-              <Button asChild className="rounded-full shadow-sm">
+              <Button asChild>
                 <Link href={action.href}>{action.label}</Link>
               </Button>
             ) : (
-              <Button onClick={action.onClick} className="rounded-full shadow-sm">
+              <Button onClick={action.onClick}>
                 {action.label}
               </Button>
             )}
@@ -87,7 +87,7 @@ export function ErrorState({
 }) {
   return (
     <EmptyState
-      icon={<ServerCrash className="h-8 w-8 text-danger-500/70" aria-hidden />}
+      icon={<ServerCrash className="h-8 w-8 text-danger-600" aria-hidden />}
       title={title}
       description={description}
       action={onRetry ? { label: 'Thử lại ngay', onClick: onRetry } : undefined}

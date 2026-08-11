@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { BackButton } from '@/components/ui/back-button';
 import { AuthRequired } from '@/components/auth/auth-required';
+import { PageContainer, PageHeader } from '@/components/layout/page-shell';
 import { AccountSecurityView } from '@/features/users/account-security-view';
 
 export const metadata: Metadata = {
@@ -10,13 +11,15 @@ export const metadata: Metadata = {
 
 export default function AccountSecurityPage() {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
-      <BackButton label="Về tài khoản" className="mb-4 sm:hidden" />
-      <h1 className="mb-2 text-xl font-semibold tracking-tight">Bảo mật tài khoản</h1>
-      <p className="mb-6 text-sm text-zinc-600">Quản lý phương thức đăng nhập và trạng thái xác minh.</p>
+    <PageContainer size="narrow" className="space-y-6">
+      <BackButton label="Về tài khoản" className="sm:hidden" />
+      <PageHeader
+        title="Bảo mật tài khoản"
+        description="Quản lý phương thức đăng nhập và trạng thái xác minh."
+      />
       <AuthRequired nextPath="/account/security">
         <AccountSecurityView />
       </AuthRequired>
-    </div>
+    </PageContainer>
   );
 }

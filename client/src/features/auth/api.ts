@@ -89,3 +89,17 @@ export function changePassword(input: { currentPassword: string; newPassword: st
     body: JSON.stringify(input),
   });
 }
+
+export function sendContactPhoneOtp(phone: string) {
+  return apiRequest<{ success: true }>('/auth/otp/send-contact-phone', {
+    method: 'POST',
+    body: JSON.stringify({ phone }),
+  });
+}
+
+export function verifyContactPhoneOtp(input: { phone: string; code: string }) {
+  return apiRequest<{ success: true }>('/auth/otp/verify-contact-phone', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}

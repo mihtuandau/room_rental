@@ -122,7 +122,7 @@ export function ListingPreview({
 }) {
   return (
     <aside className="sticky top-24 hidden space-y-4 lg:block">
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-lg border border-zinc-200 bg-white p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
           Xem trước tin
         </p>
@@ -145,7 +145,7 @@ export function ListingPreview({
           <ReviewRow label="Hình ảnh" value={`${imageCount} ảnh`} />
         </dl>
       </div>
-      <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+      <div className="rounded-lg border border-brand-100 bg-brand-50 p-4">
         <p className="text-sm font-medium text-brand-900">
           Đang hoàn thành bước {step + 1}/{LISTING_STEPS.length}
         </p>

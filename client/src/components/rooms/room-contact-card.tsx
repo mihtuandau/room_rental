@@ -90,9 +90,12 @@ export function RoomContactCard({
           </p>
         </div>
         {isVerified && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700">
+          <span
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700"
+            title="Tin đã được quản trị viên xác minh"
+          >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-            Đã xác minh
+            Tin đã xác minh
           </span>
         )}
       </div>

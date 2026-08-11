@@ -3,6 +3,7 @@ import { serverFetch } from '@/lib/server-api';
 import { fetchProvinces } from '@/features/locations/api';
 import type { Amenity } from '@/features/amenities/api';
 import { BackButton } from '@/components/ui/back-button';
+import { PageContainer } from '@/components/layout/page-shell';
 import { EditListingView } from './edit-listing-view';
 
 export const metadata: Metadata = {
@@ -22,9 +23,9 @@ export default async function EditListingPage({ params }: Props) {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
-      <BackButton label="Tin của tôi" className="mb-4 sm:hidden" />
+    <PageContainer className="space-y-6">
+      <BackButton label="Tin của tôi" className="sm:hidden" />
       <EditListingView roomId={Number(id)} amenities={amenities} provinces={provinces} />
-    </div>
+    </PageContainer>
   );
 }

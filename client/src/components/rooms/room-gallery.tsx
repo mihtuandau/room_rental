@@ -114,9 +114,12 @@ function CarouselGallery({
         )}>
           <h3 className={cn("min-w-0 flex-1 truncate text-sm font-semibold", isLightbox ? "text-white" : "text-zinc-900")}>{title}</h3>
           {isVerified && (
-            <span className="flex shrink-0 items-center gap-1 rounded bg-brand-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+            <span
+              className="flex shrink-0 items-center gap-1 rounded bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white"
+              title="Tin đã được quản trị viên xác minh"
+            >
               <ShieldCheck className="h-3 w-3" aria-hidden />
-              Đã xác minh
+              Tin đã xác minh
             </span>
           )}
         </div>

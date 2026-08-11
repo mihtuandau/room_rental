@@ -37,15 +37,15 @@ export function EditListingView({
 function FormSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-20 w-full rounded-xl" />
+      <Skeleton className="h-20 w-full rounded-lg" />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[7fr_5fr]">
         <div className="space-y-6">
-          <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-lg" />
         </div>
         <div className="space-y-6">
-          <Skeleton className="h-40 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
         </div>
       </div>
     </div>

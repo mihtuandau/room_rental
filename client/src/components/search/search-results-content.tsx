@@ -8,6 +8,7 @@ import type { RoomSearchResult } from '@/features/rooms/api';
 import { PAGE_SIZE, type SearchState } from '@/features/rooms/search-params';
 import { cn } from '@/lib/utils';
 import { SearchPagination } from './search-pagination';
+import { hasSavedSearchCriteria, SaveSearchButton } from './save-search-button';
 import type { ResultsView } from './use-search-view-state';
 
 const ResultsMap = dynamic(
@@ -67,13 +68,24 @@ export function SearchResultsContent({
   }
   if (isError || !data) return <ErrorState onRetry={onRetry} />;
   if (!data.rooms.length) {
-    return hasActiveFilters ? (
-      <EmptyState
-        title="Không tìm thấy phòng phù hợp"
-        description="Thử nới lỏng bộ lọc để xem nhiều tin hơn."
-        action={{ label: 'Xoá bộ lọc', onClick: onClear }}
-      />
-    ) : (
+    if (hasActiveFilters) {
+      return (
+        <div className="space-y-3">
+          <EmptyState
+            title="Không tìm thấy phòng phù hợp"
+            description="Thử nới lỏng bộ lọc hoặc lưu tìm kiếm để nhận tin mới phù hợp."
+            action={{ label: 'Xoá bộ lọc', onClick: onClear }}
+          />
+          {hasSavedSearchCriteria(state) ? (
+            <div className="flex justify-center">
+              <SaveSearchButton state={state} />
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    return (
       <EmptyState
         title="Chưa có tin đăng nào"
         description="Hãy là người đầu tiên đăng tin cho thuê."

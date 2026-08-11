@@ -14,7 +14,10 @@ import {
   sendRegisterOtp,
   changePassword,
   verifyResetOtp,
+  sendContactPhoneOtp,
+  verifyContactPhoneOtp,
 } from './api';
+import { profileKeys } from '@/features/users/hooks';
 
 /**
  * On any successful sign-in the access token goes into the in-memory auth store
@@ -70,6 +73,20 @@ export function useResetPassword() {
 
 export function useChangePassword() {
   return useMutation({ mutationFn: changePassword });
+}
+
+export function useSendContactPhoneOtp() {
+  return useMutation({ mutationFn: sendContactPhoneOtp });
+}
+
+export function useVerifyContactPhoneOtp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: verifyContactPhoneOtp,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: profileKeys.me });
+    },
+  });
 }
 
 export function useVerifyResetOtp() {

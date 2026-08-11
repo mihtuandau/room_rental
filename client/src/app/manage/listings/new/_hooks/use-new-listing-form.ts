@@ -14,7 +14,10 @@ import {
   type CreateRoomFormInput,
   type CreateRoomFormOutput,
 } from '@/features/rooms/schemas';
-import { uploadToCloudinary } from '@/features/storage/api';
+import {
+  deleteUnconfirmedRoomImage,
+  uploadToCloudinary,
+} from '@/features/storage/api';
 import { ApiError } from '@/lib/api-client';
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -201,12 +204,22 @@ export function useNewListingForm(amenities: Amenity[]) {
       });
       setIsUploadingImages(true);
       for (let index = 0; index < images.length; index += 1) {
-        const uploaded = await uploadToCloudinary(
-          images[index].file,
-          'room-image',
-          room.id,
-        );
-        await confirmRoomImage(room.id, uploaded, index === 0);
+        let uploaded: Awaited<ReturnType<typeof uploadToCloudinary>> | null = null;
+        try {
+          uploaded = await uploadToCloudinary(
+            images[index].file,
+            'room-image',
+            room.id,
+          );
+          await confirmRoomImage(room.id, uploaded, index === 0);
+        } catch (error) {
+          if (uploaded) {
+            await deleteUnconfirmedRoomImage(room.id, uploaded.public_id).catch(
+              () => undefined,
+            );
+          }
+          throw error;
+        }
       }
       if (selectedAmenityIds.length) {
         await setRoomAmenities.mutateAsync({

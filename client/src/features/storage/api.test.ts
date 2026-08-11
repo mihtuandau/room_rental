@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRequest } from '@/lib/api-client';
-import { uploadToCloudinary } from './api';
+import { deleteUnconfirmedRoomImage, uploadToCloudinary } from './api';
 
 vi.mock('@/lib/api-client', () => ({ apiRequest: vi.fn() }));
 
@@ -44,6 +44,21 @@ describe('uploadToCloudinary', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://api.cloudinary.com/v1_1/demo/image/upload',
       expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
+    );
+  });
+
+  it('can clean up a Cloudinary asset that was uploaded but not confirmed', async () => {
+    vi.mocked(apiRequest).mockResolvedValue({ success: true });
+
+    await expect(
+      deleteUnconfirmedRoomImage(12, 'rooms/user-1/12/image-1'),
+    ).resolves.toEqual({ success: true });
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/storage/room-image/12/unconfirmed',
+      {
+        method: 'DELETE',
+        body: JSON.stringify({ publicId: 'rooms/user-1/12/image-1' }),
+      },
     );
   });
 });

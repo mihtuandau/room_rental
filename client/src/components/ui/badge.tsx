@@ -36,7 +36,7 @@ export function VerifiedBadge({ className }: { className?: string }) {
   return (
     <Badge variant="verified" className={className}>
       <ShieldCheck className="h-3 w-3" aria-hidden />
-      Đã xác minh
+      Tin đã xác minh
     </Badge>
   );
 }

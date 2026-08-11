@@ -51,3 +51,13 @@ export async function uploadToCloudinary(
   if (!res.ok) throw new Error('Tải ảnh lên thất bại.');
   return (await res.json()) as CloudinaryResult;
 }
+
+export function deleteUnconfirmedRoomImage(roomId: number, publicId: string) {
+  return apiRequest<{ success: boolean }>(
+    `/storage/room-image/${roomId}/unconfirmed`,
+    {
+      method: 'DELETE',
+      body: JSON.stringify({ publicId }),
+    },
+  );
+}
