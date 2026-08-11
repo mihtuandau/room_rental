@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ReportStatus } from '../../../generated/prisma/client';
+import { ReportStatus, RoomStatus } from '../../../generated/prisma/client';
 import { CreateReportDto } from './dto/create-report.dto';
 
 @Injectable()
@@ -13,8 +13,11 @@ export class ReportsService {
 
   async create(userId: string, roomId: number, dto: CreateReportDto) {
     const room = await this.prisma.room.findUnique({ where: { id: roomId } });
-    if (!room || room.deletedAt)
+    if (!room || room.deletedAt || room.status !== RoomStatus.active)
       throw new NotFoundException('Listing not found.');
+    if (room.ownerId === userId) {
+      throw new ConflictException('You cannot report your own listing.');
+    }
 
     // avoid piling up duplicate reports while a previous one is still open
     const openReport = await this.prisma.report.findFirst({

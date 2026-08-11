@@ -82,4 +82,37 @@ describe('StorageService', () => {
     ).rejects.toThrow('A listing can have at most 10 images.');
     expect(cloudinary.createUploadSignature).not.toHaveBeenCalled();
   });
+
+  it('deletes only an owned, unconfirmed Cloudinary image', async () => {
+    const prisma = {
+      room: {
+        findUnique: jest.fn().mockResolvedValue({
+          ownerId: 'owner-1',
+          deletedAt: null,
+        }),
+      },
+      roomImage: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    };
+    const cloudinary = {
+      isOwnedRoomImagePublicId: jest.fn().mockReturnValue(true),
+      destroyAsset: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new StorageService(
+      prisma as unknown as PrismaService,
+      cloudinary as unknown as CloudinaryService,
+    );
+
+    await expect(
+      service.deleteUnconfirmedRoomImage(
+        'owner-1',
+        42,
+        'rooms/owner-1/42/orphan',
+      ),
+    ).resolves.toEqual({ success: true });
+    expect(cloudinary.destroyAsset).toHaveBeenCalledWith(
+      'rooms/owner-1/42/orphan',
+    );
+  });
 });

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
@@ -20,10 +28,10 @@ export class ReportsController {
   })
   create(
     @CurrentUser('id') userId: string,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: CreateReportDto,
   ) {
-    return this.reportsService.create(userId, Number(id), dto);
+    return this.reportsService.create(userId, id, dto);
   }
 
   @Get('reports/mine')

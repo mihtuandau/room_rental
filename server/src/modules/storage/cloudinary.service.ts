@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import { randomUUID } from 'node:crypto';
@@ -18,11 +23,13 @@ export class CloudinaryService {
   private cloudName: string;
   private apiKey: string;
   private apiSecret: string;
+  private uploadPreset?: string;
 
   constructor(private config: ConfigService) {
     this.cloudName = this.config.get<string>('CLOUDINARY_CLOUD_NAME')!;
     this.apiKey = this.config.get<string>('CLOUDINARY_API_KEY')!;
     this.apiSecret = this.config.get<string>('CLOUDINARY_API_SECRET')!;
+    this.uploadPreset = this.config.get<string>('CLOUDINARY_UPLOAD_PRESET');
 
     cloudinary.config({
       cloud_name: this.cloudName,
@@ -32,6 +39,11 @@ export class CloudinaryService {
   }
 
   createUploadSignature(publicIdPrefix: string) {
+    if (!this.uploadPreset) {
+      throw new ServiceUnavailableException(
+        'Image uploads are not configured. Configure a Cloudinary upload preset.',
+      );
+    }
     const timestamp = Math.round(Date.now() / 1000);
     const publicId = `${publicIdPrefix}/${randomUUID()}`;
     const allowedFormats = ALLOWED_IMAGE_FORMATS.join(',');
@@ -40,6 +52,7 @@ export class CloudinaryService {
       public_id: publicId,
       overwrite: false,
       allowed_formats: allowedFormats,
+      upload_preset: this.uploadPreset,
     };
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
@@ -53,6 +66,7 @@ export class CloudinaryService {
       publicId,
       overwrite: false,
       allowedFormats,
+      uploadPreset: this.uploadPreset,
       signature,
       uploadUrl: `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`,
     };

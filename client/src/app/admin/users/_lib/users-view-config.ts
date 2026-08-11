@@ -46,7 +46,9 @@ export function downloadUsersCsv(users: AdminUser[]) {
     /^[=+\-@]/.test(value) ? `'${value}` : value;
   const rows = users.map((user) =>
     [
+      user.id,
       user.fullName || '',
+      user.email || '',
       user.phone || '',
       ROLE_LABELS[user.role],
       String(user.listingCount),
@@ -58,7 +60,7 @@ export function downloadUsersCsv(users: AdminUser[]) {
       .map((value) => escape(safe(value)))
       .join(','),
   );
-  const content = `\uFEFFTên,Số điện thoại,Loại tài khoản,Số tin đăng,Có tin hoạt động,Xác minh,Trạng thái,Ngày tham gia\n${rows.join('\n')}`;
+  const content = `\uFEFFMã người dùng,Tên,Email,Số điện thoại,Loại tài khoản,Số tin đăng,Có tin hoạt động,Xác minh,Trạng thái,Ngày tham gia\n${rows.join('\n')}`;
   const url = URL.createObjectURL(
     new Blob([content], { type: 'text/csv;charset=utf-8' }),
   );

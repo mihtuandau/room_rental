@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { PageHeader } from "@/components/layout/page-shell";
 import { cn } from "@/lib/utils";
 
 type MetricTone = "brand" | "warning" | "danger" | "neutral";
@@ -23,20 +24,12 @@ export function AdminPageHeader({
   className?: string;
 }) {
   return (
-    <header
-      className={cn(
-        "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
-        className,
-      )}
-    >
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-          {title}
-        </h1>
-        <p className="mt-1 max-w-prose text-sm text-zinc-600">{description}</p>
-      </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </header>
+    <PageHeader
+      title={title}
+      description={description}
+      action={action}
+      className={className}
+    />
   );
 }
 

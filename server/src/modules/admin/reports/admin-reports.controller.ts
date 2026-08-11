@@ -31,7 +31,14 @@ export class AdminReportsController {
       query.status,
       query.page ?? 1,
       query.pageSize ?? 20,
+      query.actionable,
     );
+  }
+
+  @Patch(':id/start-review')
+  @ApiOperation({ summary: 'Mark a pending report as being reviewed' })
+  startReview(@Param('id') id: string) {
+    return this.adminReportsService.startReview(id);
   }
 
   @Patch(':id/resolve')

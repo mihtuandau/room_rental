@@ -18,6 +18,7 @@ import {
   rejectAdminRoom,
   setAdminRoomVerified,
   resolveAdminReport,
+  startAdminReportReview,
   createAdminAmenity,
   updateAdminAmenity,
   deleteAdminAmenity,
@@ -85,6 +86,19 @@ export function useAdminReports(params: AdminReportsParams) {
 export function useResolveAdminReport() {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: resolveAdminReport, onSuccess: (_, values) => { void queryClient.invalidateQueries({ queryKey: [...adminKeys.all, 'reports'] }); void queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() }); toast.success(values.status === 'resolved' ? 'Đã xử lý báo cáo.' : 'Đã bỏ qua báo cáo.'); }, onError: () => toast.error('Không thể xử lý báo cáo. Bạn thử lại nhé.') });
+}
+
+export function useStartAdminReportReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: startAdminReportReview,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...adminKeys.all, 'reports'] });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.pendingReports() });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+    onError: () => toast.error('Không thể bắt đầu xem xét báo cáo. Bạn thử lại nhé.'),
+  });
 }
 
 export function useAdminAmenities() { return useQuery({ queryKey: adminKeys.amenities(), queryFn: getAdminAmenities }); }

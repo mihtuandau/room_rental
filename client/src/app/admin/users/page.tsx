@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { PageContainer } from '@/components/layout/page-shell';
 import { AdminUsersView } from './users-view';
 
 export const metadata: Metadata = {
@@ -8,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function AdminUsersPage() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:px-8 xl:px-10">
+    <PageContainer>
       <AdminUsersView />
-    </div>
+    </PageContainer>
   );
 }

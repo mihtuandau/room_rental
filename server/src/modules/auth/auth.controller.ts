@@ -19,6 +19,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { FacebookLoginDto } from './dto/facebook-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { SendContactPhoneOtpDto } from './dto/send-contact-phone-otp.dto';
+import { VerifyContactPhoneOtpDto } from './dto/verify-contact-phone-otp.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '@/common/guards/jwt-refresh.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -28,7 +30,9 @@ const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  path: '/auth/refresh',
+  // The cookie must reach both /auth/refresh and /auth/logout so logout can
+  // revoke the tokenVersion before clearing the browser cookie.
+  path: '/auth',
 };
 
 @ApiTags('auth')
@@ -98,6 +102,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtRefreshGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiCookieAuth()
   @ApiOperation({
     summary: 'Reissue an access token from the refresh token cookie',
@@ -117,6 +122,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtRefreshGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Log out — revoke every issued refresh token' })
   async logout(
@@ -124,7 +130,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logout(userId);
-    res.clearCookie(REFRESH_COOKIE, { path: '/auth/refresh' });
+    res.clearCookie(REFRESH_COOKIE, { path: cookieOptions.path });
     return { success: true };
   }
 
@@ -137,6 +143,19 @@ export class AuthController {
     return { success: true };
   }
 
+  @Post('otp/send-contact-phone')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Send an OTP to the authenticated listing contact phone' })
+  async sendContactPhoneOtp(
+    @CurrentUser('id') userId: string,
+    @Body() dto: SendContactPhoneOtpDto,
+  ) {
+    await this.authService.sendContactPhoneOtp(userId, dto.phone);
+    return { success: true };
+  }
+
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
@@ -145,6 +164,19 @@ export class AuthController {
   })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     await this.authService.verifyOtp(dto, dto.purpose, dto.code);
+    return { success: true };
+  }
+
+  @Post('otp/verify-contact-phone')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Verify the authenticated listing contact phone' })
+  async verifyContactPhoneOtp(
+    @CurrentUser('id') userId: string,
+    @Body() dto: VerifyContactPhoneOtpDto,
+  ) {
+    await this.authService.verifyContactPhoneOtp(userId, dto.phone, dto.code);
     return { success: true };
   }
 

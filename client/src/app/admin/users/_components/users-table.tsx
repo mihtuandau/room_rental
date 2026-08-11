@@ -140,7 +140,10 @@ function UserRow({
         </p>
       </td>
       <td className="px-4 py-4 text-zinc-600">
-        {user.phone || 'Chưa có số điện thoại'}
+        <p>{user.phone || 'Chưa có số điện thoại'}</p>
+        <p className="mt-1 max-w-48 truncate text-xs text-zinc-500">
+          {user.email || 'Chưa có email'}
+        </p>
       </td>
       <td className="px-4 py-4">
         <AccountActivity user={user} />

@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  ParseIntPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -40,15 +41,15 @@ export class AdminAmenitiesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Edit a catalog amenity' })
-  update(@Param('id') id: string, @Body() dto: UpdateAmenityDto) {
-    return this.adminAmenitiesService.update(Number(id), dto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAmenityDto) {
+    return this.adminAmenitiesService.update(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete a catalog amenity (removed from all listings via cascade)',
   })
-  remove(@Param('id') id: string) {
-    return this.adminAmenitiesService.remove(Number(id));
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.adminAmenitiesService.remove(id);
   }
 }

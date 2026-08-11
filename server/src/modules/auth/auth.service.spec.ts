@@ -190,7 +190,7 @@ describe('AuthService registration OTP', () => {
     );
   });
 
-  it('sends phone OTP through the development SMS transport', async () => {
+  it('rejects unauthenticated change-phone OTP requests', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
       otpCode: { create: jest.fn().mockResolvedValue({}) },
@@ -213,17 +213,10 @@ describe('AuthService registration OTP', () => {
       {} as GoogleTokenService,
     );
 
-    await service.sendOtp({ phone: '0912345678' }, OtpPurpose.change_phone);
-    expect(prisma.otpCode.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        phone: '0912345678',
-        purpose: OtpPurpose.change_phone,
-        codeHash: expect.any(String),
-      }),
-    });
-    expect(sms.send).toHaveBeenCalledWith(
-      '0912345678',
-      expect.stringContaining('123456'),
-    );
+    await expect(
+      service.sendOtp({ phone: '0912345678' }, OtpPurpose.change_phone),
+    ).rejects.toThrow('requires an authenticated account');
+    expect(prisma.otpCode.create).not.toHaveBeenCalled();
+    expect(sms.send).not.toHaveBeenCalled();
   });
 });

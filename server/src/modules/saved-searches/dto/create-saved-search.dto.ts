@@ -1,12 +1,20 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  Length,
+} from 'class-validator';
 import { RoomType } from '../../../../generated/prisma/client';
 
 export class CreateSavedSearchDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() city?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() district?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() ward?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) city?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) district?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) ward?: string;
 
   @ApiPropertyOptional({ enum: RoomType })
   @IsOptional()
@@ -28,11 +36,13 @@ export class CreateSavedSearchDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
+  @IsNumber({ allowInfinity: false, allowNaN: false })
   @Min(0)
   areaMin?: number;
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
+  @IsNumber({ allowInfinity: false, allowNaN: false })
   @Min(0)
   areaMax?: number;
 }

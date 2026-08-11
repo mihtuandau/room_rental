@@ -8,6 +8,7 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(10_000)
   page?: number = 1;
 
   @ApiPropertyOptional({ default: 20 })

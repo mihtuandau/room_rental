@@ -118,6 +118,7 @@ model User {
 
   // Contact info shown to tenants on a listing — may differ from the login phone.
   contactPhone String? @map("contact_phone")
+  contactPhoneVerified Boolean @default(false) @map("contact_phone_verified")
   zaloUrl      String? @map("zalo_url")
 
   role            Role    @default(user)
@@ -222,6 +223,7 @@ model Room {
   @@index([price])
   @@index([roomType])
   @@index([ownerId])
+  @@index([latitude, longitude])
   @@index([publishedAt])
   @@index([expiresAt])
   @@map("rooms")

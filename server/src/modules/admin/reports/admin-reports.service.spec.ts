@@ -75,4 +75,25 @@ describe('AdminReportsService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.report.findUniqueOrThrow).not.toHaveBeenCalled();
   });
+
+  it('moves a pending report into the reviewing queue atomically', async () => {
+    tx.report.findUnique.mockResolvedValue({
+      id: 'report-1',
+      status: ReportStatus.pending,
+    });
+    tx.report.updateMany.mockResolvedValue({ count: 1 });
+    tx.report.findUniqueOrThrow.mockResolvedValue({
+      id: 'report-1',
+      status: ReportStatus.reviewing,
+    });
+
+    await expect(service.startReview('report-1')).resolves.toEqual({
+      id: 'report-1',
+      status: ReportStatus.reviewing,
+    });
+    expect(tx.report.updateMany).toHaveBeenCalledWith({
+      where: { id: 'report-1', status: ReportStatus.pending },
+      data: { status: ReportStatus.reviewing },
+    });
+  });
 });

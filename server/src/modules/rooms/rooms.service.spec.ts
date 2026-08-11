@@ -3,6 +3,56 @@ import { CloudinaryService } from '../storage/cloudinary.service';
 import { RoomsService } from './rooms.service';
 
 describe('RoomsService', () => {
+  describe('featuredLocations', () => {
+    it('ranks active areas and selects a public cover image', async () => {
+      const prisma = {
+        room: {
+          groupBy: jest.fn().mockResolvedValue([
+            {
+              city: 'Hồ Chí Minh',
+              district: 'Quận 7',
+              _count: { _all: 3 },
+              _min: { price: 2_000_000 },
+            },
+            {
+              city: 'Đà Nẵng',
+              district: 'Hải Châu',
+              _count: { _all: 1 },
+              _min: { price: 1_500_000 },
+            },
+          ]),
+          findFirst: jest.fn().mockResolvedValue({
+            images: [{ url: 'https://cdn.example/cover.jpg' }],
+          }),
+        },
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      await expect(service.featuredLocations(1)).resolves.toEqual([
+        {
+          city: 'Hồ Chí Minh',
+          district: 'Quận 7',
+          count: 3,
+          minPrice: 2_000_000,
+          imageUrl: 'https://cdn.example/cover.jpg',
+        },
+      ]);
+      expect(prisma.room.groupBy).toHaveBeenCalledWith({
+        by: ['city', 'district'],
+        where: {
+          status: 'active',
+          deletedAt: null,
+          owner: { is: { deletedAt: null } },
+        },
+        _count: { _all: true },
+        _min: { price: true },
+      });
+    });
+  });
+
   describe('search', () => {
     it('does not require coordinates for a normal search', async () => {
       const prisma = {
@@ -30,9 +80,39 @@ describe('RoomsService', () => {
       expect(result.total).toBe(1);
     });
 
+    it('returns a short-lived cached public search result when available', async () => {
+      const cached = {
+        rooms: [{ id: 99 }],
+        total: 1,
+        page: 1,
+        pageSize: 12,
+      };
+      const prisma = {
+        room: { findMany: jest.fn(), count: jest.fn() },
+      };
+      const cache = {
+        get: jest.fn().mockResolvedValue(cached),
+        set: jest.fn(),
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+        cache as never,
+      );
+
+      await expect(service.search({ page: 1, pageSize: 12 })).resolves.toEqual(
+        cached,
+      );
+      expect(prisma.room.findMany).not.toHaveBeenCalled();
+      expect(cache.set).not.toHaveBeenCalled();
+    });
+
     it('filters public results by radius around coordinates', async () => {
       const prisma = {
-        $queryRaw: jest.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
+        $queryRaw: jest
+          .fn()
+          .mockResolvedValueOnce([{ count: BigInt(2) }])
+          .mockResolvedValueOnce([{ id: 1 }, { id: 2 }]),
         $transaction: jest.fn((queries: unknown[]) => Promise.all(queries)),
         room: {
           findMany: jest.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
@@ -52,15 +132,10 @@ describe('RoomsService', () => {
         pageSize: 12,
       });
 
-      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
       expect(prisma.room.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
-            status: 'active',
-            deletedAt: null,
-            id: { in: [1, 2] },
-          }),
-          take: 12,
+          where: { id: { in: [1, 2] } },
         }),
       );
       expect(result).toEqual({
@@ -108,7 +183,9 @@ describe('RoomsService', () => {
           city: 'Đà Nẵng',
           district: 'Hải Châu',
         }),
-      ).rejects.toThrow('Verify your phone number before posting a listing.');
+      ).rejects.toThrow(
+        'Verify your contact phone number before posting a listing.',
+      );
       expect(prisma.room.create).not.toHaveBeenCalled();
     });
   });
@@ -150,6 +227,7 @@ describe('RoomsService', () => {
           slug: room.slug,
           status: 'active',
           deletedAt: null,
+          owner: { is: { deletedAt: null } },
         },
         include: {
           images: {
@@ -248,6 +326,49 @@ describe('RoomsService', () => {
         service.setCoverImage('caller-1', 42, 'image-2'),
       ).rejects.toThrow('You do not have permission to modify this listing.');
       expect(prisma.roomImage.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update', () => {
+    it('returns an active listing to moderation after owner edits it', async () => {
+      const room = {
+        id: 42,
+        ownerId: 'owner-1',
+        status: 'active',
+        deletedAt: null,
+      };
+      const tx = {
+        room: {
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            ...room,
+            status: 'pending',
+          }),
+        },
+      };
+      const prisma = {
+        room: { findUnique: jest.fn().mockResolvedValue(room) },
+        $transaction: jest.fn((callback: (transaction: typeof tx) => unknown) =>
+          callback(tx),
+        ),
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      await expect(
+        service.update(room.ownerId, room.id, { title: 'Updated title' }),
+      ).resolves.toMatchObject({ status: 'pending' });
+      expect(tx.room.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'active' }),
+          data: expect.objectContaining({
+            status: 'pending',
+            isVerified: false,
+          }),
+        }),
+      );
     });
   });
 

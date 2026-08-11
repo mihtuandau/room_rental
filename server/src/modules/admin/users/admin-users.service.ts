@@ -11,6 +11,7 @@ import { ListUsersQueryDto } from './dto/list-users-query.dto';
 const USER_SAFE_SELECT = {
   id: true,
   phone: true,
+  email: true,
   fullName: true,
   role: true,
   isPhoneVerified: true,

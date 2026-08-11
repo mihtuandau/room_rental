@@ -7,7 +7,11 @@ import { AdminPageHeader } from '@/components/admin/admin-page';
 import { Badge } from '@/components/ui/badge';
 import { ErrorState } from '@/components/ui/states';
 import type { AdminReport } from '@/features/admin/api';
-import { useAdminReports, useResolveAdminReport } from '@/features/admin/hooks';
+import {
+  useAdminReports,
+  useResolveAdminReport,
+  useStartAdminReportReview,
+} from '@/features/admin/hooks';
 import { ReportDialog } from './_components/report-dialog';
 import { ReportsSkeleton } from './_components/reports-skeleton';
 import { ReportsStats } from './_components/reports-stats';
@@ -30,6 +34,7 @@ export function AdminReportsView() {
     pageSize: PAGE_SIZE,
   });
   const resolve = useResolveAdminReport();
+  const startReview = useStartAdminReportReview();
 
   const submit = (status: 'resolved' | 'dismissed') => {
     if (!selected || !note.trim()) return;
@@ -54,7 +59,7 @@ export function AdminReportsView() {
   const { data } = reports;
   const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
   const pending = data.reports.filter(
-    (report) => report.status === 'pending',
+    (report) => report.status === 'pending' || report.status === 'reviewing',
   ).length;
 
   return (
@@ -83,6 +88,9 @@ export function AdminReportsView() {
         onSelect={(report) => {
           setSelected(report);
           setNote('');
+          if (report.status === 'pending') {
+            void startReview.mutate(report.id);
+          }
         }}
         onPage={(page) => void setState({ page })}
       />
