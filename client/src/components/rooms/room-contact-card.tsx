@@ -3,7 +3,16 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, Clock3, Eye, Phone, ShieldCheck, UserRound } from 'lucide-react';
+import {
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  Eye,
+  Phone,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils';
@@ -11,6 +20,7 @@ import { ApiError } from '@/lib/api-client';
 import { useIsSignedIn } from '@/stores/auth-store';
 import { useRevealContact } from '@/features/rooms/hooks';
 import type { RoomOwner } from '@/features/rooms/api';
+import { ReportDialog } from './report-dialog';
 
 function ZaloIcon() {
   return (
@@ -18,6 +28,16 @@ function ZaloIcon() {
       Za
     </span>
   );
+}
+
+function isCloudinaryAvatar(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'res.cloudinary.com';
+  } catch {
+    return false;
+  }
 }
 
 export function RoomContactCard({
@@ -46,6 +66,7 @@ export function RoomContactCard({
   const revealContact = useRevealContact(roomId);
   const [revealedPhone, setRevealedPhone] = useState<string | null>(null);
   const [revealedZalo, setRevealedZalo] = useState<string | null>(null);
+  const [showVerificationInfo, setShowVerificationInfo] = useState(false);
   const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -76,7 +97,7 @@ export function RoomContactCard({
     <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-card">
       <div className="flex items-center gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-500">
-          {owner.avatarUrl ? (
+          {isCloudinaryAvatar(owner.avatarUrl) ? (
             <Image src={owner.avatarUrl} alt="" width={48} height={48} className="h-full w-full object-cover" />
           ) : (
             <UserRound className="h-6 w-6" aria-hidden />
@@ -90,15 +111,50 @@ export function RoomContactCard({
           </p>
         </div>
         {isVerified && (
-          <span
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700"
-            title="Tin đã được quản trị viên xác minh"
+          <button
+            type="button"
+            aria-expanded={showVerificationInfo}
+            aria-controls={`verification-info-${roomId}`}
+            onClick={() => setShowVerificationInfo((current) => !current)}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
           >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
             Tin đã xác minh
-          </span>
+            <ChevronDown
+              className={`h-3 w-3 transition-transform ${showVerificationInfo ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
         )}
       </div>
+
+      {isVerified && showVerificationInfo ? (
+        <div
+          id={`verification-info-${roomId}`}
+          role="status"
+          className="mt-3 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-2.5 text-xs leading-5 text-brand-900"
+        >
+          Trọ Ơi đã kiểm tra thông tin tin đăng, hình ảnh và thông tin liên hệ theo quy trình kiểm duyệt trước khi hiển thị.
+        </div>
+      ) : null}
+
+      {isVerified ? (
+        <div className="mt-4 grid gap-2 rounded-lg border border-zinc-100 bg-zinc-50/70 p-3 text-xs text-zinc-600">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-brand-600" aria-hidden />
+            <span>Tin đăng đã được Trọ Ơi duyệt</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2
+              className={`h-3.5 w-3.5 shrink-0 ${owner.contactPhoneVerified ? 'text-brand-600' : 'text-zinc-400'}`}
+              aria-hidden
+            />
+            <span>
+              {owner.contactPhoneVerified ? 'Số điện thoại đã xác minh' : 'Số điện thoại đang chờ xác minh'}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-5 border-t border-zinc-100 pt-4">
         <p className="text-2xl font-bold tabular-nums text-zinc-900">
@@ -158,6 +214,10 @@ export function RoomContactCard({
           <Clock3 className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
           <span>Cập nhật {dateFormatter.format(new Date(updatedAt))}</span>
         </div>
+      </div>
+
+      <div className="mt-4 border-t border-zinc-100 pt-3">
+        <ReportDialog roomId={roomId} roomSlug={roomSlug} variant="link" />
       </div>
 
       <p className="mt-4 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-500">

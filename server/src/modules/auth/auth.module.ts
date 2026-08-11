@@ -9,11 +9,12 @@ import { GoogleTokenService } from './google/google-token.service';
 import { FacebookTokenService } from './facebook/facebook-token.service';
 import { EmailService } from './email/email.service';
 import { SmsService } from './sms/sms.service';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   // JwtModule.register({}) with no default secret/options: AuthService signs
   // access and refresh tokens explicitly with their own secret per call.
-  imports: [PassportModule, JwtModule.register({})],
+  imports: [PassportModule, JwtModule.register({}), StorageModule],
   controllers: [AuthController],
   providers: [
     AuthService,

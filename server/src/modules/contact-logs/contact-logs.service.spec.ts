@@ -12,6 +12,8 @@ describe('ContactLogsService', () => {
           owner: {
             phone: '0912345678',
             contactPhone: '0987654321',
+            contactPhoneVerified: true,
+            isPhoneVerified: true,
             zaloUrl: 'https://zalo.me/owner-1',
           },
         }),
@@ -20,9 +22,7 @@ describe('ContactLogsService', () => {
       contactLog: { create: jest.fn() },
       $transaction: jest.fn().mockResolvedValue([]),
     };
-    const service = new ContactLogsService(
-      prisma as unknown as PrismaService,
-    );
+    const service = new ContactLogsService(prisma as unknown as PrismaService);
 
     await expect(
       service.logContact('tenant-1', 42, ContactType.phone),
@@ -38,13 +38,17 @@ describe('ContactLogsService', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 42,
           ownerId: 'owner-1',
-          owner: { phone: '0912345678', contactPhone: null, zaloUrl: null },
+          owner: {
+            phone: '0912345678',
+            contactPhone: null,
+            contactPhoneVerified: false,
+            isPhoneVerified: true,
+            zaloUrl: null,
+          },
         }),
       },
     };
-    const service = new ContactLogsService(
-      prisma as unknown as PrismaService,
-    );
+    const service = new ContactLogsService(prisma as unknown as PrismaService);
 
     await expect(
       service.logContact('owner-1', 42, ContactType.phone),
@@ -52,5 +56,31 @@ describe('ContactLogsService', () => {
     await expect(
       service.logContact('tenant-1', 42, ContactType.message),
     ).rejects.toThrow('messaging is implemented');
+  });
+
+  it('does not reveal an unverified listing phone or create a contact log', async () => {
+    const prisma = {
+      room: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 42,
+          ownerId: 'owner-1',
+          owner: {
+            phone: '0912345678',
+            contactPhone: '0987654321',
+            contactPhoneVerified: false,
+            isPhoneVerified: true,
+            zaloUrl: null,
+          },
+        }),
+      },
+      contactLog: { create: jest.fn() },
+      $transaction: jest.fn(),
+    };
+    const service = new ContactLogsService(prisma as unknown as PrismaService);
+
+    await expect(
+      service.logContact('tenant-1', 42, ContactType.phone),
+    ).rejects.toThrow('has not been verified');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

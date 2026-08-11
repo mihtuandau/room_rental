@@ -17,54 +17,78 @@ import {
   useVerifyContactPhoneOtp,
 } from '@/features/auth/hooks';
 import { useProfile, useUpdateProfile } from '@/features/users/hooks';
+import type { Profile } from '@/features/users/api';
 import { updateProfileSchema, type UpdateProfileFormInput } from '@/features/users/schemas';
 import { uploadToCloudinary } from '@/features/storage/api';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/constants';
 
 const MEMBER_SINCE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
 
-export function AccountView({ showLogout = true }: { showLogout?: boolean }) {
+export function AccountView({ showLogout = true, showIdentity = true }: { showLogout?: boolean; showIdentity?: boolean }) {
   const { data: profile, isPending, isError, refetch } = useProfile();
 
   if (isPending) return <AccountSkeleton />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   return (
-    <div className="space-y-8">
-      <AvatarSection avatarUrl={profile.avatarUrl} fullName={profile.fullName} />
+    <div className="space-y-5">
+      {showIdentity ? <AccountIdentityCard profile={profile} /> : null}
 
-      <div className="space-y-1 rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-600">Số điện thoại đăng nhập</span>
-          <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-900">
-            {profile.phone}
-            {profile.isPhoneVerified && (
-              <ShieldCheck className="h-4 w-4 text-brand-600" aria-label="Đã xác minh" />
-            )}
-          </span>
+      <div className="space-y-4">
+        <section className="w-full rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
+          <div className="mb-5 border-b border-zinc-100 pb-4">
+            <h2 className="font-semibold text-zinc-900">Thông tin cá nhân</h2>
+            <p className="mt-1 text-sm text-zinc-600">Cập nhật thông tin để chủ trọ và người thuê dễ nhận diện bạn hơn.</p>
+          </div>
+          <div className="w-full">
+            <ProfileForm
+              email={profile.email}
+              fullName={profile.fullName}
+              contactPhone={profile.contactPhone}
+              zaloUrl={profile.zaloUrl}
+            />
+          </div>
+        </section>
+
+        <div className="w-full">
+          <ContactPhoneVerification
+            key={`${profile.contactPhone ?? 'none'}-${profile.contactPhoneVerified}`}
+            phone={profile.contactPhone}
+            verified={profile.contactPhoneVerified}
+          />
         </div>
-        <div className="flex items-center justify-between border-t border-zinc-100 pt-2.5">
-          <span className="text-sm text-zinc-600">Thành viên từ</span>
-          <span className="text-sm font-medium text-zinc-900">
-            {new Date(profile.createdAt).toLocaleDateString('vi-VN', MEMBER_SINCE_FORMAT)}
-          </span>
-        </div>
+
+        {showLogout ? <LogoutButton /> : null}
       </div>
-
-      <ProfileForm
-        fullName={profile.fullName}
-        contactPhone={profile.contactPhone}
-        zaloUrl={profile.zaloUrl}
-      />
-
-      <ContactPhoneVerification
-        key={`${profile.contactPhone ?? 'none'}-${profile.contactPhoneVerified}`}
-        phone={profile.contactPhone}
-        verified={profile.contactPhoneVerified}
-      />
-
-      {showLogout ? <LogoutButton /> : null}
     </div>
+  );
+}
+
+export function AccountIdentityCard({ profile }: { profile: Profile }) {
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <AvatarSection avatarUrl={profile.avatarUrl} fullName={profile.fullName} />
+        <dl className="grid grid-cols-2 gap-5 border-t border-zinc-100 pt-4 text-sm sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+          <div>
+            <dt className="text-xs text-zinc-500">Số đăng nhập</dt>
+            <dd className="mt-1 flex items-center gap-1 font-medium text-zinc-900">
+              {profile.phone}
+              {profile.isPhoneVerified && <ShieldCheck className="h-4 w-4 text-brand-600" aria-label="Đã xác minh" />}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-zinc-500">Thành viên từ</dt>
+            <dd className="mt-1 font-medium text-zinc-900">
+              {new Date(profile.createdAt).toLocaleDateString('vi-VN', MEMBER_SINCE_FORMAT)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <p className="mt-5 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-500">
+        Thông tin liên hệ chỉ hiển thị khi cần thiết cho tin đăng của bạn.
+      </p>
+    </section>
   );
 }
 
@@ -158,10 +182,12 @@ function AvatarSection({
 }
 
 function ProfileForm({
+  email,
   fullName,
   contactPhone,
   zaloUrl,
 }: {
+  email: string | null;
   fullName: string | null;
   contactPhone: string | null;
   zaloUrl: string | null;
@@ -228,15 +254,32 @@ function ProfileForm({
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Field
-        id="fullName"
-        label="Họ và tên"
-        autoComplete="name"
-        placeholder="Nguyễn Văn A"
-        error={errors.fullName?.message}
-        {...register('fullName')}
-      />
+    <form onSubmit={onSubmit} className="grid w-full gap-4 sm:grid-cols-2" noValidate>
+      <div>
+        <label htmlFor="accountEmail" className="mb-1.5 block text-sm font-medium text-zinc-700">
+          Email đăng nhập
+        </label>
+        <div
+          id="accountEmail"
+          aria-describedby="accountEmailHelp"
+          className="flex min-h-11 w-full items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700"
+        >
+          {email || 'Chưa thêm email'}
+        </div>
+        <p id="accountEmailHelp" className="mt-1 text-xs text-zinc-500">
+          Email dùng để đăng nhập và khôi phục tài khoản.
+        </p>
+      </div>
+      <div>
+        <Field
+          id="fullName"
+          label="Họ và tên"
+          autoComplete="name"
+          placeholder="Nguyễn Văn A"
+          error={errors.fullName?.message}
+          {...register('fullName')}
+        />
+      </div>
 
       <div>
         <Field
@@ -255,16 +298,22 @@ function ProfileForm({
         )}
       </div>
 
-      <Field
-        id="zaloUrl"
-        label="Đường dẫn Zalo"
-        autoComplete="off"
-        placeholder="https://zalo.me/0912345678"
-        error={errors.zaloUrl?.message}
-        {...register('zaloUrl')}
-      />
+      <div>
+        <Field
+          id="zaloUrl"
+          label="Đường dẫn Zalo"
+          autoComplete="off"
+          placeholder="https://zalo.me/0912345678"
+          error={errors.zaloUrl?.message}
+          {...register('zaloUrl')}
+        />
+      </div>
 
-      <Button type="submit" disabled={isSubmitting || !isDirty}>
+      <Button
+        type="submit"
+        className="w-fit sm:col-span-2"
+        disabled={isSubmitting || !isDirty}
+      >
         {isSubmitting ? 'Đang lưu…' : 'Lưu thay đổi'}
       </Button>
     </form>
@@ -328,7 +377,7 @@ function ContactPhoneVerification({
   }
 
   return (
-    <section className="rounded-lg border border-warning-50 bg-warning-50/40 p-4">
+    <section className="rounded-xl border border-warning-100 bg-warning-50/50 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-zinc-900">

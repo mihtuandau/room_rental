@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateSavedSearchDto } from './dto/create-saved-search.dto';
+import { UpdateSavedSearchDto } from './dto/update-saved-search.dto';
 
 @Injectable()
 export class SavedSearchesService {
@@ -77,5 +78,20 @@ export class SavedSearchesService {
 
     await this.prisma.savedSearch.delete({ where: { id } });
     return { success: true };
+  }
+
+  async update(userId: string, id: string, dto: UpdateSavedSearchDto) {
+    const savedSearch = await this.prisma.savedSearch.findUnique({ where: { id } });
+    if (!savedSearch) throw new NotFoundException('Saved search not found.');
+    if (savedSearch.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this saved search.',
+      );
+    }
+
+    return this.prisma.savedSearch.update({
+      where: { id },
+      data: dto,
+    });
   }
 }

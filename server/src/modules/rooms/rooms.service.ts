@@ -26,6 +26,8 @@ const OWNER_PUBLIC_SELECT = {
   createdAt: true,
   phone: true,
   contactPhone: true,
+  isPhoneVerified: true,
+  contactPhoneVerified: true,
 } as const;
 
 /** Keep a useful hint visible without exposing a landlord's full number. */
@@ -34,6 +36,35 @@ function maskPhone(phone: string | null | undefined) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 6) return '******';
   return `${digits.slice(0, 2)}${'*'.repeat(digits.length - 5)}${digits.slice(-3)}`;
+}
+
+function publicCloudinaryAvatar(
+  avatarUrl: string | null | undefined,
+  userId: string,
+) {
+  if (!avatarUrl) return null;
+  try {
+    const url = new URL(avatarUrl);
+    const uploadMarker = '/image/upload/';
+    const uploadIndex = url.pathname.indexOf(uploadMarker);
+    const pathSegments =
+      uploadIndex >= 0
+        ? url.pathname
+            .slice(uploadIndex + uploadMarker.length)
+            .split('/')
+            .filter(Boolean)
+        : [];
+    const avatarFolderIndex = pathSegments.indexOf('avatars');
+    return url.protocol === 'https:' &&
+      url.hostname === 'res.cloudinary.com' &&
+      avatarFolderIndex >= 0 &&
+      pathSegments[avatarFolderIndex + 1] === userId &&
+      pathSegments.length > avatarFolderIndex + 2
+      ? avatarUrl
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 const COVER_IMAGE_INCLUDE = {
@@ -49,6 +80,63 @@ const ROOM_IMAGE_ORDER = [
   { position: 'asc' as const },
   { createdAt: 'asc' as const },
 ];
+
+// Keep list/search responses to fields needed by public cards and maps. In
+// particular, never expose ownerId, moderation state, deletion timestamps, or
+// Cloudinary public IDs through a public listing endpoint.
+const PUBLIC_ROOM_LIST_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  price: true,
+  area: true,
+  bedrooms: true,
+  city: true,
+  district: true,
+  roomType: true,
+  isVerified: true,
+  latitude: true,
+  longitude: true,
+  createdAt: true,
+  updatedAt: true,
+  viewCount: true,
+  images: {
+    where: { isCover: true },
+    orderBy: { createdAt: 'asc' as const },
+    take: 1,
+    select: { url: true },
+  },
+} as const;
+
+const PUBLIC_ROOM_DETAIL_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  roomType: true,
+  price: true,
+  area: true,
+  deposit: true,
+  bedrooms: true,
+  bathrooms: true,
+  maxOccupants: true,
+  city: true,
+  district: true,
+  ward: true,
+  address: true,
+  latitude: true,
+  longitude: true,
+  isVerified: true,
+  viewCount: true,
+  createdAt: true,
+  updatedAt: true,
+  images: {
+    orderBy: ROOM_IMAGE_ORDER,
+    select: { id: true, url: true, isCover: true, position: true },
+  },
+  owner: { select: OWNER_PUBLIC_SELECT },
+  amenities: { include: { amenity: true } },
+} as const;
 
 type FeaturedLocation = {
   city: string;
@@ -180,6 +268,25 @@ export class RoomsService {
   }
 
   async search(dto: SearchRoomsDto): Promise<RoomSearchResult> {
+    if (
+      dto.priceMin !== undefined &&
+      dto.priceMax !== undefined &&
+      dto.priceMin > dto.priceMax
+    ) {
+      throw new BadRequestException(
+        'Minimum price must be less than or equal to maximum price.',
+      );
+    }
+    if (
+      dto.areaMin !== undefined &&
+      dto.areaMax !== undefined &&
+      dto.areaMin > dto.areaMax
+    ) {
+      throw new BadRequestException(
+        'Minimum area must be less than or equal to maximum area.',
+      );
+    }
+
     const normalizedKey = JSON.stringify(
       Object.entries(dto)
         .sort(([left], [right]) => left.localeCompare(right))
@@ -340,7 +447,7 @@ export class RoomsService {
         orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        include: COVER_IMAGE_INCLUDE,
+        select: PUBLIC_ROOM_LIST_SELECT,
       }),
       this.prisma.room.count({ where }),
     ]);
@@ -364,10 +471,10 @@ export class RoomsService {
     ];
 
     if (dto.city) predicates.push(Prisma.sql`r.city = ${dto.city}`);
-    if (dto.district)
-      predicates.push(Prisma.sql`r.district = ${dto.district}`);
+    if (dto.district) predicates.push(Prisma.sql`r.district = ${dto.district}`);
     if (dto.ward) predicates.push(Prisma.sql`r.ward = ${dto.ward}`);
-    if (dto.roomType) predicates.push(Prisma.sql`r.room_type = ${dto.roomType}`);
+    if (dto.roomType)
+      predicates.push(Prisma.sql`r.room_type = ${dto.roomType}`);
     if (dto.priceMin !== undefined)
       predicates.push(Prisma.sql`r.price >= ${dto.priceMin}`);
     if (dto.priceMax !== undefined)
@@ -401,10 +508,7 @@ export class RoomsService {
       const lng = dto.lng!;
       const radiusKm = dto.radiusKm ?? 3;
       const latDelta = radiusKm / 111.045;
-      const longitudeScale = Math.max(
-        Math.cos((lat * Math.PI) / 180),
-        0.01,
-      );
+      const longitudeScale = Math.max(Math.cos((lat * Math.PI) / 180), 0.01);
       const lngDelta = radiusKm / (111.045 * longitudeScale);
       predicates.push(
         Prisma.sql`r.latitude BETWEEN ${lat - latDelta} AND ${lat + latDelta}`,
@@ -420,13 +524,14 @@ export class RoomsService {
     }
 
     const whereSql = Prisma.join(predicates, ' AND ');
-    const orderBy = hasRadiusSearch && (!dto.sort || dto.sort === 'newest')
-      ? Prisma.sql`r.is_verified DESC, distance_km ASC, r.created_at DESC, r.id DESC`
-      : dto.sort === 'price_asc'
-        ? Prisma.sql`r.is_verified DESC, r.price ASC, r.id DESC`
-        : dto.sort === 'price_desc'
-          ? Prisma.sql`r.is_verified DESC, r.price DESC, r.id DESC`
-          : Prisma.sql`r.is_verified DESC, r.created_at DESC, r.id DESC`;
+    const orderBy =
+      hasRadiusSearch && (!dto.sort || dto.sort === 'newest')
+        ? Prisma.sql`r.is_verified DESC, distance_km ASC, r.created_at DESC, r.id DESC`
+        : dto.sort === 'price_asc'
+          ? Prisma.sql`r.is_verified DESC, r.price ASC, r.id DESC`
+          : dto.sort === 'price_desc'
+            ? Prisma.sql`r.is_verified DESC, r.price DESC, r.id DESC`
+            : Prisma.sql`r.is_verified DESC, r.created_at DESC, r.id DESC`;
     const distanceSelect = distanceExpression
       ? Prisma.sql`, ${distanceExpression} AS distance_km`
       : Prisma.empty;
@@ -460,7 +565,7 @@ export class RoomsService {
 
     const fetchedRooms = await this.prisma.room.findMany({
       where: { id: { in: ids } },
-      include: COVER_IMAGE_INCLUDE,
+      select: PUBLIC_ROOM_LIST_SELECT,
     });
     const byId = new Map(fetchedRooms.map((room) => [room.id, room]));
     return {
@@ -482,21 +587,31 @@ export class RoomsService {
         deletedAt: null,
         owner: { is: { deletedAt: null } },
       },
-      include: {
-        images: { orderBy: ROOM_IMAGE_ORDER },
-        owner: { select: OWNER_PUBLIC_SELECT },
-        amenities: { include: { amenity: true } },
-      },
+      select: PUBLIC_ROOM_DETAIL_SELECT,
     });
     if (!room) throw new NotFoundException('Listing not found.');
 
-    const { phone, contactPhone, ...publicOwner } = room.owner;
+    const {
+      phone,
+      contactPhone,
+      isPhoneVerified,
+      contactPhoneVerified: rawContactPhoneVerified,
+      ...publicOwner
+    } = room.owner;
+    const hasVerifiedContactPhone = contactPhone
+      ? rawContactPhoneVerified || (contactPhone === phone && isPhoneVerified)
+      : isPhoneVerified;
 
     return {
       ...room,
       owner: {
         ...publicOwner,
+        avatarUrl: publicCloudinaryAvatar(
+          publicOwner.avatarUrl,
+          publicOwner.id,
+        ),
         contactPhoneMasked: maskPhone(contactPhone ?? phone),
+        contactPhoneVerified: hasVerifiedContactPhone,
       },
       // flatten the join rows — the client only cares about the amenities themselves
       amenities: room.amenities.map((ra) => ra.amenity),

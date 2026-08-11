@@ -59,7 +59,7 @@ function stripDistrictPrefix(name: string): string {
  */
 export async function fetchProvinces(): Promise<ProvinceOption[]> {
   try {
-    const res = await fetch('https://provinces.open-api.vn/api/v2/p/', {
+    const res = await fetch('https://provinces.open-api.vn/api/v1/p/', {
       next: { revalidate: 60 * 60 * 24 },
     });
     if (!res.ok) return [...VN_CITY_OPTIONS];
@@ -92,7 +92,7 @@ export async function fetchWards(
   try {
     const endpoint = districtCode
       ? `https://provinces.open-api.vn/api/v1/d/${districtCode}?depth=2`
-      : `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`;
+      : `https://provinces.open-api.vn/api/v1/p/${provinceCode}?depth=2`;
     const res = await fetch(endpoint, { next: { revalidate: 60 * 60 * 24 } });
     if (!res.ok) return [];
     const detail = (await res.json()) as { wards?: { name: string }[] };

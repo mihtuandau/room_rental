@@ -180,6 +180,14 @@ export class AdminRoomsService {
       if (!room || room.deletedAt) {
         throw new NotFoundException('Listing not found.');
       }
+      if (
+        room.status !== RoomStatus.pending &&
+        room.status !== RoomStatus.active
+      ) {
+        throw new BadRequestException(
+          'Only pending or active listings can be verified.',
+        );
+      }
       if (room.isVerified === isVerified) return room;
 
       const result = await tx.room.updateMany({

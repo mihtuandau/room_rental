@@ -22,17 +22,42 @@ export class ContactLogsService {
         owner: { is: { deletedAt: null } },
       },
       include: {
-        owner: { select: { phone: true, contactPhone: true, zaloUrl: true } },
+        owner: {
+          select: {
+            phone: true,
+            contactPhone: true,
+            contactPhoneVerified: true,
+            isPhoneVerified: true,
+            zaloUrl: true,
+          },
+        },
       },
     });
     if (!room) throw new NotFoundException('Listing not found.');
     if (room.ownerId === userId) {
-      throw new ForbiddenException('You cannot reveal contact details for your own listing.');
+      throw new ForbiddenException(
+        'You cannot reveal contact details for your own listing.',
+      );
     }
     if (type === ContactType.message) {
       throw new BadRequestException(
         'Message contact is not available until messaging is implemented.',
       );
+    }
+
+    if (type === ContactType.phone) {
+      const phone = room.owner.contactPhone ?? room.owner.phone;
+      const phoneVerified = room.owner.contactPhone
+        ? room.owner.contactPhoneVerified ||
+          (room.owner.contactPhone === room.owner.phone &&
+            room.owner.isPhoneVerified)
+        : room.owner.isPhoneVerified;
+
+      if (!phone || !phoneVerified) {
+        throw new BadRequestException(
+          'The listing contact phone has not been verified yet.',
+        );
+      }
     }
 
     await this.prisma.$transaction([

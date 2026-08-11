@@ -31,7 +31,7 @@ const REASONS = [
 export function WhyChooseUs() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      <ScrollReveal className="mb-6 lg:mb-8">
+      <ScrollReveal className="mb-5 lg:mb-6">
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
           Vì sao chọn <span className="text-brand-700">Trọ Ơi?</span>
         </h2>
@@ -40,23 +40,21 @@ export function WhyChooseUs() {
         </p>
       </ScrollReveal>
       
-      {/* Consistent 3-column Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3 md:gap-0">
         {REASONS.map(({ icon: Icon, title, description }, i) => (
           <ScrollReveal
             key={title}
             delay={i * 150}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-500 hover:shadow-md sm:p-8"
+            className="group flex gap-4 md:border-l md:border-zinc-200 md:px-7 first:md:border-l-0 first:md:pl-0 last:md:pr-0"
           >
-            <div className="relative z-10">
-              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-700 transition-colors duration-300 group-hover:bg-brand-50 group-hover:text-brand-700">
-                <Icon className="h-6 w-6" aria-hidden />
-              </div>
-              
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-colors duration-200 group-hover:bg-brand-100">
+              <Icon className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
               <h3 className="text-lg font-semibold text-zinc-900 lg:text-xl">
                 {title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">
                 {description}
               </p>
             </div>

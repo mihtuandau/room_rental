@@ -332,6 +332,7 @@ model SavedSearch {
   areaMin  Float? @map("area_min")
   areaMax  Float? @map("area_max")
 
+  notificationsEnabled Boolean  @default(true) @map("notifications_enabled")
   lastNotifiedAt DateTime? @map("last_notified_at")
   createdAt      DateTime  @default(now()) @map("created_at")
 

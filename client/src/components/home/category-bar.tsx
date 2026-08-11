@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useQueryStates } from 'nuqs';
 import {
   BedDouble,
@@ -30,31 +29,6 @@ export function CategoryBar() {
     history: 'push',
     shallow: true,
   });
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY < 10) {
-        // Always show at the very top
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Scrolling down: hide CategoryBar
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up: show CategoryBar
-        setIsVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
   const handleCategoryClick = (value: RoomType) => {
     if (state.roomType === value) {
       // Toggle off if already selected
@@ -66,12 +40,7 @@ export function CategoryBar() {
   };
 
   return (
-    <div 
-      className={cn(
-        "sticky top-16 z-30 w-full border-b border-zinc-200/50 bg-white/95 shadow-xs backdrop-blur-xs transition-all duration-300 ease-in-out scroll-mt-28",
-        isVisible ? "translate-y-0 opacity-100" : "-translate-y-[calc(100%+64px)] opacity-0 pointer-events-none"
-      )}
-    >
+    <div className="relative z-20 w-full border-b border-zinc-200/70 bg-white scroll-mt-20">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="flex items-center justify-start gap-6 overflow-x-auto py-2 scrollbar-none sm:gap-8">
           {ROOM_TYPE_OPTIONS.map(({ value, label }) => {
@@ -82,6 +51,7 @@ export function CategoryBar() {
                 key={value}
                 type="button"
                 onClick={() => handleCategoryClick(value)}
+                aria-pressed={isActive}
                 className={cn(
                   'group flex min-h-10 flex-row items-center gap-1.5 border-b-2 py-2 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 cursor-pointer',
                   isActive

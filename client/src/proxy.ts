@@ -1,9 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const contentSecurityPolicy = [
+function buildContentSecurityPolicy(nonce: string, isDevelopment: boolean) {
+  return [
     "default-src 'self'",
     "base-uri 'self'",
     "font-src 'self' data:",
@@ -32,14 +30,38 @@ export function middleware(request: NextRequest) {
     ].join(' '),
     ...(isDevelopment ? [] : ['upgrade-insecure-requests']),
   ].join('; ');
+}
+
+/**
+ * This is only a coarse client-side gate. The backend still verifies the
+ * session and role for every protected API request.
+ */
+export function proxy(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const contentSecurityPolicy = buildContentSecurityPolicy(nonce, isDevelopment);
+  const { pathname, search } = request.nextUrl;
+  const isProtectedRoute =
+    pathname === '/account' ||
+    pathname.startsWith('/account/') ||
+    pathname.startsWith('/manage/') ||
+    pathname.startsWith('/admin/');
+  const signedIn =
+    request.cookies.has('rr_session') || request.cookies.has('rr_refresh');
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', contentSecurityPolicy);
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  if (isProtectedRoute && !signedIn) {
+    const login = new URL('/login', request.url);
+    login.searchParams.set('next', `${pathname}${search}`);
+    const response = NextResponse.redirect(login);
+    response.headers.set('Content-Security-Policy', contentSecurityPolicy);
+    return response;
+  }
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   return response;
 }

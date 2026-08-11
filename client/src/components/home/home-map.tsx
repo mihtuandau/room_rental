@@ -424,7 +424,7 @@ export function HomeMap({
         : 'các khu vực nổi bật';
 
   return (
-    <div className="relative h-full min-h-[260px] overflow-hidden rounded-lg bg-brand-50 sm:min-h-[320px] lg:min-h-[420px]">
+    <div className="relative h-full min-h-[260px] overflow-hidden rounded-xl bg-brand-50 sm:min-h-[320px] lg:min-h-[380px]">
       <div ref={containerRef} className="h-full w-full" />
       {mapError ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-50/95 px-6 text-center">

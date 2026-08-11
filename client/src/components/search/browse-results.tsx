@@ -10,9 +10,9 @@ export function BrowseResults({
   return (
     <div
       id="search-results"
-      className="mx-auto w-full max-w-7xl pb-16 pt-7 sm:pt-10 sm:pb-20"
+      className="mx-auto w-full max-w-7xl pb-14 pt-7 sm:pt-9 sm:pb-16"
     >
-      <div className="flex flex-col gap-12 sm:gap-16">
+      <div className="flex flex-col gap-10 sm:gap-12">
         {browseTop}
         {browseBottom}
       </div>

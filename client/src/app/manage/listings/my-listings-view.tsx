@@ -97,10 +97,10 @@ function ListingsStats({ rooms }: { rooms: MyRoomItem[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-zinc-200 bg-white lg:grid-cols-4 lg:divide-x lg:divide-zinc-100">
       {items.map(({ label, value, icon: Icon, tone }) => (
-        <div key={label} className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-white p-5">
-          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+        <div key={label} className="flex items-center gap-3 p-4 sm:p-5">
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
             <Icon className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0">

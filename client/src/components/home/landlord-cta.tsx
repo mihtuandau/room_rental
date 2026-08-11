@@ -17,10 +17,7 @@ const LANDLORD_STEPS = [
 export function LandlordCta() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      <div className="group relative flex flex-col gap-6 overflow-hidden rounded-lg border border-zinc-200 bg-gradient-to-br from-white via-white to-brand-50/40 px-6 py-10 shadow-card sm:px-10 sm:py-12 md:flex-row md:items-start md:justify-between md:gap-12">
-        {/* Subtle decorative glow blob */}
-        <div className="absolute -bottom-24 -right-24 -z-10 h-72 w-72 rounded-full bg-brand-500/5 blur-3xl pointer-events-none group-hover:bg-brand-500/10 transition-colors duration-500" />
-
+      <div className="group relative flex flex-col gap-6 overflow-hidden rounded-2xl bg-brand-50/55 px-6 py-8 sm:px-10 sm:py-9 md:flex-row md:items-center md:justify-between md:gap-12">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-5">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 bg-brand-50 text-brand-700 transition-colors duration-300 group-hover:bg-brand-100">
             <House className="h-6 w-6" aria-hidden />
@@ -48,7 +45,7 @@ export function LandlordCta() {
           </div>
         </div>
 
-        <Button size="lg" className="w-full shrink-0 shadow-card transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] sm:w-auto" asChild>
+        <Button size="lg" className="w-full shrink-0 sm:w-auto" asChild>
           <Link href="/manage/listings/new">Đăng tin miễn phí</Link>
         </Button>
       </div>

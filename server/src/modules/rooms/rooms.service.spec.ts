@@ -156,6 +156,23 @@ describe('RoomsService', () => {
         'Both latitude and longitude are required for radius search.',
       );
     });
+
+    it('rejects inverted numeric ranges before querying or caching', async () => {
+      const cache = { get: jest.fn(), set: jest.fn() };
+      const service = new RoomsService(
+        {} as PrismaService,
+        {} as CloudinaryService,
+        cache as never,
+      );
+
+      await expect(
+        service.search({ priceMin: 3_000_000, priceMax: 2_000_000 }),
+      ).rejects.toThrow('Minimum price');
+      await expect(
+        service.search({ areaMin: 40, areaMax: 20 }),
+      ).rejects.toThrow('Minimum area');
+      expect(cache.get).not.toHaveBeenCalled();
+    });
   });
 
   describe('create', () => {
@@ -202,6 +219,8 @@ describe('RoomsService', () => {
           id: 'owner-1',
           phone: '0912345678',
           contactPhone: null,
+          isPhoneVerified: true,
+          contactPhoneVerified: false,
           fullName: 'Nguyễn Văn A',
           avatarUrl: null,
           createdAt: new Date('2025-01-15T00:00:00.000Z'),
@@ -222,40 +241,36 @@ describe('RoomsService', () => {
 
       const result = await service.findActiveBySlug(room.slug);
 
-      expect(prisma.room.findFirst).toHaveBeenCalledWith({
-        where: {
-          slug: room.slug,
-          status: 'active',
-          deletedAt: null,
-          owner: { is: { deletedAt: null } },
-        },
-        include: {
-          images: {
-            orderBy: [
-              { isCover: 'desc' },
-              { position: 'asc' },
-              { createdAt: 'asc' },
-            ],
+      expect(prisma.room.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            slug: room.slug,
+            status: 'active',
+            deletedAt: null,
+            owner: { is: { deletedAt: null } },
           },
-          owner: {
-            select: {
-              id: true,
-              fullName: true,
-              avatarUrl: true,
-              createdAt: true,
-              phone: true,
-              contactPhone: true,
-            },
-          },
-          amenities: { include: { amenity: true } },
-        },
-      });
+          select: expect.objectContaining({
+            images: expect.objectContaining({
+              select: { id: true, url: true, isCover: true, position: true },
+            }),
+            owner: expect.objectContaining({
+              select: expect.objectContaining({
+                phone: true,
+                contactPhone: true,
+                isPhoneVerified: true,
+                contactPhoneVerified: true,
+              }),
+            }),
+          }),
+        }),
+      );
       expect(result.owner).toEqual({
         id: 'owner-1',
         fullName: 'Nguyễn Văn A',
         avatarUrl: null,
         createdAt: new Date('2025-01-15T00:00:00.000Z'),
         contactPhoneMasked: '09*****678',
+        contactPhoneVerified: true,
       });
       expect(result.owner).not.toHaveProperty('contactPhone');
       expect(result.owner).not.toHaveProperty('zaloUrl');

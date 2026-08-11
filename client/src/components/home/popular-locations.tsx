@@ -58,7 +58,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
               key={`${loc.city}-${loc.district}`}
               type="button"
               onClick={() => handleLocationClick(loc)}
-              className="group relative h-56 w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-200 text-left transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
+              className="group relative h-56 w-full cursor-pointer overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
             >
               {/* Background Image */}
               <div className="absolute inset-0 z-0 transition-transform duration-500 group-hover:scale-105">
@@ -70,12 +70,12 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
                   className="object-cover"
                   sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 25vw"
                 />
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 transition-colors duration-300 group-hover:from-black/90 group-hover:via-black/50" />
+                {/* A restrained overlay keeps text readable without making the card feel glossy. */}
+                <div className="absolute inset-0 bg-black/45 transition-colors duration-300 group-hover:bg-black/55" />
               </div>
 
               {/* Tag Badge / Real Count */}
-              <div className="absolute left-4 top-4 z-10 rounded-md border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
+              <div className="absolute left-4 top-4 z-10 rounded-md bg-black/45 px-3 py-1 text-xs font-medium text-white">
                 {loc.count} tin đăng
               </div>
 
@@ -90,7 +90,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
                     {summary}
                   </p>
                 </div>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 border border-white/20 backdrop-blur-xs text-white transition-all duration-300 group-hover:bg-brand-600 group-hover:border-brand-600 group-hover:scale-110">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/40 bg-black/35 text-white transition-colors duration-200 group-hover:border-brand-500 group-hover:bg-brand-600">
                 <ArrowUpRight className="h-4 w-4" aria-hidden />
               </div>
             </div>

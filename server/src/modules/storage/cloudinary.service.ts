@@ -124,6 +124,39 @@ export class CloudinaryService {
     await cloudinary.uploader.destroy(publicId);
   }
 
+  async importProviderAvatar(sourceUrl: string, userId: string) {
+    let url: URL;
+    try {
+      url = new URL(sourceUrl);
+    } catch {
+      return null;
+    }
+
+    const trustedHost =
+      url.protocol === 'https:' &&
+      (url.hostname === 'lh3.googleusercontent.com' ||
+        url.hostname === 'platform-lookaside.fbsbx.com' ||
+        url.hostname.endsWith('.fbcdn.net'));
+    if (!trustedHost || !this.cloudName || !this.apiSecret) return null;
+
+    try {
+      const asset = await cloudinary.uploader.upload(sourceUrl, {
+        folder: `avatars/${userId}`,
+        public_id: randomUUID(),
+        overwrite: false,
+        resource_type: 'image',
+      });
+      return asset.secure_url.startsWith(
+        `https://res.cloudinary.com/${this.cloudName}/image/upload/`,
+      )
+        ? asset.secure_url
+        : null;
+    } catch {
+      this.logger.warn(`Provider avatar import failed for user ${userId}.`);
+      return null;
+    }
+  }
+
   warnLegacyAssetNotDestroyed(publicId: string, roomId: number) {
     this.logger.warn(
       `Skipped Cloudinary deletion for legacy unscoped image ${publicId} on room ${roomId}.`,

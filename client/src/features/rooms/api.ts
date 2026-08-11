@@ -16,6 +16,7 @@ export interface RoomOwner {
   createdAt: string;
   /** Masked contact returned by the public detail endpoint. */
   contactPhoneMasked: string | null;
+  contactPhoneVerified: boolean;
 }
 
 export interface RoomAmenity {

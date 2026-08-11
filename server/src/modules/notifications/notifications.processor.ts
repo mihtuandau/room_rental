@@ -70,6 +70,7 @@ export class NotificationsProcessor extends WorkerHost {
                 ]
               : [{ areaMin: null }, { areaMax: null }]),
           ],
+          notificationsEnabled: true,
           user: { deletedAt: null },
         },
         orderBy: { id: 'asc' },

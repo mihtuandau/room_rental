@@ -22,7 +22,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      <ScrollReveal className="mb-6 lg:mb-8">
+      <ScrollReveal className="mb-5 lg:mb-6">
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
           Cách <span className="text-brand-700">Trọ Ơi</span> hoạt động
         </h2>
@@ -31,18 +31,14 @@ export function HowItWorks() {
         </p>
       </ScrollReveal>
 
-      <div className="relative grid gap-4 md:grid-cols-3 md:gap-8">
-        <div
-          className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-7 hidden border-t border-dashed border-brand-200 md:block"
-          aria-hidden="true"
-        />
+      <div className="grid gap-6 md:grid-cols-3 md:gap-0 md:divide-x md:divide-zinc-200">
         {STEPS.map(({ icon: Icon, title, description }, index) => (
           <ScrollReveal
             key={title}
             delay={index * 120}
-            className="relative flex gap-4 py-2 md:block md:text-center"
+            className="flex gap-4 md:block md:px-8 md:first:pl-0 md:last:pr-0"
           >
-            <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 ring-4 ring-white md:mx-auto">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 md:mx-auto">
               <Icon className="h-6 w-6" aria-hidden />
             </div>
             <div className="pt-1 md:pt-5">

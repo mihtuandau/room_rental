@@ -9,13 +9,13 @@ import { toast } from 'sonner';
 import {
   ArrowLeft,
   Bell,
+  Bookmark,
   ChevronDown,
   BarChart3,
   Heart,
   ListChecks,
   LogOut,
   Menu,
-  Settings,
   UserRound,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -312,7 +312,11 @@ export function Header() {
                 </div>
                 <DropdownMenuItem onSelect={() => router.push('/account')} className="gap-3 py-2.5">
                   <UserRound className="h-4 w-4 shrink-0" aria-hidden />
-                  Hồ sơ cá nhân
+                  Tài khoản
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push('/account/saved-searches')} className="gap-3 py-2.5">
+                  <Bookmark className="h-4 w-4 shrink-0" aria-hidden />
+                  Tìm kiếm đã lưu
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => router.push('/manage/listings')} className="gap-3 py-2.5">
                   <ListChecks className="h-4 w-4 shrink-0" aria-hidden />
@@ -321,10 +325,6 @@ export function Header() {
                 <DropdownMenuItem onSelect={() => router.push('/manage/dashboard')} className="gap-3 py-2.5">
                   <BarChart3 className="h-4 w-4 shrink-0" aria-hidden />
                   Thống kê
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => router.push('/account/security')} className="gap-3 py-2.5">
-                  <Settings className="h-4 w-4 shrink-0" aria-hidden />
-                  Cài đặt tài khoản
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={logout.isPending}

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { BackButton } from '@/components/ui/back-button';
-import { ReportDialog } from '@/components/rooms/report-dialog';
 import { RoomContactCard } from '@/components/rooms/room-contact-card';
 import { RoomGallery } from '@/components/rooms/room-gallery';
 import { RoomLocationMap } from '@/components/rooms/room-location-map';
@@ -122,7 +121,7 @@ export function RoomDetailContent({
           </ScrollReveal>
           {room.description ? (
             <ScrollReveal delay={150}>
-              <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+              <section className="border-t border-zinc-200 pt-6">
                 <h2 className="text-lg font-semibold">Mô tả</h2>
                 <p className="mt-3 max-w-prose whitespace-pre-line text-base leading-relaxed text-zinc-700">
                   {room.description}
@@ -131,7 +130,7 @@ export function RoomDetailContent({
             </ScrollReveal>
           ) : null}
           <ScrollReveal delay={200}>
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+            <div className="border-t border-zinc-200 pt-6">
               <RoomLocationMap
                 address={room.address}
                 ward={room.ward}
@@ -142,9 +141,6 @@ export function RoomDetailContent({
               />
             </div>
           </ScrollReveal>
-          <div className="flex justify-center border-t border-zinc-200 pt-6">
-            <ReportDialog roomId={room.id} roomSlug={room.slug} variant="link" />
-          </div>
         </div>
         <aside className="mt-8 space-y-6 lg:mt-0">
           {featuredRooms.length > 0 && (

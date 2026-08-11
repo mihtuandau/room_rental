@@ -75,7 +75,7 @@ export function RoomAmenities({ room }: { room: RoomDetail }) {
 
   if (!groups.length) return null;
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+    <section className="border-t border-zinc-200 pt-6">
       <h2 className="text-lg font-semibold">Tiện ích</h2>
       <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
         {groups.map((group) => (
