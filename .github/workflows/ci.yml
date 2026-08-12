@@ -136,7 +136,11 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             "$VPS_USER@$VPS_HOST" \
-            "cd '$DEPLOY_PATH' && bash ops/deploy-backend.sh"
+            "cd '$DEPLOY_PATH' && \
+              git fetch origin main && \
+              git checkout main && \
+              git pull --ff-only origin main && \
+              bash ops/deploy-backend.sh"
 
   deploy-frontend:
     name: Deploy Frontend Production
@@ -188,4 +192,8 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             "$VPS_USER@$VPS_HOST" \
-            "cd '$DEPLOY_PATH' && bash ../ops/deploy-frontend.sh"
+            "cd '$DEPLOY_PATH' && \
+              git fetch origin main && \
+              git checkout main && \
+              git pull --ff-only origin main && \
+              bash ../ops/deploy-frontend.sh"
