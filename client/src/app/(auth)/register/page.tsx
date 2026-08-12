@@ -1,8 +1,8 @@
-import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { RegisterForm } from '@/features/auth/components/register-form';
 import { AuthDivider } from '@/features/auth/components/auth-divider';
 import { SocialAuthButtons } from '@/features/auth/components/social-auth-buttons';
+import { getSafeAuthNext } from '@/features/auth/next-path';
 
 export const metadata: Metadata = {
   title: 'Đăng ký',
@@ -10,7 +10,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const { next: nextParam } = await searchParams;
+  const next = getSafeAuthNext(nextParam);
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -18,13 +25,11 @@ export default function RegisterPage() {
         <p className="mt-2 text-sm text-zinc-600">Lưu tin yêu thích và đăng phòng dễ dàng hơn.</p>
       </div>
 
-      <Suspense>
-        <div className="space-y-6">
-          <SocialAuthButtons />
-          <AuthDivider />
-          <RegisterForm />
-        </div>
-      </Suspense>
+      <div className="space-y-6">
+        <SocialAuthButtons next={next} />
+        <AuthDivider />
+        <RegisterForm next={next} />
+      </div>
 
       <p className="text-center text-sm text-zinc-600">
         Đã có tài khoản?{' '}

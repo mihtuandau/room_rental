@@ -236,8 +236,6 @@ export class RoomsService {
       select: {
         phone: true,
         contactPhone: true,
-        contactPhoneVerified: true,
-        isPhoneVerified: true,
       },
     });
     if (!owner.contactPhone && !owner.phone) {
@@ -245,16 +243,6 @@ export class RoomsService {
         'Add a contact phone number to your profile before posting a listing.',
       );
     }
-    const contactPhoneVerified = owner.contactPhone
-      ? owner.contactPhoneVerified ||
-        (owner.contactPhone === owner.phone && owner.isPhoneVerified)
-      : owner.isPhoneVerified;
-    if (!contactPhoneVerified) {
-      throw new BadRequestException(
-        'Verify your contact phone number before posting a listing.',
-      );
-    }
-
     const room = await this.prisma.room.create({
       data: {
         ...dto,

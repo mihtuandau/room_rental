@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { LoginForm } from '@/features/auth/components/login-form';
 import { AuthDivider } from '@/features/auth/components/auth-divider';
 import { SocialAuthButtons } from '@/features/auth/components/social-auth-buttons';
+import { getSafeAuthNext } from '@/features/auth/next-path';
 
 export const metadata: Metadata = {
   title: 'Đăng nhập',
@@ -12,7 +12,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const { next: nextParam } = await searchParams;
+  const next = getSafeAuthNext(nextParam);
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -20,13 +27,11 @@ export default function LoginPage() {
         <p className="mt-2 text-sm text-zinc-600">Đăng nhập để tiếp tục tìm phòng phù hợp.</p>
       </div>
 
-      <Suspense>
-        <div className="space-y-6">
-          <SocialAuthButtons />
-          <AuthDivider />
-          <LoginForm />
-        </div>
-      </Suspense>
+      <div className="space-y-6">
+        <SocialAuthButtons next={next} />
+        <AuthDivider />
+        <LoginForm next={next} />
+      </div>
 
       <p className="text-center text-sm text-zinc-600">
         Chưa có tài khoản?{' '}
