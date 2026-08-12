@@ -25,8 +25,17 @@ for required_file in server/.env.production docker-compose.prod.yml; do
   fi
 done
 
-command -v docker >/dev/null || { echo "docker is required" >&2; exit 1; }
-command -v docker-compose >/dev/null || { echo "docker-compose is required" >&2; exit 1; }
+command -v docker >/dev/null || {
+  echo "docker is required" >&2
+  exit 1
+}
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Docker Compose plugin is required: docker compose" >&2
+  exit 1
+fi
+
+COMPOSE=(docker compose -f docker-compose.prod.yml)
 
 echo "Pulling backend site..."
 git pull --ff-only origin main
@@ -44,15 +53,15 @@ docker build --network=host \
   ./server
 
 echo "Starting infrastructure..."
-docker-compose -f docker-compose.prod.yml up -d postgres redis
+"${COMPOSE[@]}" up -d postgres redis
 
 echo "Applying database migrations..."
-docker-compose -f docker-compose.prod.yml run --rm --no-deps migrate
+"${COMPOSE[@]}" run --rm --no-deps migrate
 
 echo "Replacing backend container..."
-docker-compose -f docker-compose.prod.yml stop backend || true
-docker-compose -f docker-compose.prod.yml rm -f backend || true
-docker-compose -f docker-compose.prod.yml up -d --no-deps backend
+"${COMPOSE[@]}" stop backend || true
+"${COMPOSE[@]}" rm -f backend || true
+"${COMPOSE[@]}" up -d --no-deps backend
 
 wait_for_http() {
   local url="$1"
@@ -62,6 +71,7 @@ wait_for_http() {
     if curl --fail --silent --show-error "$url" >/dev/null; then
       return 0
     fi
+
     sleep 2
   done
 
