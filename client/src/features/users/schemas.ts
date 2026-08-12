@@ -24,4 +24,19 @@ export const updateProfileSchema = z.object({
     .or(z.literal('')),
 });
 
+export const listingContactSetupSchema = z.object({
+  contactPhone: z
+    .string()
+    .trim()
+    .regex(VN_PHONE, 'Số điện thoại không hợp lệ.'),
+});
+
+export const listingContactOtpSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, 'Mã xác minh gồm 6 chữ số.'),
+});
+
 export type UpdateProfileFormInput = z.infer<typeof updateProfileSchema>;
+export type ListingContactSetupInput = z.infer<
+  typeof listingContactSetupSchema
+>;
+export type ListingContactOtpInput = z.infer<typeof listingContactOtpSchema>;

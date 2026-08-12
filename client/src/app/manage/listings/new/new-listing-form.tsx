@@ -1,10 +1,15 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/states';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
+import { useProfile } from '@/features/users/hooks';
 import { ImageReviewStep } from './_components/image-review-step';
+import { ListingContactSetup } from './_components/listing-contact-setup';
 import {
   DetailsAmenitiesStep,
   LocationStep,
@@ -16,16 +21,72 @@ import {
   ListingStepper,
 } from './_components/new-listing-ui';
 import { useNewListingForm } from './_hooks/use-new-listing-form';
-import { ContactPhoneGate } from './_components/contact-phone-gate';
 
 export function NewListingForm({
   amenities,
   provinces,
+  phoneVerificationRequired = false,
 }: {
   amenities: Amenity[];
   provinces: ProvinceOption[];
+  phoneVerificationRequired?: boolean;
 }) {
-  const listing = useNewListingForm(amenities);
+  const profileQuery = useProfile();
+  const [forceContactSetup, setForceContactSetup] = useState(false);
+
+  if (profileQuery.isPending || !profileQuery.data) {
+    if (profileQuery.isError) {
+      return (
+        <ErrorState
+          title="Không tải được thông tin tài khoản"
+          description="Kiểm tra kết nối và thử lại để bắt đầu đăng tin."
+          onRetry={() => void profileQuery.refetch()}
+        />
+      );
+    }
+    return <NewListingFormSkeleton />;
+  }
+
+  const profile = profileQuery.data;
+  const contactPhone = profile.contactPhone ?? profile.phone;
+  const contactPhoneVerified = Boolean(
+    contactPhone &&
+      (profile.contactPhoneVerified ||
+        (contactPhone === profile.phone && profile.isPhoneVerified)),
+  );
+  const needsContactSetup =
+    !contactPhone ||
+    forceContactSetup ||
+    (phoneVerificationRequired && !contactPhoneVerified);
+
+  return (
+    <>
+      <ListingEditor
+        amenities={amenities}
+        provinces={provinces}
+        onContactRequired={() => setForceContactSetup(true)}
+      />
+      {needsContactSetup ? (
+        <ListingContactSetup
+          initialPhone={contactPhone ?? ''}
+          verificationRequired={phoneVerificationRequired}
+          onComplete={() => setForceContactSetup(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ListingEditor({
+  amenities,
+  provinces,
+  onContactRequired,
+}: {
+  amenities: Amenity[];
+  provinces: ProvinceOption[];
+  onContactRequired: () => void;
+}) {
+  const listing = useNewListingForm(amenities, onContactRequired);
   const {
     register,
     control,
@@ -157,12 +218,27 @@ export function NewListingForm({
           </Button>
         )}
       </div>
-      <ContactPhoneGate
-        open={listing.contactPhoneGateOpen}
-        initialPhone={listing.contactPhone}
-        onOpenChange={listing.setContactPhoneGateOpen}
-        onVerified={listing.continueAfterContactPhoneVerified}
-      />
     </form>
+  );
+}
+
+function NewListingFormSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Đang tải thông tin đăng tin">
+      <div className="grid grid-cols-4 gap-3">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-10 w-full" />
+        ))}
+      </div>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-5 rounded-lg border border-zinc-200 bg-white p-6">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+        <Skeleton className="hidden h-72 w-full lg:block" />
+      </div>
+    </div>
   );
 }

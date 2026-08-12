@@ -9,6 +9,8 @@ coverage
 *.log
 .vscode
 .idea
+.env.production
+
 
 # AI/editor tooling — irrelevant to the image, and some entries are symlinks
 # that the build context tar can't checksum

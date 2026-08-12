@@ -20,9 +20,31 @@ import { useProfile, useUpdateProfile } from '@/features/users/hooks';
 import type { Profile } from '@/features/users/api';
 import { updateProfileSchema, type UpdateProfileFormInput } from '@/features/users/schemas';
 import { uploadToCloudinary } from '@/features/storage/api';
+import { ApiError } from '@/lib/api-client';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/constants';
 
 const MEMBER_SINCE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+
+function getContactOtpErrorMessage(error: unknown) {
+  if (!(error instanceof ApiError)) {
+    return 'Không kết nối được máy chủ. Kiểm tra mạng và thử lại.';
+  }
+
+  switch (error.status) {
+    case 400:
+      return 'Số điện thoại vừa thay đổi. Hãy lưu hồ sơ rồi gửi lại mã.';
+    case 401:
+      return 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.';
+    case 409:
+      return 'Số điện thoại này đang thuộc một tài khoản khác. Hãy dùng số khác hoặc đăng nhập đúng tài khoản.';
+    case 429:
+      return 'Bạn gửi mã hơi nhanh. Đợi một phút rồi thử lại.';
+    case 503:
+      return 'Dịch vụ SMS đang tạm gián đoạn. Hãy thử lại sau ít phút.';
+    default:
+      return 'Không gửi được mã xác minh. Hãy thử lại sau.';
+  }
+}
 
 export function AccountView({ showLogout = true, showIdentity = true }: { showLogout?: boolean; showIdentity?: boolean }) {
   const { data: profile, isPending, isError, refetch } = useProfile();
@@ -357,8 +379,8 @@ function ContactPhoneVerification({
       setStep('verify');
       setCode('');
       toast.success('Đã gửi mã xác minh đến số điện thoại liên hệ.');
-    } catch {
-      toast.error('Không gửi được mã xác minh. Bạn thử lại nhé.');
+    } catch (error) {
+      toast.error(getContactOtpErrorMessage(error));
     }
   }
 

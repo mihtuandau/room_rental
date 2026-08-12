@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ForgotPasswordForm } from '@/features/auth/components/forgot-password-form';
 
@@ -26,4 +27,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-import Link from 'next/link';

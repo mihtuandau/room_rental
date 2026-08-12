@@ -7,6 +7,7 @@ interface UploadSignature {
   publicId: string;
   overwrite: false;
   allowedFormats: string;
+  uploadPreset?: string;
   signature: string;
   uploadUrl: string;
 }
@@ -44,6 +45,7 @@ export async function uploadToCloudinary(
   form.append('public_id', sig.publicId);
   form.append('overwrite', String(sig.overwrite));
   form.append('allowed_formats', sig.allowedFormats);
+  if (sig.uploadPreset) form.append('upload_preset', sig.uploadPreset);
   form.append('signature', sig.signature);
 
   // No Authorization header, no credentials — this is a third-party request.

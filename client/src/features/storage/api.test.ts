@@ -34,6 +34,7 @@ describe('uploadToCloudinary', () => {
       publicId: 'rooms/user-1/12/image-1',
       overwrite: false,
       allowedFormats: 'jpg,png,webp',
+      uploadPreset: 'roomrent-images',
       signature: 'signature',
       uploadUrl: 'https://api.cloudinary.com/v1_1/demo/image/upload',
     });
@@ -45,6 +46,26 @@ describe('uploadToCloudinary', () => {
       'https://api.cloudinary.com/v1_1/demo/image/upload',
       expect.objectContaining({ method: 'POST', body: expect.any(FormData) }),
     );
+    const uploadBody = vi.mocked(fetch).mock.calls[0]?.[1]?.body as FormData;
+    expect(uploadBody.get('upload_preset')).toBe('roomrent-images');
+  });
+
+  it('uploads with a signed request when no upload preset is configured', async () => {
+    vi.mocked(apiRequest).mockResolvedValue({
+      cloudName: 'demo',
+      apiKey: 'key',
+      timestamp: 123,
+      publicId: 'rooms/user-1/12/image-1',
+      overwrite: false,
+      allowedFormats: 'jpg,png,webp',
+      signature: 'signature',
+      uploadUrl: 'https://api.cloudinary.com/v1_1/demo/image/upload',
+    });
+
+    await uploadToCloudinary(new File(['image'], 'room.jpg'), 'room-image', 12);
+
+    const uploadBody = vi.mocked(fetch).mock.calls[0]?.[1]?.body as FormData;
+    expect(uploadBody.get('upload_preset')).toBeNull();
   });
 
   it('can clean up a Cloudinary asset that was uploaded but not confirmed', async () => {

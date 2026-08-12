@@ -42,7 +42,9 @@ export class AuthController {
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Register a new user account' })
+  @ApiOperation({
+    summary: 'Register a new user account with a verified phone number',
+  })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -137,7 +139,7 @@ export class AuthController {
   @Post('otp/send')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) // anti SMS-spam
-  @ApiOperation({ summary: 'Send a one-time OTP code by email or phone' })
+  @ApiOperation({ summary: 'Send a registration or password-reset OTP' })
   async sendOtp(@Body() dto: SendOtpDto) {
     await this.authService.sendOtp(dto, dto.purpose);
     return { success: true };
@@ -147,7 +149,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Send an OTP to the authenticated listing contact phone' })
+  @ApiOperation({
+    summary: 'Send an OTP to the authenticated listing contact phone',
+  })
   async sendContactPhoneOtp(
     @CurrentUser('id') userId: string,
     @Body() dto: SendContactPhoneOtpDto,
@@ -160,7 +164,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
-    summary: 'Verify an OTP code (email registration or phone verification)',
+    summary: 'Verify an OTP code for a supported authentication flow',
   })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     await this.authService.verifyOtp(dto, dto.purpose, dto.code);
@@ -184,7 +188,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
-    summary: 'Verify a password-reset OTP before setting a new password',
+    summary: 'Verify a phone or email password-reset OTP',
   })
   async verifyResetOtp(@Body() dto: VerifyOtpDto) {
     await this.authService.verifyResetOtp(dto);
