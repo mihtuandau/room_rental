@@ -11,6 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   server:
     name: Backend
@@ -82,3 +85,91 @@ jobs:
           API_URL: http://localhost:3000
           NEXT_PUBLIC_SITE_URL: http://localhost:5000
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-placeholder.apps.googleusercontent.com
+
+  deploy-backend:
+    name: Deploy Backend Production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [server, client]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://api.dautuan.com
+
+    steps:
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.BACKEND_VPS_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.BACKEND_VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$KNOWN_HOSTS"
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/roomrent_deploy"
+          chmod 600 "$HOME/.ssh/roomrent_deploy"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy VPS
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.BACKEND_VPS_HOST }}
+          VPS_USER: ${{ secrets.BACKEND_VPS_USER }}
+          DEPLOY_PATH: ${{ secrets.BACKEND_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$DEPLOY_PATH"
+          ssh \
+            -i "$HOME/.ssh/roomrent_deploy" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "cd '$DEPLOY_PATH' && bash ops/deploy-backend.sh"
+
+  deploy-frontend:
+    name: Deploy Frontend Production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [server, client]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://dautuan.com
+
+    steps:
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.FRONTEND_VPS_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.FRONTEND_VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$KNOWN_HOSTS"
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/roomrent_frontend_deploy"
+          chmod 600 "$HOME/.ssh/roomrent_frontend_deploy"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy VPS frontend site
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.FRONTEND_VPS_HOST }}
+          VPS_USER: ${{ secrets.FRONTEND_VPS_USER }}
+          DEPLOY_PATH: ${{ secrets.FRONTEND_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$DEPLOY_PATH"
+          ssh \
+            -i "$HOME/.ssh/roomrent_frontend_deploy" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "cd '$DEPLOY_PATH' && bash ../ops/deploy-frontend.sh"
