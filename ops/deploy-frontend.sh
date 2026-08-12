@@ -4,6 +4,17 @@ set -euo pipefail
 # Frontend site deployment. Backend is deployed separately by deploy-backend.sh.
 
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+
+# GitHub Actions connects through a non-interactive SSH session, so .bashrc
+# does not reliably load NVM for the CloudPanel site user.
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  set +u
+  # shellcheck source=/dev/null
+  source "$NVM_DIR/nvm.sh"
+  set -u
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
@@ -23,6 +34,7 @@ if [[ ! -f client/.env.production ]]; then
   exit 1
 fi
 
+command -v node >/dev/null || { echo "node is required; install Node.js 22 for the frontend site user" >&2; exit 1; }
 command -v pnpm >/dev/null || { echo "pnpm is required" >&2; exit 1; }
 command -v pm2 >/dev/null || { echo "pm2 is required" >&2; exit 1; }
 
