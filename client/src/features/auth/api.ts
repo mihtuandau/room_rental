@@ -6,10 +6,6 @@ function toContact(identifier: string) {
   return VN_PHONE.test(value) ? { phone: value } : { email: value.toLowerCase() };
 }
 
-function toEmail(identifier: string) {
-  return { email: identifier.trim().toLowerCase() };
-}
-
 /**
  * These four hit the dedicated /api/auth/* Route Handlers (not the generic
  * proxy) because they are the only place allowed to set or clear the session
@@ -21,7 +17,7 @@ export interface AuthResult {
 }
 
 export function login(input: { identifier: string; password: string }) {
-  return authRequest<AuthResult>('/login', { ...toContact(input.identifier), password: input.password });
+  return authRequest<AuthResult>('/login', { phone: input.identifier.trim(), password: input.password });
 }
 
 // Registration creates the account only — it returns no token and starts no
@@ -32,13 +28,13 @@ export function register(input: {
   fullName?: string;
   otpCode: string;
 }) {
-  return authRequest<{ ok: true }>('/register', { ...toContact(input.identifier), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
+  return authRequest<{ ok: true }>('/register', { phone: input.identifier.trim(), password: input.password, fullName: input.fullName, otpCode: input.otpCode });
 }
 
 export function sendRegisterOtp(identifier: string) {
   return apiRequest<{ success: true }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ ...toContact(identifier), purpose: 'register' }),
+    body: JSON.stringify({ phone: identifier.trim(), purpose: 'register' }),
   });
 }
 
@@ -61,12 +57,13 @@ export function logout() {
 export function sendResetOtp(identifier: string) {
   return apiRequest<{ success: true }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ ...toEmail(identifier), purpose: 'reset_password' }),
+    body: JSON.stringify({ ...toContact(identifier), purpose: 'reset_password' }),
   });
 }
 
 export function resetPassword(input: {
-  email: string;
+  email?: string;
+  phone?: string;
   code: string;
   newPassword: string;
 }) {
@@ -76,7 +73,7 @@ export function resetPassword(input: {
   });
 }
 
-export function verifyResetOtp(input: { email: string; code: string }) {
+export function verifyResetOtp(input: { email?: string; phone?: string; code: string }) {
   return apiRequest<{ success: true }>('/auth/otp/verify-reset', {
     method: 'POST',
     body: JSON.stringify({ ...input, purpose: 'reset_password' }),

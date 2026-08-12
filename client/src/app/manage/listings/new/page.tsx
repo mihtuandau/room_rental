@@ -25,7 +25,13 @@ export default async function NewListingPage() {
       />
 
       <div>
-        <NewListingForm amenities={amenities} provinces={provinces} />
+        <NewListingForm
+          amenities={amenities}
+          provinces={provinces}
+          phoneVerificationRequired={
+            process.env.PHONE_VERIFICATION_REQUIRED === 'true'
+          }
+        />
       </div>
     </PageContainer>
   );

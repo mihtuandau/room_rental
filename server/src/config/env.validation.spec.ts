@@ -25,4 +25,27 @@ describe('validateEnv', () => {
       }),
     ).toThrow('JWT access and refresh secrets must be different.');
   });
+
+  it('requires all Twilio Verify credentials when selected', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        SMS_PROVIDER: 'twilio_verify',
+      }),
+    ).toThrow(
+      'TWILIO_ACCOUNT_SID is required when SMS_PROVIDER=twilio_verify.',
+    );
+  });
+
+  it('accepts a complete Twilio Verify configuration', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        SMS_PROVIDER: 'twilio_verify',
+        TWILIO_ACCOUNT_SID: `AC${'1'.repeat(32)}`,
+        TWILIO_AUTH_TOKEN: '2'.repeat(32),
+        TWILIO_VERIFY_SERVICE_SID: `VA${'3'.repeat(32)}`,
+      }),
+    ).not.toThrow();
+  });
 });

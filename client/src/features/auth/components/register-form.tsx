@@ -69,7 +69,7 @@ export function RegisterForm({ next = '/' }: { next?: string }) {
       ) : (
         <>
           <Field id="fullName" label="Họ tên" autoComplete="name" placeholder="Nguyễn Văn A" error={errors.fullName?.message} {...register('fullName')} />
-          <Field id="identifier" label="Email hoặc số điện thoại" autoComplete="username" placeholder="ban@example.com hoặc 0912345678" error={errors.identifier?.message} {...register('identifier')} />
+          <Field id="identifier" label="Số điện thoại" inputMode="tel" autoComplete="tel" placeholder="0912345678" error={errors.identifier?.message} {...register('identifier')} />
           <Field id="password" label="Mật khẩu" type="password" autoComplete="new-password" error={errors.password?.message} {...register('password')} />
           <PasswordRequirements value={passwordValue} />
           {errors.root && <p role="alert" className="rounded-md bg-danger-50 p-3 text-sm text-danger-600">{errors.root.message}</p>}

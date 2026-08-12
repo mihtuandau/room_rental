@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { RegisterForm } from '@/features/auth/components/register-form';
 import { AuthDivider } from '@/features/auth/components/auth-divider';
@@ -22,7 +23,7 @@ export default async function RegisterPage({
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Tạo tài khoản Trọ Ơi</h1>
-        <p className="mt-2 text-sm text-zinc-600">Lưu tin yêu thích và đăng phòng dễ dàng hơn.</p>
+        <p className="mt-2 text-sm text-zinc-600">Lưu tin và đăng tin dễ dàng hơn.</p>
       </div>
 
       <div className="space-y-6">
@@ -40,4 +41,3 @@ export default async function RegisterPage({
     </div>
   );
 }
-import Link from 'next/link';

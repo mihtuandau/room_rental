@@ -32,6 +32,19 @@ export const envSchema = z
     MAIL_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().email().optional(),
     MAIL_FROM_NAME: z.string().min(1).optional(),
+    SMS_PROVIDER: z.enum(['mock', 'twilio_verify']).default('mock'),
+    TWILIO_ACCOUNT_SID: z
+      .string()
+      .regex(/^AC[0-9a-fA-F]{32}$/)
+      .optional(),
+    TWILIO_AUTH_TOKEN: z
+      .string()
+      .regex(/^[0-9a-fA-F]{32}$/)
+      .optional(),
+    TWILIO_VERIFY_SERVICE_SID: z
+      .string()
+      .regex(/^VA[0-9a-fA-F]{32}$/)
+      .optional(),
     // Development-only deterministic OTP for the mock SMS transport.
     DEV_OTP_CODE: z
       .string()
@@ -47,12 +60,40 @@ export const envSchema = z
     path: ['DEV_OTP_CODE'],
   })
   .refine(
-    (env) => env.NODE_ENV !== 'production' || Boolean(env.CLOUDINARY_UPLOAD_PRESET),
+    (env) =>
+      env.NODE_ENV !== 'production' || Boolean(env.CLOUDINARY_UPLOAD_PRESET),
     {
       message: 'CLOUDINARY_UPLOAD_PRESET is required in production.',
       path: ['CLOUDINARY_UPLOAD_PRESET'],
     },
-  );
+  )
+  .superRefine((env, ctx) => {
+    if (env.SMS_PROVIDER !== 'twilio_verify') {
+      if (env.NODE_ENV === 'production') {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'SMS_PROVIDER must be twilio_verify in production.',
+          path: ['SMS_PROVIDER'],
+        });
+      }
+      return;
+    }
+
+    const requiredTwilioValues = [
+      ['TWILIO_ACCOUNT_SID', env.TWILIO_ACCOUNT_SID],
+      ['TWILIO_AUTH_TOKEN', env.TWILIO_AUTH_TOKEN],
+      ['TWILIO_VERIFY_SERVICE_SID', env.TWILIO_VERIFY_SERVICE_SID],
+    ] as const;
+    for (const [key, value] of requiredTwilioValues) {
+      if (!value) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `${key} is required when SMS_PROVIDER=twilio_verify.`,
+          path: [key],
+        });
+      }
+    }
+  });
 
 export type EnvConfig = z.infer<typeof envSchema>;
 

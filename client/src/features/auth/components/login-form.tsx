@@ -54,7 +54,7 @@ export function LoginForm({ next = '/' }: { next?: string }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Field id="identifier" label="Email hoặc số điện thoại" autoComplete="username" placeholder="ban@example.com hoặc 0912345678" error={errors.identifier?.message} {...register('identifier')} />
+      <Field id="identifier" label="Số điện thoại" inputMode="tel" autoComplete="tel" placeholder="0912345678" error={errors.identifier?.message} {...register('identifier')} />
 
       <div>
         <Field
