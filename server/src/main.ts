@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -26,10 +27,9 @@ async function bootstrap() {
     '/reports',
     '/rooms/mine',
   ];
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     if (
-      req.method !== 'GET' &&
-      req.method !== 'HEAD' ||
+      (req.method !== 'GET' && req.method !== 'HEAD') ||
       privatePrefixes.some((prefix) => req.path.startsWith(prefix))
     ) {
       res.setHeader('Cache-Control', 'private, no-store');
