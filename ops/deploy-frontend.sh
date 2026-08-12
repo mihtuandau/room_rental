@@ -26,17 +26,23 @@ fi
 command -v pnpm >/dev/null || { echo "pnpm is required" >&2; exit 1; }
 command -v pm2 >/dev/null || { echo "pm2 is required" >&2; exit 1; }
 
+CLIENT_DIR="$REPO_ROOT/client"
+PM2_APP_NAME="roomrent-client"
+
 echo "Pulling frontend site..."
 git pull --ff-only origin main
 
-cd "$REPO_ROOT/client"
+cd "$CLIENT_DIR"
 pnpm install --frozen-lockfile
-pnpm build
+pnpm run build
 
-if pm2 describe roomrent-client >/dev/null 2>&1; then
-  pm2 reload roomrent-client --update-env
+if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+  pm2 reload "$PM2_APP_NAME" --update-env
 else
-  pm2 start pnpm --name roomrent-client -- start
+  pm2 start pnpm \
+    --name "$PM2_APP_NAME" \
+    --cwd "$CLIENT_DIR" \
+    -- start
 fi
 pm2 save
 
