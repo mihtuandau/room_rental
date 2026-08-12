@@ -121,6 +121,8 @@ jobs:
           printf '%s %s\n' "$VPS_HOST" "$HOST_PUBLIC_KEY" > "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
           ssh-keygen -F "$VPS_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null
+          echo "Pinned backend host-key fingerprint:"
+          ssh-keygen -lf "$HOME/.ssh/known_hosts" -E sha256
 
       - name: Deploy VPS
         shell: bash
@@ -177,6 +179,8 @@ jobs:
           printf '%s %s\n' "$VPS_HOST" "$HOST_PUBLIC_KEY" > "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
           ssh-keygen -F "$VPS_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null
+          echo "Pinned frontend host-key fingerprint:"
+          ssh-keygen -lf "$HOME/.ssh/known_hosts" -E sha256
 
       - name: Deploy VPS frontend site
         shell: bash
