@@ -16,6 +16,7 @@ import {
   ListingStepper,
 } from './_components/new-listing-ui';
 import { useNewListingForm } from './_hooks/use-new-listing-form';
+import { ContactPhoneGate } from './_components/contact-phone-gate';
 
 export function NewListingForm({
   amenities,
@@ -156,6 +157,12 @@ export function NewListingForm({
           </Button>
         )}
       </div>
+      <ContactPhoneGate
+        open={listing.contactPhoneGateOpen}
+        initialPhone={listing.contactPhone}
+        onOpenChange={listing.setContactPhoneGateOpen}
+        onVerified={listing.continueAfterContactPhoneVerified}
+      />
     </form>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api-client';
@@ -13,9 +13,8 @@ import { Field } from './field';
 import { PasswordRequirements } from './password-requirements';
 import { AuthStepTransition } from './auth-step-transition';
 
-export function RegisterForm() {
+export function RegisterForm({ next = '/' }: { next?: string }) {
   const router = useRouter();
-  const next = useSearchParams().get('next') ?? '/';
   const registerMutation = useRegister();
   const sendOtpMutation = useSendRegisterOtp();
   const [otpStep, setOtpStep] = useState(false);

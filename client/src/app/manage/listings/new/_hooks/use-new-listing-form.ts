@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { Amenity } from '@/features/amenities/api';
+import { useProfile } from '@/features/users/hooks';
 import { buildLocationSearchQueries } from '@/features/locations/geocoding';
 import { confirmRoomImage } from '@/features/rooms/api';
 import { useCreateRoom, useSetRoomAmenities } from '@/features/rooms/hooks';
@@ -48,6 +49,7 @@ const ROOM_TYPES_WITH_ROOM_COUNTS = new Set([
 
 export function useNewListingForm(amenities: Amenity[]) {
   const router = useRouter();
+  const { data: profile } = useProfile();
   const createRoom = useCreateRoom();
   const setRoomAmenities = useSetRoomAmenities();
   const [step, setStep] = useState(0);
@@ -55,6 +57,8 @@ export function useNewListingForm(amenities: Amenity[]) {
   const [images, setImages] = useState<StagedImage[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [contactPhoneGateOpen, setContactPhoneGateOpen] = useState(false);
+  const [pendingSubmitValues, setPendingSubmitValues] = useState<CreateRoomFormOutput | null>(null);
   const form = useForm<
     CreateRoomFormInput,
     unknown,
@@ -194,7 +198,7 @@ export function useNewListingForm(amenities: Amenity[]) {
     }
   }
 
-  const submitValues = handleSubmit(async (values) => {
+  async function submitListing(values: CreateRoomFormOutput) {
     try {
       const room = await createRoom.mutateAsync({
         ...values,
@@ -234,15 +238,9 @@ export function useNewListingForm(amenities: Amenity[]) {
         error instanceof ApiError &&
         error.message.toLowerCase().includes('contact phone')
       ) {
-        toast.error(
-          'Cần thêm số điện thoại liên hệ trước khi đăng tin.',
-          {
-            action: {
-              label: 'Cập nhật hồ sơ',
-              onClick: () => router.push('/account'),
-            },
-          },
-        );
+        setPendingSubmitValues(values);
+        setContactPhoneGateOpen(true);
+        toast.error('Cần thêm và xác minh số điện thoại trước khi đăng tin.');
         return;
       }
       if (error instanceof ApiError && error.status === 401) {
@@ -255,7 +253,18 @@ export function useNewListingForm(amenities: Amenity[]) {
     } finally {
       setIsUploadingImages(false);
     }
+  }
+
+  const submitValues = handleSubmit(async (values) => {
+    await submitListing(values);
   });
+
+  async function continueAfterContactPhoneVerified() {
+    const values = pendingSubmitValues;
+    setPendingSubmitValues(null);
+    setContactPhoneGateOpen(false);
+    if (values) await submitListing(values);
+  }
 
   const onFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     if (!images.length) {
@@ -299,5 +308,9 @@ export function useNewListingForm(amenities: Amenity[]) {
     goNext,
     goBack: () => setStep((current) => Math.max(current - 1, 0)),
     onFormSubmit,
+    contactPhone: profile?.contactPhone ?? profile?.phone ?? '',
+    contactPhoneGateOpen,
+    setContactPhoneGateOpen,
+    continueAfterContactPhoneVerified,
   };
 }

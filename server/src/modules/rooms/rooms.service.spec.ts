@@ -176,16 +176,17 @@ describe('RoomsService', () => {
   });
 
   describe('create', () => {
-    it('rejects a password account whose phone has not been verified', async () => {
+    it('allows posting with an unverified phone when a contact number exists', async () => {
       const prisma = {
         user: {
           findUniqueOrThrow: jest.fn().mockResolvedValue({
             phone: '0912345678',
             contactPhone: null,
-            isPhoneVerified: false,
           }),
         },
-        room: { create: jest.fn() },
+        room: {
+          create: jest.fn().mockResolvedValue({ id: 1, status: 'pending' }),
+        },
       };
       const service = new RoomsService(
         prisma as unknown as PrismaService,
@@ -200,10 +201,8 @@ describe('RoomsService', () => {
           city: 'Đà Nẵng',
           district: 'Hải Châu',
         }),
-      ).rejects.toThrow(
-        'Verify your contact phone number before posting a listing.',
-      );
-      expect(prisma.room.create).not.toHaveBeenCalled();
+      ).resolves.toEqual({ id: 1, status: 'pending' });
+      expect(prisma.room.create).toHaveBeenCalled();
     });
   });
 

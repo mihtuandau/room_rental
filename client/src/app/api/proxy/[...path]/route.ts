@@ -13,6 +13,18 @@ function revalidateRoomImagePages(method: string, path: string[], ok: boolean) {
   revalidatePath('/rooms-for-rent/[slug]', 'page');
 }
 
+function revalidateAmenityPages(method: string, path: string[], ok: boolean) {
+  if (!ok || !['POST', 'PATCH', 'DELETE'].includes(method)) return;
+  if (!/^admin\/amenities(?:\/|$)/.test(path.join('/'))) return;
+
+  // The public catalogue is server-fetched and cached by the home/search and
+  // listing-form pages. Invalidate all consumers after an admin changes it so
+  // a newly-created amenity is immediately available to landlords and tenants.
+  revalidatePath('/');
+  revalidatePath('/manage/listings/new');
+  revalidatePath('/manage/listings/[id]/edit', 'page');
+}
+
 async function forward(req: NextRequest, path: string[]) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const url = `${API_URL}/${path.join('/')}${req.nextUrl.search}`;
@@ -30,6 +42,7 @@ async function forward(req: NextRequest, path: string[]) {
     });
 
     revalidateRoomImagePages(req.method, path, beRes.ok);
+    revalidateAmenityPages(req.method, path, beRes.ok);
     if (beRes.status === 204) return new NextResponse(null, { status: 204 });
     const data = await beRes.json().catch(() => null);
     return NextResponse.json(data, { status: beRes.status });

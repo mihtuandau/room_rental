@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,9 @@ import { loginSchema, type LoginInput } from '../schemas';
 import { useLogin } from '../hooks';
 import { Field } from './field';
 
-export function LoginForm() {
+export function LoginForm({ next = '/' }: { next?: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const nextParam = useSearchParams().get('next');
   const login = useLogin();
 
   const {
@@ -33,7 +32,6 @@ export function LoginForm() {
       const profile = await getProfile();
       queryClient.setQueryData(profileKeys.me, profile);
 
-      const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/';
       const destination = next === '/' && profile.role === 'admin' ? '/admin/dashboard' : next;
 
       router.replace(destination);
