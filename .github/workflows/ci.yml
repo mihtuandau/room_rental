@@ -102,23 +102,17 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.BACKEND_VPS_HOST }}
           SSH_PRIVATE_KEY: ${{ secrets.BACKEND_VPS_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.BACKEND_VPS_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           test -n "$VPS_HOST"
           test -n "$SSH_PRIVATE_KEY"
-          test -n "$KNOWN_HOSTS"
           mkdir -p "$HOME/.ssh"
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/roomrent_deploy"
           chmod 600 "$HOME/.ssh/roomrent_deploy"
-
-          HOST_PUBLIC_KEY="$(
-            printf '%s\n' "$KNOWN_HOSTS" |
-              tr -d '\r' |
-              awk '!/^#/ && NF >= 3 { print $2, $3; exit } !/^#/ && NF == 2 { print $1, $2; exit }'
-          )"
-          test -n "$HOST_PUBLIC_KEY"
-          printf '%s %s\n' "$VPS_HOST" "$HOST_PUBLIC_KEY" > "$HOME/.ssh/known_hosts"
+          printf '%s %s\n' \
+            "$VPS_HOST" \
+            'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH4Fm2hbYkOAUSNe3uHBpewZ4oPYz3Mou8nAB4wA2w50' \
+            > "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
           ssh-keygen -F "$VPS_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null
           echo "Pinned backend host-key fingerprint:"
@@ -160,23 +154,17 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.FRONTEND_VPS_HOST }}
           SSH_PRIVATE_KEY: ${{ secrets.FRONTEND_VPS_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.FRONTEND_VPS_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           test -n "$VPS_HOST"
           test -n "$SSH_PRIVATE_KEY"
-          test -n "$KNOWN_HOSTS"
           mkdir -p "$HOME/.ssh"
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/roomrent_frontend_deploy"
           chmod 600 "$HOME/.ssh/roomrent_frontend_deploy"
-
-          HOST_PUBLIC_KEY="$(
-            printf '%s\n' "$KNOWN_HOSTS" |
-              tr -d '\r' |
-              awk '!/^#/ && NF >= 3 { print $2, $3; exit } !/^#/ && NF == 2 { print $1, $2; exit }'
-          )"
-          test -n "$HOST_PUBLIC_KEY"
-          printf '%s %s\n' "$VPS_HOST" "$HOST_PUBLIC_KEY" > "$HOME/.ssh/known_hosts"
+          printf '%s %s\n' \
+            "$VPS_HOST" \
+            'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH4Fm2hbYkOAUSNe3uHBpewZ4oPYz3Mou8nAB4wA2w50' \
+            > "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
           ssh-keygen -F "$VPS_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null
           echo "Pinned frontend host-key fingerprint:"
