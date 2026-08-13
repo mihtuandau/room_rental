@@ -83,7 +83,8 @@ export function SearchToolbar({
   return (
     <form
       onSubmit={submitKeyword}
-      className="flex flex-col gap-1.5 rounded-lg border border-zinc-200 bg-white p-1.5 shadow-card sm:flex-row sm:flex-nowrap sm:items-center"
+      aria-label="Tìm kiếm tin đăng"
+      className="sticky top-16 z-30 flex flex-col gap-1.5 rounded-lg border border-border-strong bg-surface-card/95 p-1.5 shadow-card backdrop-blur sm:flex-row sm:flex-nowrap sm:items-center"
     >
       <LocationPicker
         state={state}
@@ -169,7 +170,7 @@ function LocationPicker({
       <PopoverPrimitive.Trigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 min-w-0 items-center justify-between gap-2 rounded-md px-3 text-left text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:w-48"
+          className="inline-flex h-10 min-w-0 items-center justify-between gap-2 rounded-md px-3 text-left text-sm font-medium text-zinc-900 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:w-48"
           aria-label="Chọn khu vực"
         >
           <span className="flex min-w-0 items-center gap-2">
@@ -183,7 +184,7 @@ function LocationPicker({
         <PopoverPrimitive.Content
           align="start"
           sideOffset={8}
-          className="z-50 w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-zinc-200 bg-white p-4 shadow-popover focus:outline-none"
+          className="z-50 w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-border-strong bg-surface-card p-4 shadow-popover focus:outline-none"
         >
           <div className="mb-3">
             <p className="text-sm font-semibold text-zinc-900">Chọn khu vực</p>

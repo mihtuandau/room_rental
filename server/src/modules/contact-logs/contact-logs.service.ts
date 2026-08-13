@@ -45,21 +45,6 @@ export class ContactLogsService {
       );
     }
 
-    if (type === ContactType.phone) {
-      const phone = room.owner.contactPhone ?? room.owner.phone;
-      const phoneVerified = room.owner.contactPhone
-        ? room.owner.contactPhoneVerified ||
-          (room.owner.contactPhone === room.owner.phone &&
-            room.owner.isPhoneVerified)
-        : room.owner.isPhoneVerified;
-
-      if (!phone || !phoneVerified) {
-        throw new BadRequestException(
-          'The listing contact phone has not been verified yet.',
-        );
-      }
-    }
-
     await this.prisma.$transaction([
       this.prisma.contactLog.create({ data: { userId, roomId, type } }),
       this.prisma.room.update({

@@ -133,6 +133,8 @@ function ListingEditor({
             <LocationStep
               provinces={provinces}
               city={listing.city}
+              district={listing.district}
+              ward={listing.ward}
               latitude={listing.latitudeValue}
               longitude={listing.longitudeValue}
               addressQueries={listing.addressQueries}
@@ -141,6 +143,17 @@ function ListingEditor({
               errors={errors}
               onCity={(value) => {
                 listing.setValue('city', value, { shouldValidate: true });
+                listing.setValue('district', '', { shouldValidate: true });
+                listing.setValue('ward', '', { shouldValidate: true });
+                listing.clearCoordinates();
+              }}
+              onDistrict={(value) => {
+                listing.setValue('district', value, { shouldValidate: true });
+                listing.setValue('ward', '', { shouldValidate: true });
+                listing.clearCoordinates();
+              }}
+              onWard={(value) => {
+                listing.setValue('ward', value, { shouldValidate: true });
                 listing.clearCoordinates();
               }}
               onCoordinates={listing.setCoordinates}
@@ -152,7 +165,8 @@ function ListingEditor({
               control={control}
               register={register}
               errors={errors}
-              showRoomCounts={listing.showRoomCounts}
+              showBedroomCount={listing.showBedroomCount}
+              showBathroomCount={listing.showBathroomCount}
               amenityGroups={listing.amenityGroups}
               selectedAmenityIds={listing.selectedAmenityIds}
               onToggleAmenity={listing.toggleAmenity}

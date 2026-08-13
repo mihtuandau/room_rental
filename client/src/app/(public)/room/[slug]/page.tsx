@@ -68,11 +68,13 @@ export default async function RoomDetailPage({ params }: Props) {
   const room = await getRoom((await params).slug);
   if (!room) notFound();
 
-  const similarRooms = await getSimilarRooms(room.city, room.roomType, room.id);
-  const recommendedRooms = await getRecommendedRooms(room.city, room.id);
+  const [similarRooms, recommendedRooms] = await Promise.all([
+    getSimilarRooms(room.city, room.roomType, room.id),
+    getRecommendedRooms(room.city, room.id),
+  ]);
 
   return (
-    <div className="bg-zinc-50">
+    <div className="bg-white">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
         <script
           type="application/ld+json"

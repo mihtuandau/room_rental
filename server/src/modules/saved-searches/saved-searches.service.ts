@@ -81,7 +81,9 @@ export class SavedSearchesService {
   }
 
   async update(userId: string, id: string, dto: UpdateSavedSearchDto) {
-    const savedSearch = await this.prisma.savedSearch.findUnique({ where: { id } });
+    const savedSearch = await this.prisma.savedSearch.findUnique({
+      where: { id },
+    });
     if (!savedSearch) throw new NotFoundException('Saved search not found.');
     if (savedSearch.userId !== userId) {
       throw new ForbiddenException(

@@ -87,9 +87,9 @@ export function SearchResultsContent({
 
     return (
       <EmptyState
-        title="Chưa có tin đăng nào"
-        description="Hãy là người đầu tiên đăng tin cho thuê."
-        action={{ label: 'Đăng tin', href: '/manage/listings/new' }}
+        title="Chưa có tin đăng phù hợp"
+        description="Bạn có thể tìm theo khu vực khác hoặc quay lại trang tìm phòng để bắt đầu lại."
+        action={{ label: 'Tìm theo khu vực', href: '/#tim-phong' }}
       />
     );
   }

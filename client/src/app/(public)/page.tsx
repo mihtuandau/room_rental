@@ -111,14 +111,12 @@ export default async function HomePage({ searchParams }: Props) {
     fetchProvinces(),
   ]);
 
-  const initialRooms = queryClient.getQueryData<RoomSearchResult>(roomQueryKey);
   return (
     <>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <CategoryBar />
         <HomeHero
           provinces={provinces}
-          rooms={initialRooms?.rooms ?? []}
         />
         <SearchView
           amenities={amenities}

@@ -12,9 +12,21 @@ import {
 import { RoomType } from '../../../../generated/prisma/client';
 
 export class CreateSavedSearchDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) city?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) district?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 100) ward?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  city?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  district?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  ward?: string;
 
   @ApiPropertyOptional({ enum: RoomType })
   @IsOptional()

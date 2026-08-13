@@ -5,10 +5,21 @@
      Competitors lean on orange/red urgency; Trọ Ơi stays calm and credible. */
   --color-brand-50: oklch(0.97 0.02 165);
   --color-brand-100: oklch(0.94 0.04 165);
+  --color-brand-200: oklch(0.88 0.07 165);
+  --color-brand-300: oklch(0.79 0.1 165);
   --color-brand-500: oklch(0.7 0.13 165);
   --color-brand-600: oklch(0.6 0.13 165);
   --color-brand-700: oklch(0.51 0.12 165);
+  --color-brand-800: oklch(0.42 0.1 165);
   --color-brand-900: oklch(0.33 0.08 165);
+
+  /* Semantic surfaces keep the public experience layered without changing
+     the brand hue: page < subtle section < card < floating popover. */
+  --color-surface-page: oklch(1 0 0);
+  --color-surface-subtle: oklch(0.985 0.003 264);
+  --color-surface-card: oklch(1 0 0);
+  --color-border-subtle: oklch(0.925 0.008 264);
+  --color-border-strong: oklch(0.865 0.012 264);
 
   /* Status — meaning, never decoration */
   --color-success-50: oklch(0.97 0.03 150);
@@ -39,6 +50,9 @@
   /* Staggered entrance animation for grid cards */
   --animate-fade-up: fade-up 0.5s var(--ease-out-soft) both;
 
+  /* Slow, non-distracting motion for the homepage hero image */
+  --animate-hero-pan: hero-pan 14s ease-in-out infinite alternate;
+
   @keyframes fade-up {
     from {
       opacity: 0;
@@ -48,6 +62,11 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  @keyframes hero-pan {
+    from { transform: scale(1.02) translate3d(-0.5%, -0.25%, 0); }
+    to { transform: scale(1.08) translate3d(0.5%, 0.25%, 0); }
   }
 
   /* Infinite horizontal marquee for category strip */
@@ -60,7 +79,7 @@
 }
 
 body {
-  background: var(--color-white);
+  background: var(--color-surface-page);
   color: var(--color-zinc-900);
   transition:
     background-color 150ms var(--ease-out-soft),

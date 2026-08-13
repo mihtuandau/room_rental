@@ -40,9 +40,9 @@ export function CategoryBar() {
   };
 
   return (
-    <div className="relative z-20 w-full border-b border-zinc-200/70 bg-white scroll-mt-20">
+    <div className="relative z-20 w-full border-b border-border-subtle bg-surface-card scroll-mt-20 transition-colors">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="flex items-center justify-start gap-6 overflow-x-auto py-2 scrollbar-none sm:gap-8">
+        <div className="flex items-center justify-start gap-2 overflow-x-auto py-1.5 scrollbar-none sm:gap-3">
           {ROOM_TYPE_OPTIONS.map(({ value, label }) => {
             const Icon = CATEGORY_ICONS[value];
             const isActive = state.roomType === value;
@@ -53,10 +53,10 @@ export function CategoryBar() {
                 onClick={() => handleCategoryClick(value)}
                 aria-pressed={isActive}
                 className={cn(
-                  'group flex min-h-10 flex-row items-center gap-1.5 border-b-2 py-2 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 cursor-pointer',
+                  'group flex min-h-10 shrink-0 cursor-pointer flex-row items-center gap-1.5 rounded-md border border-transparent px-3 py-2 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2',
                   isActive
-                    ? 'border-brand-600 text-brand-600 font-semibold'
-                    : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-900',
+                    ? 'bg-brand-50 text-brand-700 font-semibold'
+                    : 'text-zinc-600 hover:bg-white/80 hover:text-zinc-900',
                 )}
               >
                 <Icon

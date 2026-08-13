@@ -46,6 +46,7 @@ describe('ContactLogsService', () => {
             zaloUrl: null,
           },
         }),
+        update: jest.fn(),
       },
     };
     const service = new ContactLogsService(prisma as unknown as PrismaService);
@@ -58,7 +59,7 @@ describe('ContactLogsService', () => {
     ).rejects.toThrow('messaging is implemented');
   });
 
-  it('does not reveal an unverified listing phone or create a contact log', async () => {
+  it('reveals a listing phone to a signed-in viewer even when it is unverified', async () => {
     const prisma = {
       room: {
         findFirst: jest.fn().mockResolvedValue({
@@ -72,6 +73,7 @@ describe('ContactLogsService', () => {
             zaloUrl: null,
           },
         }),
+        update: jest.fn(),
       },
       contactLog: { create: jest.fn() },
       $transaction: jest.fn(),
@@ -80,7 +82,10 @@ describe('ContactLogsService', () => {
 
     await expect(
       service.logContact('tenant-1', 42, ContactType.phone),
-    ).rejects.toThrow('has not been verified');
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    ).resolves.toEqual({
+      contactPhone: '0987654321',
+      zaloUrl: null,
+    });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 });

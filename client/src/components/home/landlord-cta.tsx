@@ -17,7 +17,7 @@ const LANDLORD_STEPS = [
 export function LandlordCta() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      <div className="group relative flex flex-col gap-6 overflow-hidden rounded-2xl bg-brand-50/55 px-6 py-8 sm:px-10 sm:py-9 md:flex-row md:items-center md:justify-between md:gap-12">
+      <div className="group relative flex flex-col gap-6 overflow-hidden rounded-xl border border-brand-100/80 bg-brand-50/45 px-6 py-8 sm:px-10 sm:py-9 md:flex-row md:items-center md:justify-between md:gap-12">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-5">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 bg-brand-50 text-brand-700 transition-colors duration-300 group-hover:bg-brand-100">
             <House className="h-6 w-6" aria-hidden />
