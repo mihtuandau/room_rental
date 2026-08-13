@@ -101,15 +101,15 @@ export function RoomCard({
       onMouseEnter={onActivate}
       onMouseLeave={onDeactivate}
       className={cn(
-        'group relative overflow-hidden rounded-lg border bg-white transition-[transform,box-shadow,border-color] duration-200',
+        'group relative overflow-hidden rounded-lg border border-border-subtle bg-surface-card transition-[transform,box-shadow,border-color] duration-200',
         active
           ? 'border-brand-600 shadow-card'
-          : 'border-zinc-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-card',
+          : 'hover:-translate-y-0.5 hover:border-border-strong hover:shadow-card',
       )}
     >
-      <div className="relative aspect-[4/3] bg-zinc-100">
+      <div className="relative aspect-[4/3] bg-surface-subtle">
         {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-zinc-100" aria-hidden="true" />
+          <div className="absolute inset-0 animate-pulse bg-surface-subtle" aria-hidden="true" />
         )}
         <Image
           src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}

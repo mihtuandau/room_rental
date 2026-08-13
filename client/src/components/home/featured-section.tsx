@@ -37,7 +37,7 @@ export async function FeaturedSection() {
 
         <Link
           href="/?all=true&sort=newest"
-          className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-xs transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-4 py-2 text-sm font-medium text-zinc-700 shadow-xs transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
           Xem tất cả
           <ArrowRight
@@ -48,7 +48,7 @@ export async function FeaturedSection() {
       </ScrollReveal>
 
       {/* 3-column grid */}
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[1.12fr_0.94fr_0.94fr]">
         {rooms.map((room, i) => (
           <ScrollReveal key={room.id} delay={i * 150}>
             <RoomCard room={room} priority={i === 0} />

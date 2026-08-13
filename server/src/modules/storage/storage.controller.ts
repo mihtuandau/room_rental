@@ -44,7 +44,9 @@ export class StorageController {
 
   @Delete('room-image/:roomId/unconfirmed')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Delete an uploaded room image that was not confirmed' })
+  @ApiOperation({
+    summary: 'Delete an uploaded room image that was not confirmed',
+  })
   deleteUnconfirmedRoomImage(
     @CurrentUser('id') userId: string,
     @Param('roomId', ParseIntPipe) roomId: number,

@@ -30,7 +30,7 @@ const REASONS = [
 /* ─── Component ─────────────────────────────────────────────────────── */
 export function WhyChooseUs() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <section className="mx-auto w-full max-w-7xl border-t border-border-subtle px-4 pt-10 sm:px-6 sm:pt-12">
       <ScrollReveal className="mb-5 lg:mb-6">
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
           Vì sao chọn <span className="text-brand-700">Trọ Ơi?</span>
@@ -45,7 +45,7 @@ export function WhyChooseUs() {
           <ScrollReveal
             key={title}
             delay={i * 150}
-            className="group flex gap-4 md:border-l md:border-zinc-200 md:px-7 first:md:border-l-0 first:md:pl-0 last:md:pr-0"
+            className="group flex gap-4 md:border-l md:border-border-subtle md:px-7 first:md:border-l-0 first:md:pl-0 last:md:pr-0"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-colors duration-200 group-hover:bg-brand-100">
               <Icon className="h-5 w-5" aria-hidden />

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Banknote, CircleDotDashed, LocateFixed, Search } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
 import { Button } from '@/components/ui/button';
@@ -12,19 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { RoomCardItem } from '@/components/rooms/room-card';
 import {
   fetchDistricts,
   fetchWards,
   type ProvinceOption,
 } from '@/features/locations/api';
-import { useRoomsSearch } from '@/features/rooms/hooks';
-import { isSearchExpanded, searchParsers, toSearchParams } from '@/features/rooms/search-params';
+import { isSearchExpanded, searchParsers } from '@/features/rooms/search-params';
 import { PRICE_RANGE_OPTIONS, RADIUS_OPTIONS } from '@/lib/constants';
-import { HomeMap } from './home-map';
 
 const ALL = '__all__';
 const DEFAULT_RADIUS_KM = 3;
+const HERO_IMAGES = [
+  { src: '/banner.png', alt: 'Phòng sáng thoáng với ban công nhiều ánh sáng' },
+  { src: '/room1.jpg', alt: 'Phòng có gác và khu bếp nhỏ gọn' },
+  { src: '/room3.jpg', alt: 'Không gian phòng có gác và nội thất tiện nghi' },
+] as const;
 type SearchCenterMode = 'province' | 'nearby';
 
 interface ReverseGeocodeResponse {
@@ -206,10 +209,8 @@ async function resolveNearbyPlace(center: [number, number], provinces: ProvinceO
 
 export function HomeHero({
   provinces,
-  rooms,
 }: {
   provinces: ProvinceOption[];
-  rooms: RoomCardItem[];
 }) {
   const [urlState, setUrlState] = useQueryStates(searchParsers, {
     history: 'push',
@@ -226,12 +227,24 @@ export function HomeHero({
   );
   const [locationMessage, setLocationMessage] = useState('');
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
   const [radiusKm, setRadiusKm] = useState(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
   const [priceRangeValue, setPriceRangeValue] = useState(
     PRICE_RANGE_OPTIONS.find(
       (p) => p.priceMin === urlState.priceMin && p.priceMax === urlState.priceMax,
     )?.value ?? ALL,
   );
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) return;
+
+    const timer = window.setInterval(() => {
+      setHeroImageIndex((current) => (current + 1) % HERO_IMAGES.length);
+    }, 5_500);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   // The header can clear the search URL while this home component stays
   // mounted. Keep the hero's local controls aligned with the canonical URL so
@@ -267,9 +280,6 @@ export function HomeHero({
     urlState.radiusKm,
   ]);
   const expanded = isSearchExpanded(urlState);
-  const liveSearchParams = useMemo(() => toSearchParams(urlState), [urlState]);
-  const liveSearch = useRoomsSearch(liveSearchParams);
-  const currentRooms = expanded ? (liveSearch.data?.rooms ?? rooms) : rooms;
   const locationSuggestions = keyword.trim()
     ? provinces
         .filter((province) => {
@@ -384,9 +394,9 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-visible bg-brand-50/35 pb-6 pt-8 sm:pb-10 sm:pt-12 lg:min-h-[480px] lg:py-10"
+      className="relative isolate scroll-mt-20 overflow-visible bg-brand-50/35 pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[560px] lg:py-14"
     >
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:gap-10">
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-12">
         <div className="max-w-xl">
           <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
             Tìm phòng nhanh hơn,
@@ -397,7 +407,7 @@ export function HomeHero({
           </p>
 
           <form
-            className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5"
+            className="mt-6 rounded-xl border border-border-strong bg-surface-card p-4 shadow-card sm:p-5"
             onSubmit={(event) => {
               event.preventDefault();
               submit();
@@ -511,13 +521,23 @@ export function HomeHero({
 
         </div>
 
-        <HomeMap
-          rooms={currentRooms}
-          radiusKm={radiusKm}
-          selectedCity=""
-          centerMode={centerMode}
-          userCenter={userCenter}
-        />
+        <div className="relative min-h-[280px] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-card sm:min-h-[360px] lg:h-[460px]">
+          {HERO_IMAGES.map((image, index) => (
+            <Image
+              key={image.src}
+              src={image.src}
+              alt={index === heroImageIndex ? image.alt : ''}
+              aria-hidden={index !== heroImageIndex}
+              fill
+              priority={index === 0}
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className={`object-cover transition-[opacity,transform] duration-1000 ease-in-out ${
+                index === heroImageIndex ? 'opacity-100' : 'opacity-0'
+              } ${index === heroImageIndex ? 'motion-safe:animate-hero-pan' : ''}`}
+            />
+          ))}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/20 via-transparent to-transparent" />
+        </div>
       </div>
     </section>
   );

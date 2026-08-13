@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import {
   ArrowLeft,
   Bell,
@@ -73,26 +72,18 @@ export function Header() {
   // (its own "Tìm kiếm" button already goes to the same expanded results).
 
   const [, setUrlState] = useQueryStates(searchParsers);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isCompact, setIsCompact] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY < 10) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
+      setIsCompact(currentScrollY > 72);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   useEffect(() => {
     if (pathname !== '/') {
@@ -180,16 +171,21 @@ export function Header() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-40 bg-white/95 backdrop-blur transition-all duration-300 ease-in-out",
-      pathname === '/' ? "border-b border-transparent shadow-none" : "border-b border-zinc-200 shadow-card",
-      isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+      "sticky top-0 z-40 border-b bg-surface-card/95 backdrop-blur transition-[box-shadow,background-color] duration-200",
+      pathname === '/' && !isCompact ? "border-transparent shadow-none" : "border-zinc-200 shadow-card",
     )}>
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className={cn(
+        "mx-auto flex w-full max-w-7xl items-center justify-between px-4 transition-[height] duration-200 sm:px-6",
+        isCompact ? "h-14" : "h-16",
+      )}>
         <Link
           href="/"
           onClick={handleHomeLinkClick()}
           aria-label="Trọ Ơi — Trang chủ"
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
+            isCompact ? "h-14 w-14" : "h-16 w-16",
+          )}
         >
           <Image
             src="/logo.png"
@@ -197,7 +193,7 @@ export function Header() {
             width={64}
             height={64}
             priority
-            className="h-16 w-16 object-contain"
+            className={cn("object-contain transition-[width,height] duration-200", isCompact ? "h-14 w-14" : "h-16 w-16")}
           />
         </Link>
 
@@ -216,7 +212,7 @@ export function Header() {
                   "relative rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
                   isActive
                     ? "text-brand-600 font-semibold"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                    : "text-zinc-600 hover:bg-surface-subtle hover:text-zinc-900"
                 )}
               >
                 {item.label}
@@ -264,17 +260,8 @@ export function Header() {
                 </Link>
               </Button>
             ) : (
-              <Button 
-                className="hidden lg:inline-flex" 
-                onClick={() => toast('Vui lòng đăng nhập để có thể đăng tin phòng trọ.', {
-                  style: {
-                    background: 'var(--color-brand-50)',
-                    color: 'var(--color-brand-900)',
-                    borderColor: 'var(--color-brand-100)'
-                  }
-                })}
-              >
-                Đăng tin
+              <Button className="hidden lg:inline-flex" asChild>
+                <Link href="/login?next=%2Fmanage%2Flistings%2Fnew">Đăng tin</Link>
               </Button>
             )
           )}
@@ -287,7 +274,7 @@ export function Header() {
                 <button
                   type="button"
                   aria-label="Mở menu tài khoản"
-                  className="flex h-10 items-center gap-1 rounded-md px-1 text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:px-2"
+                  className="flex h-10 items-center gap-1 rounded-md px-1 text-zinc-700 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:px-2"
                 >
                   <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-700">
                     {profile?.avatarUrl ? (
@@ -305,7 +292,7 @@ export function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
-                <div className="border-b border-zinc-100 px-3 py-2">
+                <div className="border-b border-border-subtle px-3 py-2">
                   <p className="max-w-48 truncate text-sm font-medium text-zinc-900">
                     {profile?.fullName || 'Tài khoản của bạn'}
                   </p>
@@ -402,7 +389,7 @@ function MobileNavigation({
             </ul>
           </nav>
 
-          <div className="mt-auto space-y-2 border-t border-zinc-100 pt-4">
+          <div className="mt-auto space-y-2 border-t border-border-subtle pt-4">
             {inManageMode ? (
               <SheetClose asChild>
                 <Link
@@ -434,18 +421,14 @@ function MobileNavigation({
                   </Link>
                 </SheetClose>
               ) : (
-                <Button 
-                  className="w-full" 
-                  onClick={() => toast('Vui lòng đăng nhập để có thể đăng tin phòng trọ.', {
-                    style: {
-                      background: 'var(--color-brand-50)',
-                      color: 'var(--color-brand-900)',
-                      borderColor: 'var(--color-brand-100)'
-                    }
-                  })}
-                >
-                  Đăng tin
-                </Button>
+                <SheetClose asChild>
+                  <Link
+                    href="/login?next=%2Fmanage%2Flistings%2Fnew"
+                    className={cn(buttonVariants(), 'w-full')}
+                  >
+                    Đăng tin
+                  </Link>
+                </SheetClose>
               )
             )}
           </div>

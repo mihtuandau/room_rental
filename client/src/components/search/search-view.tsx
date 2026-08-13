@@ -41,7 +41,7 @@ export function SearchView({
       />
       <div className="mt-6 lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
         <aside className="hidden lg:block">
-          <div className="sticky top-20 rounded-lg border border-zinc-200 bg-white p-5 shadow-card">
+          <div className="sticky top-20 rounded-lg border border-border-subtle bg-surface-card p-5 shadow-card">
             <FilterPanel
               key={search.filterResetKey}
               state={search.state}

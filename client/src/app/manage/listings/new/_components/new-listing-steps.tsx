@@ -17,6 +17,7 @@ import {
 import { Field } from '@/features/auth/components/field';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
+import { useDistricts, useWards } from '@/features/locations/hooks';
 import type {
   CreateRoomFormInput,
   CreateRoomFormOutput,
@@ -135,6 +136,8 @@ export function MainInformationStep({
 export function LocationStep({
   provinces,
   city,
+  district,
+  ward,
   latitude,
   longitude,
   addressQueries,
@@ -142,11 +145,15 @@ export function LocationStep({
   register,
   errors,
   onCity,
+  onDistrict,
+  onWard,
   onCoordinates,
   onLocationFieldChange,
 }: {
   provinces: ProvinceOption[];
   city?: string;
+  district?: string;
+  ward?: string;
   latitude?: number;
   longitude?: number;
   addressQueries: string[];
@@ -154,49 +161,107 @@ export function LocationStep({
   register: ListingRegister;
   errors: ListingErrors;
   onCity: (city: string) => void;
+  onDistrict: (district: string) => void;
+  onWard: (ward: string) => void;
   onCoordinates: (coordinates: {
     latitude: number;
     longitude: number;
   }) => void;
   onLocationFieldChange: () => void;
 }) {
+  const selectedProvince = provinces.find((province) => province.value === city);
+  const districtsQuery = useDistricts(selectedProvince?.code);
+  const selectedDistrict = districtsQuery.data?.find(
+    (option) => option.value === district,
+  );
+  const wardsQuery = useWards(selectedProvince?.code, selectedDistrict?.code);
+
   return (
     <div className="space-y-5">
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          Tỉnh, thành phố
-        </label>
-        <Select value={city || undefined} onValueChange={onCity}>
-          <SelectTrigger aria-label="Tỉnh, thành phố">
-            <SelectValue placeholder="Chọn tỉnh, thành phố" />
-          </SelectTrigger>
-          <SelectContent>
-            {provinces.map((province) => (
-              <SelectItem key={province.value} value={province.value}>
-                {province.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.city ? (
-          <p className="mt-1 text-sm text-danger-600">{errors.city.message}</p>
-        ) : null}
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field
-          id="district"
-          label="Quận, huyện"
-          placeholder="Quận 7"
-          error={errors.district?.message}
-          {...register('district', { onChange: onLocationFieldChange })}
-        />
-        <Field
-          id="ward"
-          label="Phường, xã"
-          placeholder="Không bắt buộc"
-          error={errors.ward?.message}
-          {...register('ward', { onChange: onLocationFieldChange })}
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="city">
+            Tỉnh, thành phố
+          </label>
+          <Select value={city || undefined} onValueChange={onCity}>
+            <SelectTrigger id="city" className="w-full" aria-label="Tỉnh, thành phố">
+              <SelectValue placeholder="Chọn tỉnh, thành phố" />
+            </SelectTrigger>
+            <SelectContent>
+              {provinces.map((province) => (
+                <SelectItem key={province.value} value={province.value}>
+                  {province.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.city ? (
+            <p className="mt-1 text-sm text-danger-600">{errors.city.message}</p>
+          ) : null}
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="district">
+            Quận, huyện
+          </label>
+          <Select
+            value={district || undefined}
+            onValueChange={onDistrict}
+            disabled={!selectedProvince?.code || districtsQuery.isPending}
+          >
+            <SelectTrigger
+              id="district"
+              className="w-full"
+              aria-label="Quận, huyện"
+            >
+              <SelectValue
+                placeholder={
+                  districtsQuery.isPending
+                    ? 'Đang tải quận, huyện…'
+                    : 'Chọn quận, huyện'
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {districtsQuery.data?.map((option) => (
+                <SelectItem key={option.code ?? option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="ward">
+            Phường, xã
+          </label>
+          <Select
+            value={ward || undefined}
+            onValueChange={onWard}
+            disabled={!selectedDistrict?.code || wardsQuery.isPending}
+          >
+            <SelectTrigger
+              id="ward"
+              className="w-full"
+              aria-label="Phường, xã"
+            >
+              <SelectValue
+                placeholder={
+                  wardsQuery.isPending ? 'Đang tải phường, xã…' : 'Chọn phường, xã'
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {wardsQuery.data?.map((wardName) => (
+                <SelectItem key={wardName} value={wardName}>
+                  {wardName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.ward ? (
+            <p className="mt-1 text-sm text-danger-600">{errors.ward.message}</p>
+          ) : null}
+        </div>
       </div>
       <Field
         id="address"
@@ -223,7 +288,8 @@ export function DetailsAmenitiesStep({
   control,
   register,
   errors,
-  showRoomCounts,
+  showBedroomCount,
+  showBathroomCount,
   amenityGroups,
   selectedAmenityIds,
   onToggleAmenity,
@@ -231,7 +297,8 @@ export function DetailsAmenitiesStep({
   control: ListingControl;
   register: ListingRegister;
   errors: ListingErrors;
-  showRoomCounts: boolean;
+  showBedroomCount: boolean;
+  showBathroomCount: boolean;
   amenityGroups: Array<{ type: AmenityType; items: Amenity[] }>;
   selectedAmenityIds: number[];
   onToggleAmenity: (id: number) => void;
@@ -256,8 +323,7 @@ export function DetailsAmenitiesStep({
           error={errors.maxOccupants?.message}
           {...register('maxOccupants')}
         />
-        {showRoomCounts ? (
-          <>
+        {showBedroomCount ? (
             <Field
               id="bedrooms"
               label="Phòng ngủ"
@@ -267,6 +333,8 @@ export function DetailsAmenitiesStep({
               error={errors.bedrooms?.message}
               {...register('bedrooms')}
             />
+        ) : null}
+        {showBathroomCount ? (
             <Field
               id="bathrooms"
               label="Phòng tắm"
@@ -276,7 +344,6 @@ export function DetailsAmenitiesStep({
               error={errors.bathrooms?.message}
               {...register('bathrooms')}
             />
-          </>
         ) : null}
       </div>
       <div className="border-t border-zinc-200 pt-5">
