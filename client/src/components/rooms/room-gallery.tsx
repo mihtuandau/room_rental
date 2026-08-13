@@ -105,7 +105,7 @@ function CarouselGallery({
   return (
     <div className={cn(
       "relative mx-auto w-full",
-      isLightbox ? "max-w-none h-full flex flex-col justify-between" : "mt-4 max-w-5xl rounded-xl"
+      isLightbox ? "max-w-none h-full flex flex-col justify-between" : "max-w-none rounded-xl"
     )}>
       {showTitle && (
         <div className={cn(
@@ -141,7 +141,7 @@ function CarouselGallery({
                 "group relative min-w-0 flex-[0_0_100%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-inset",
                 isLightbox 
                   ? "h-[65vh] sm:h-[70vh] lg:h-[75vh] bg-transparent" 
-                  : "h-[min(52vh,360px)] bg-zinc-100 sm:h-[min(60vh,480px)] lg:h-[min(62vh,560px)]"
+                  : "aspect-[16/9] bg-zinc-100 sm:aspect-[16/8.5] lg:aspect-[16/8]"
               )}
             >
               <Image
@@ -152,7 +152,8 @@ function CarouselGallery({
                 quality={95}
                 priority={index === 0}
                 className={cn(
-                  "object-contain transition-transform duration-300 group-hover:scale-[1.01]",
+                  isLightbox ? "object-contain" : "object-cover",
+                  "transition-transform duration-300 group-hover:scale-[1.01]",
                   isLightbox && "drop-shadow-2xl"
                 )}
               />
@@ -203,7 +204,7 @@ function CarouselGallery({
             "flex justify-center gap-1.5 overflow-x-auto px-1 pb-1",
             isLightbox 
               ? "mx-auto mb-8 bg-white/80 backdrop-blur-md border border-zinc-200/80 p-2 rounded-2xl shadow-xl max-w-[90vw] md:max-w-xl justify-center scrollbar-none" 
-              : "mt-2"
+              : "mt-1"
           )}>
             {images.map((image, index) => (
               <button

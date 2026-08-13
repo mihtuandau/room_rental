@@ -40,7 +40,7 @@ const STEP_FIELDS: (keyof CreateRoomFormInput)[][] = [
   ['deposit', 'maxOccupants', 'bedrooms', 'bathrooms'],
   [],
 ];
-const ROOM_TYPES_WITH_ROOM_COUNTS = new Set([
+const ROOM_TYPES_WITH_BEDROOM_COUNTS = new Set([
   'whole_house',
   'mini_apartment',
   'serviced_apartment',
@@ -118,9 +118,8 @@ export function useNewListingForm(
 
   function selectRoomType(value: CreateRoomFormInput['roomType']) {
     setValue('roomType', value, { shouldValidate: true });
-    if (!ROOM_TYPES_WITH_ROOM_COUNTS.has(value)) {
+    if (!ROOM_TYPES_WITH_BEDROOM_COUNTS.has(value)) {
       setValue('bedrooms', undefined);
-      setValue('bathrooms', undefined);
     }
   }
 
@@ -295,6 +294,7 @@ export function useNewListingForm(
     roomType,
     city,
     district,
+    ward,
     title,
     priceValue: Number(price),
     areaValue: Number(area),
@@ -302,7 +302,8 @@ export function useNewListingForm(
     longitudeValue: typeof longitude === 'number' ? longitude : undefined,
     addressQueries,
     canAutoSearchLocation: Boolean(city && district && (ward || address)),
-    showRoomCounts: ROOM_TYPES_WITH_ROOM_COUNTS.has(roomType),
+    showBedroomCount: ROOM_TYPES_WITH_BEDROOM_COUNTS.has(roomType),
+    showBathroomCount: Boolean(roomType),
     amenityGroups,
     selectedAmenityIds,
     images,

@@ -3,9 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { House, X } from 'lucide-react';
+import { useIsSignedIn } from '@/stores/auth-store';
 
 export function FloatingLandlordBadge() {
   const [visible, setVisible] = useState(false);
+  const isSignedIn = useIsSignedIn();
+  const destination = isSignedIn
+    ? '/manage/listings/new'
+    : '/login?next=%2Fmanage%2Flistings%2Fnew';
 
   useEffect(() => {
     // Check if dismissed in this session
@@ -29,11 +34,11 @@ export function FloatingLandlordBadge() {
   return (
     <aside
       aria-label="Dành cho chủ trọ"
-      className="fixed bottom-5 left-5 z-40 animate-fade-up max-w-[320px]"
+      className="fixed bottom-5 left-5 z-40 hidden max-w-[320px] animate-fade-up sm:block"
     >
       <div className="group relative flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 p-3 pr-8 shadow-popover backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-xl">
         <Link
-          href="/manage/listings/new"
+          href={destination}
           className="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 rounded-xl"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 transition-transform duration-200 group-hover:scale-105">

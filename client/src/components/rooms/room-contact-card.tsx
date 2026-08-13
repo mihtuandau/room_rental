@@ -3,32 +3,17 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
-  Clock3,
-  Eye,
-  Phone,
-  ShieldCheck,
-  UserRound,
-} from 'lucide-react';
+import { BadgeCheck, Heart, MessageCircle, Phone, Share2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { formatPrice } from '@/lib/utils';
 import { ApiError } from '@/lib/api-client';
-import { useIsSignedIn } from '@/stores/auth-store';
+import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { useRevealContact } from '@/features/rooms/hooks';
+import { useIsFavorited, useToggleFavorite } from '@/features/favorites/hooks';
+import { useProfile } from '@/features/users/hooks';
 import type { RoomOwner } from '@/features/rooms/api';
 import { ReportDialog } from './report-dialog';
-
-function ZaloIcon() {
-  return (
-    <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-blue-600 text-[9px] font-bold leading-none text-white" aria-hidden>
-      Za
-    </span>
-  );
-}
+import { cn } from '@/lib/utils';
 
 function isCloudinaryAvatar(value: string | null | undefined): value is string {
   if (!value) return false;
@@ -43,35 +28,28 @@ function isCloudinaryAvatar(value: string | null | undefined): value is string {
 export function RoomContactCard({
   roomId,
   roomSlug,
-  price,
-  deposit,
-  listedAt,
-  updatedAt,
-  viewCount,
   isVerified,
   owner,
+  embedded = false,
 }: {
   roomId: number;
   roomSlug: string;
-  price: number;
-  deposit: number | null;
-  listedAt: string;
-  updatedAt: string;
-  viewCount?: number;
   isVerified: boolean;
   owner: RoomOwner;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const isSignedIn = useIsSignedIn();
+  const isBootstrapped = useAuthStore((state) => state.isBootstrapped);
+  const { data: profile, isLoading: isProfileLoading } = useProfile();
   const revealContact = useRevealContact(roomId);
+  const { isFavorited } = useIsFavorited(roomId);
+  const toggleFavorite = useToggleFavorite(roomId);
   const [revealedPhone, setRevealedPhone] = useState<string | null>(null);
   const [revealedZalo, setRevealedZalo] = useState<string | null>(null);
-  const [showVerificationInfo, setShowVerificationInfo] = useState(false);
-  const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  const isOwnListing = Boolean(isSignedIn && profile?.id === owner.id);
+  const ownPhone = isOwnListing ? profile?.contactPhone ?? profile?.phone ?? null : null;
+  const ownZaloUrl = isOwnListing ? profile?.zaloUrl ?? null : null;
   const memberFormatter = new Intl.DateTimeFormat('vi-VN', {
     month: 'long',
     year: 'numeric',
@@ -82,147 +60,165 @@ export function RoomContactCard({
   };
 
   const handleReveal = async (type: 'phone' | 'zalo') => {
+    // The access token is restored from the httpOnly refresh cookie on mount.
+    // Do not treat the short window before that request settles as a guest
+    // session, otherwise a signed-in user gets redirected to /login by a fast
+    // click on the contact button.
+    if (!isBootstrapped) return;
     if (!isSignedIn) return requireSignIn();
+    if (isProfileLoading) return;
+    if (isOwnListing) {
+      if (type === 'phone' && ownPhone) setRevealedPhone(ownPhone);
+      else if (type === 'zalo' && ownZaloUrl) setRevealedZalo(ownZaloUrl);
+      else toast.error(type === 'phone'
+        ? 'Hãy thêm và xác minh số liên hệ trong tài khoản.'
+        : 'Bạn chưa thêm liên kết Zalo trong tài khoản.');
+      return;
+    }
     try {
       const result = await revealContact.mutateAsync(type);
-      if (type === 'phone') setRevealedPhone(result.contactPhone);
-      else setRevealedZalo(result.zaloUrl);
+      if (type === 'phone') {
+        if (!result.contactPhone) {
+          toast.error('Chủ trọ chưa cung cấp số điện thoại.');
+          return;
+        }
+        setRevealedPhone(result.contactPhone);
+      } else if (result.zaloUrl) {
+        setRevealedZalo(result.zaloUrl);
+      } else {
+        toast.error('Chủ trọ chưa cung cấp liên kết Zalo.');
+      }
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) requireSignIn();
-      else toast.error('Không tải được thông tin liên hệ, thử lại sau.');
+      else if (err instanceof ApiError && err.status === 403) {
+        toast.error('Bạn đang xem tin của mình nên không cần mở số liên hệ.');
+      } else {
+        toast.error('Không tải được thông tin liên hệ, thử lại sau.');
+      }
     }
   };
 
+  const handleSave = () => {
+    if (!isSignedIn) {
+      router.push(`/login?next=${encodeURIComponent(`/room/${roomSlug}`)}`);
+      return;
+    }
+    toggleFavorite.mutate(isFavorited);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ url }).catch(() => undefined);
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast.success('Đã sao chép liên kết.');
+  };
+
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-card">
-      <div className="flex items-center gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-500">
+    <div className={cn(
+      'relative overflow-hidden bg-surface-card',
+      embedded
+        ? 'rounded-xl border-0 shadow-none'
+        : 'rounded-2xl border border-border-subtle shadow-card',
+    )}>
+      <div className="relative flex items-center gap-3 border-b border-border-subtle p-4 pr-14 sm:p-5 sm:pr-14">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-800 text-lg font-medium text-white sm:h-14 sm:w-14">
           {isCloudinaryAvatar(owner.avatarUrl) ? (
             <Image src={owner.avatarUrl} alt="" width={48} height={48} className="h-full w-full object-cover" />
           ) : (
-            <UserRound className="h-6 w-6" aria-hidden />
+            owner.fullName?.trim().charAt(0).toUpperCase() || <UserRound className="h-6 w-6" aria-hidden />
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-zinc-900">{owner.fullName ?? 'Chủ trọ'}</p>
-          <p className="text-xs text-zinc-500">Người đăng tin</p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="flex items-center gap-1 truncate text-base font-semibold text-zinc-900 sm:text-lg">
+            {owner.fullName ?? 'Chủ trọ'}
+            {isVerified ? <BadgeCheck className="h-5 w-5 shrink-0 fill-brand-700 text-white" aria-label="Đã xác minh" /> : null}
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500">
             Tham gia từ {memberFormatter.format(new Date(owner.createdAt))}
           </p>
         </div>
-        {isVerified && (
-          <button
-            type="button"
-            aria-expanded={showVerificationInfo}
-            aria-controls={`verification-info-${roomId}`}
-            onClick={() => setShowVerificationInfo((current) => !current)}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-            Tin đã xác minh
-            <ChevronDown
-              className={`h-3 w-3 transition-transform ${showVerificationInfo ? 'rotate-180' : ''}`}
-              aria-hidden
-            />
-          </button>
-        )}
       </div>
 
-      {isVerified && showVerificationInfo ? (
-        <div
-          id={`verification-info-${roomId}`}
-          role="status"
-          className="mt-3 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-2.5 text-xs leading-5 text-brand-900"
-        >
-          Trọ Ơi đã kiểm tra thông tin tin đăng, hình ảnh và thông tin liên hệ theo quy trình kiểm duyệt trước khi hiển thị.
-        </div>
-      ) : null}
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-label="Chia sẻ tin đăng"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:right-5 sm:top-5"
+      >
+        <Share2 className="h-4 w-4" aria-hidden />
+      </button>
 
-      {isVerified ? (
-        <div className="mt-4 grid gap-2 rounded-lg border border-zinc-100 bg-zinc-50/70 p-3 text-xs text-zinc-600">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-brand-600" aria-hidden />
-            <span>Tin đăng đã được Trọ Ơi duyệt</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2
-              className={`h-3.5 w-3.5 shrink-0 ${owner.contactPhoneVerified ? 'text-brand-600' : 'text-zinc-400'}`}
-              aria-hidden
-            />
-            <span>
-              {owner.contactPhoneVerified ? 'Số điện thoại đã xác minh' : 'Số điện thoại đang chờ xác minh'}
-            </span>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="mt-5 border-t border-zinc-100 pt-4">
-        <p className="text-2xl font-bold tabular-nums text-zinc-900">
-          {formatPrice(price)}
-          <span className="ml-1 text-base font-normal text-zinc-500">/tháng</span>
-        </p>
-        {deposit != null && (
-          <div className="mt-3 flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm">
-            <span className="text-zinc-600">Đặt cọc</span>
-            <span className="font-semibold text-zinc-900">{formatPrice(deposit)}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-5 space-y-2">
+      <div className="space-y-2.5 p-4 sm:p-5">
         {owner.contactPhoneMasked && !revealedPhone && (
-          <div className="rounded-lg bg-zinc-50 px-3 py-2 text-center text-sm text-zinc-600">
+          <div className="rounded-lg bg-surface-subtle px-3 py-2 text-center text-sm text-zinc-600">
             Số điện thoại: <span className="font-semibold text-zinc-800">{owner.contactPhoneMasked}</span>
           </div>
         )}
-        {revealedPhone ? (
+        {revealedPhone || ownPhone ? (
           <Button asChild className="w-full" size="lg">
-            <a href={`tel:${revealedPhone}`}>
+            <a href={`tel:${revealedPhone ?? ownPhone}`}>
               <Phone className="h-4 w-4" aria-hidden />
-              {revealedPhone}
+              {revealedPhone ?? ownPhone}
             </a>
           </Button>
-        ) : (
-          <Button className="w-full" size="lg" onClick={() => handleReveal('phone')} disabled={revealContact.isPending}>
-            <Phone className="h-4 w-4" aria-hidden />
-            {revealContact.isPending ? 'Đang tải…' : isSignedIn ? 'Xem số điện thoại' : 'Đăng nhập để xem số'}
-          </Button>
-        )}
-        {revealedZalo ? (
-          <Button variant="outline" className="w-full" size="lg" asChild>
-            <a href={revealedZalo} target="_blank" rel="noopener noreferrer"><ZaloIcon /> Mở Zalo</a>
-          </Button>
-        ) : (
-          <Button variant="outline" className="w-full" size="lg" onClick={() => handleReveal('zalo')} disabled={revealContact.isPending}>
-            <ZaloIcon /> Nhắn Zalo
-          </Button>
-        )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-zinc-100 pt-4 text-xs text-zinc-500">
-        {viewCount != null && (
-          <div className="flex items-center gap-1.5">
-            <Eye className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
-            <span>{viewCount.toLocaleString('vi-VN')} lượt xem</span>
+        ) : isOwnListing ? (
+          <div className="rounded-lg bg-surface-subtle px-3 py-2 text-center text-sm text-zinc-600">
+            Hãy thêm và xác minh số liên hệ trong tài khoản để hiển thị số điện thoại.
           </div>
+        ) : (
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={() => handleReveal('phone')}
+            disabled={!isBootstrapped || (isSignedIn && isProfileLoading) || revealContact.isPending}
+          >
+            <Phone className="h-4 w-4" aria-hidden />
+            {!isBootstrapped
+              ? 'Đang kiểm tra phiên…'
+              : revealContact.isPending
+                ? 'Đang tải…'
+                : isSignedIn
+                  ? 'Xem số điện thoại'
+                  : 'Đăng nhập để xem số'}
+          </Button>
         )}
-        <div className="flex items-center gap-1.5">
-          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
-          <span>Đăng {dateFormatter.format(new Date(listedAt))}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock3 className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
-          <span>Cập nhật {dateFormatter.format(new Date(updatedAt))}</span>
+        <div className="grid grid-cols-2 gap-2">
+          {revealedZalo || ownZaloUrl ? (
+            <Button variant="outline" className="w-full" size="lg" asChild>
+              <a href={revealedZalo ?? ownZaloUrl ?? '#'} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4" aria-hidden /> Zalo</a>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="lg"
+              onClick={() => handleReveal('zalo')}
+              disabled={!isBootstrapped || (isSignedIn && isProfileLoading) || revealContact.isPending}
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden /> Zalo
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className={isFavorited ? 'w-full bg-zinc-100 text-danger-600' : 'w-full'}
+            size="lg"
+            onClick={handleSave}
+            disabled={toggleFavorite.isPending}
+            aria-pressed={isFavorited}
+          >
+            <Heart className={isFavorited ? 'h-4 w-4 fill-current' : 'h-4 w-4'} aria-hidden />
+            {isFavorited ? 'Đã lưu' : 'Lưu tin'}
+          </Button>
         </div>
       </div>
 
-      <div className="mt-4 border-t border-zinc-100 pt-3">
+      <div className="border-t border-border-subtle px-4 py-3 text-center sm:px-5">
         <ReportDialog roomId={roomId} roomSlug={roomSlug} variant="link" />
       </div>
 
-      <p className="mt-4 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-500">
-        Không chuyển khoản hoặc đặt cọc trước khi xem phòng và xác minh thông tin.
-      </p>
     </div>
   );
 }

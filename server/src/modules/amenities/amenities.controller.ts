@@ -15,5 +15,4 @@ export class AmenitiesController {
   list() {
     return this.amenitiesService.list();
   }
-
 }

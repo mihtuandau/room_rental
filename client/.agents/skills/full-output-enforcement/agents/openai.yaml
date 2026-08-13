@@ -1,4 +1,0 @@
-interface:
-  display_name: "Full Output Enforcement"
-  short_description: "Produce complete code without placeholders"
-  default_prompt: "Use $full-output-enforcement to produce the complete implementation."

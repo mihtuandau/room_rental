@@ -1,6 +1,6 @@
 export default function RoomDetailLoading() {
   return (
-    <div className="bg-zinc-50">
+    <div className="bg-white">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
         <div className="pb-24 lg:pb-6">
           {/* Back button & Actions skeleton */}
