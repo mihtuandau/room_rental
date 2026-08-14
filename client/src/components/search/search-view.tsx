@@ -33,13 +33,13 @@ export function SearchView({
   }
 
   return (
-    <div id="search-results" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+    <div id="search-results" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <SearchToolbar
         state={search.state}
         provinces={provinces}
         onChange={search.applyFilter}
       />
-      <div className="mt-6 lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
+      <div className="mt-5 lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
         <aside className="hidden lg:block">
           <div className="sticky top-20 rounded-lg border border-border-subtle bg-surface-card p-5 shadow-card">
             <FilterPanel
@@ -51,7 +51,7 @@ export function SearchView({
             />
           </div>
         </aside>
-        <div className="mt-6 lg:mt-0">
+        <div className="mt-5 lg:mt-0">
           <SearchResultsControls
             state={search.state}
             amenities={amenities}

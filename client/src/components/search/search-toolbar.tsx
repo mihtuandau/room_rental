@@ -84,7 +84,7 @@ export function SearchToolbar({
     <form
       onSubmit={submitKeyword}
       aria-label="Tìm kiếm tin đăng"
-      className="sticky top-16 z-30 flex flex-col gap-1.5 rounded-lg border border-border-strong bg-surface-card/95 p-1.5 shadow-card backdrop-blur sm:flex-row sm:flex-nowrap sm:items-center"
+      className="sticky top-14 z-30 flex flex-row items-center gap-1 rounded-lg border border-border-strong bg-surface-card/95 p-1 shadow-card backdrop-blur sm:top-16 sm:gap-1.5 sm:rounded-xl sm:p-1.5"
     >
       <LocationPicker
         state={state}
@@ -98,7 +98,7 @@ export function SearchToolbar({
         onChange={onChange}
       />
 
-      <span className="hidden h-6 w-px bg-zinc-200 sm:block" aria-hidden />
+      <span className="h-5 w-px shrink-0 bg-zinc-200 sm:h-6" aria-hidden />
 
       {state.mode === 'nearby' ? (
         <>
@@ -108,7 +108,7 @@ export function SearchToolbar({
               onChange({ radiusKm: Number(value), mode: 'nearby', page: 1 })
             }
           >
-            <SelectTrigger className="border-0 shadow-none sm:w-28" aria-label="Bán kính tìm kiếm">
+            <SelectTrigger className="h-9 w-[84px] whitespace-nowrap border-0 px-2 shadow-none sm:h-10 sm:w-28 sm:px-3" aria-label="Bán kính tìm kiếm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -119,7 +119,7 @@ export function SearchToolbar({
               ))}
             </SelectContent>
           </Select>
-          <span className="hidden h-6 w-px bg-zinc-200 sm:block" aria-hidden />
+          <span className="h-5 w-px shrink-0 bg-zinc-200 sm:h-6" aria-hidden />
         </>
       ) : null}
 
@@ -127,14 +127,14 @@ export function SearchToolbar({
         key={state.keyword}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
-        placeholder="Tên đường, khu vực, từ khoá…"
+        placeholder="Tên đường, khu vực…"
         aria-label="Từ khoá"
-        className="flex-1 border-0 shadow-none focus:ring-0"
+        className="h-9 min-w-0 flex-1 border-0 px-2 text-sm shadow-none focus:ring-0 sm:h-10 sm:px-3"
       />
 
-      <Button type="submit" className="shrink-0">
+      <Button type="submit" aria-label="Tìm" className="h-9 w-9 shrink-0 p-0 sm:h-10 sm:w-auto sm:px-4">
         <Search className="h-4 w-4" aria-hidden />
-        Tìm
+        <span className="hidden sm:inline sm:ml-2">Tìm</span>
       </Button>
     </form>
   );
@@ -170,14 +170,14 @@ function LocationPicker({
       <PopoverPrimitive.Trigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 min-w-0 items-center justify-between gap-2 rounded-md px-3 text-left text-sm font-medium text-zinc-900 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:w-48"
+          className="inline-flex h-9 shrink-0 items-center justify-between gap-1 rounded-md px-2 text-left text-sm font-medium text-zinc-900 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:h-10 sm:w-48 sm:gap-2 sm:px-3"
           aria-label="Chọn khu vực"
         >
-          <span className="flex min-w-0 items-center gap-2">
+          <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             <MapPin className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
-            <span className="truncate">{summary}</span>
+            <span className="max-w-[100px] truncate sm:max-w-none">{summary}</span>
           </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden />
+          <ChevronDown className="hidden h-4 w-4 shrink-0 text-zinc-500 sm:block" aria-hidden />
         </button>
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>

@@ -48,7 +48,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
       </div>
 
       {locations.length ? (
-        <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-7 sm:gap-6 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           {locations.map((loc, index) => {
             const summary = loc.minPrice
               ? `${loc.city} · Từ ${formatPrice(loc.minPrice)}/tháng`
@@ -58,7 +58,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
               key={`${loc.city}-${loc.district}`}
               type="button"
               onClick={() => handleLocationClick(loc)}
-              className="group relative h-56 w-full cursor-pointer overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
+              className="group relative h-40 w-full overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 sm:h-56"
             >
               {/* Background Image */}
               <div className="absolute inset-0 z-0 transition-transform duration-500 group-hover:scale-105">

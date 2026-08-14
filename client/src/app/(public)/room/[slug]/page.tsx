@@ -75,7 +75,7 @@ export default async function RoomDetailPage({ params }: Props) {
 
   return (
     <div className="bg-white">
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

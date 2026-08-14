@@ -108,7 +108,7 @@ export async function Footer() {
 
   return (
     <footer className="mt-12 border-t border-border-subtle bg-surface-subtle sm:mt-16">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] sm:px-6">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:grid-cols-2 sm:gap-8 sm:px-6 sm:py-10 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div className="space-y-2">
           <Image
             src="/logo.png"
@@ -164,7 +164,7 @@ export async function Footer() {
       </div>
 
       <div className="border-t border-border-subtle">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 text-xs text-zinc-500 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-xs text-zinc-500 sm:px-6 sm:pb-4">
           <p>© {new Date().getFullYear()} Trọ Ơi. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>

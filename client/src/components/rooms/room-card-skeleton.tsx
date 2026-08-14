@@ -6,9 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export function RoomCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200">
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
-      <div className="space-y-2 p-4">
+    <div className="overflow-hidden rounded-xl bg-surface-card shadow-sm ring-1 ring-border-subtle">
+      <Skeleton className="aspect-square w-full rounded-none sm:aspect-[4/3]" />
+      <div className="space-y-2 p-2.5 sm:p-4">
         <Skeleton className="h-6 w-1/3" />
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
