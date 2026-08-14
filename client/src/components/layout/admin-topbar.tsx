@@ -36,7 +36,7 @@ export function AdminTopbar() {
   const logout = useLogout();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-3 sm:h-16 sm:px-6">
       <Dialog open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <DialogTrigger asChild>
           <Button
@@ -64,7 +64,7 @@ export function AdminTopbar() {
         <AdminBreadcrumb />
       </div>
 
-      <div className="ml-3 flex items-center gap-1">
+      <div className="ml-2 flex items-center gap-1 sm:ml-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

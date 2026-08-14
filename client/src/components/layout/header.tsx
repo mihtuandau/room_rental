@@ -172,11 +172,11 @@ export function Header() {
   return (
     <header className={cn(
       "sticky top-0 z-40 border-b bg-surface-card/95 backdrop-blur transition-[box-shadow,background-color] duration-200",
-      pathname === '/' && !isCompact ? "border-transparent shadow-none" : "border-zinc-200 shadow-card",
+      pathname === '/' && !isCompact ? "border-transparent shadow-none" : "border-border-subtle shadow-sm",
     )}>
       <div className={cn(
-        "mx-auto flex w-full max-w-7xl items-center justify-between px-4 transition-[height] duration-200 sm:px-6",
-        isCompact ? "h-14" : "h-16",
+        "mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 transition-[height] duration-200 sm:gap-4 sm:px-6",
+        isCompact ? "h-12 sm:h-14" : "h-14 sm:h-16",
       )}>
         <Link
           href="/"
@@ -184,7 +184,7 @@ export function Header() {
           aria-label="Trọ Ơi — Trang chủ"
           className={cn(
             "flex shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
-            isCompact ? "h-14 w-14" : "h-16 w-16",
+            isCompact ? "h-12 w-12" : "h-14 w-14 sm:h-16 sm:w-16",
           )}
         >
           <Image
@@ -193,7 +193,7 @@ export function Header() {
             width={64}
             height={64}
             priority
-            className={cn("object-contain transition-[width,height] duration-200", isCompact ? "h-14 w-14" : "h-16 w-16")}
+            className={cn("object-contain transition-[width,height] duration-200", isCompact ? "h-12 w-12" : "h-14 w-14 sm:h-16 sm:w-16")}
           />
         </Link>
 
@@ -209,9 +209,9 @@ export function Header() {
                 href={item.href}
                 onClick={handleHomeLinkClick(item.id)}
                 className={cn(
-                  "relative rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
+                  "relative rounded-md px-3 py-2 font-heading text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
                   isActive
-                    ? "text-brand-600 font-semibold"
+                    ? "text-brand-700"
                     : "text-zinc-600 hover:bg-surface-subtle hover:text-zinc-900"
                 )}
               >
@@ -224,7 +224,7 @@ export function Header() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {isBootstrapped && isSignedIn && (
             <>
               <HeaderIconLink href="/notifications" label="Thông báo" count={unreadCount}>
@@ -274,7 +274,7 @@ export function Header() {
                 <button
                   type="button"
                   aria-label="Mở menu tài khoản"
-                  className="flex h-10 items-center gap-1 rounded-md px-1 text-zinc-700 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:px-2"
+                  className="flex h-10 items-center gap-1.5 rounded-full px-1 text-zinc-700 transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:px-2"
                 >
                   <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-brand-700">
                     {profile?.avatarUrl ? (
@@ -363,7 +363,7 @@ function MobileNavigation({
           <span className="sr-only">Mở menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="max-w-[min(22rem,calc(100vw-1rem))]">
         <SheetHeader>
           <SheetTitle>Menu</SheetTitle>
           <SheetDescription>
@@ -456,7 +456,7 @@ function HeaderIconLink({
         {count > 0 && (
           <span
             aria-hidden
-            className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-semibold leading-none text-white"
+            className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white"
           >
             {count > 99 ? '99+' : count}
           </span>

@@ -44,7 +44,7 @@ export function ListingsToolbar({
   onStatusChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-zinc-200 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
       <h2 className="font-semibold">Tin đăng của tôi</h2>
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative">
@@ -76,7 +76,7 @@ export function ListingsToolbar({
             ))}
           </SelectContent>
         </Select>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/manage/listings/new">
             <PlusCircle className="h-4 w-4" aria-hidden />
             Đăng tin mới
@@ -89,8 +89,12 @@ export function ListingsToolbar({
 
 export function MyListingsTable({ rooms }: { rooms: MyRoomItem[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-left text-sm">
+    <>
+      <div className="space-y-3 p-3 md:hidden">
+        {rooms.map((room) => <MobileRoomCard key={room.id} room={room} />)}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[720px] text-left text-sm">
         <thead className="bg-brand-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
           <tr>
             <th className="px-4 py-3">Tin đăng</th>
@@ -105,8 +109,53 @@ export function MyListingsTable({ rooms }: { rooms: MyRoomItem[] }) {
             <RoomRow key={room.id} room={room} />
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function MobileRoomCard({ room }: { room: MyRoomItem }) {
+  return (
+    <article className="rounded-lg border border-zinc-200 bg-white p-3 shadow-card">
+      <div className="flex gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element -- API images can use arbitrary hosts. */}
+        <img
+          src={room.images[0]?.url ?? PLACEHOLDER_IMAGE}
+          alt=""
+          className="h-20 w-20 shrink-0 rounded-lg object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          {room.status === 'active' ? (
+            <Link href={`/room/${room.slug}`} className="line-clamp-2 text-sm font-semibold text-zinc-900 hover:text-brand-700">
+              {room.title}
+            </Link>
+          ) : (
+            <p className="line-clamp-2 text-sm font-semibold text-zinc-900">{room.title}</p>
+          )}
+          <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
+            {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-zinc-100 pt-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-brand-700">
+            {formatPrice(room.price)}<span className="font-normal text-zinc-500">/tháng</span>
+          </p>
+          <p className="mt-0.5 text-xs text-zinc-500">{room.viewCount.toLocaleString('vi-VN')} lượt xem</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <RoomStatusBadge status={room.status} />
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={`/manage/listings/${room.id}/edit`} aria-label="Sửa tin đăng">
+              <Pencil className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+          <DeleteListingDialog room={room} />
+        </div>
+      </div>
+    </article>
   );
 }
 

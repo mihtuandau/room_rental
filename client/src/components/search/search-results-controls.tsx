@@ -62,8 +62,8 @@ export function SearchResultsControls({
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight">{heading}</h1>
           <p className="mt-1 text-sm text-zinc-500" aria-live="polite" role="status">
             {total === undefined
@@ -73,7 +73,7 @@ export function SearchResultsControls({
                 : `Hiển thị ${rangeFrom}–${rangeTo} trong ${total.toLocaleString('vi-VN')} tin đăng`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:w-auto">
           <MobileFilters
             open={filtersOpen}
             count={dialogFilterCount}
@@ -90,7 +90,7 @@ export function SearchResultsControls({
               onChange({ sort: sort as SearchState['sort'] })
             }
           >
-            <SelectTrigger className="w-[168px]" aria-label="Sắp xếp">
+            <SelectTrigger className="w-full sm:w-[168px]" aria-label="Sắp xếp">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
