@@ -32,9 +32,9 @@
   --color-danger-50: oklch(0.97 0.03 25);
   --color-danger-600: oklch(0.58 0.2 25);
 
-  /* Keep builds offline-safe; prefer Inter when installed, then system UI. */
-  --font-sans: var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-heading: var(--font-heading), 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  /* Optimized for Vietnamese diacritics & typography standards */
+  --font-sans: var(--font-sans), 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-heading), 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 
   /* Large media frame used by the room-detail gallery */
   --spacing-room-gallery: 30rem;
@@ -93,7 +93,26 @@
       transform: translateY(0);
     }
   }
+
+  --animate-page-flip-right: page-flip-right 0.65s cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+
+  @keyframes page-flip-right {
+    0% {
+      transform: rotateY(0deg) rotateZ(0deg) rotateX(0deg) skewY(0deg) translateY(0);
+      opacity: 1;
+    }
+    45% {
+      transform: rotateY(70deg) rotateZ(16deg) rotateX(-12deg) skewY(8deg) translateY(-14px);
+      opacity: 0.85;
+    }
+    100% {
+      transform: rotateY(145deg) rotateZ(24deg) rotateX(-18deg) skewY(12deg) translateY(-28px);
+      opacity: 0;
+    }
+  }
 }
+
+
 
 html {
   scroll-behavior: smooth;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Banknote, CircleDotDashed, LocateFixed, Search } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
@@ -228,6 +228,7 @@ export function HomeHero({
   const [locationMessage, setLocationMessage] = useState('');
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [flippingIndex, setFlippingIndex] = useState<number | null>(null);
   const [radiusKm, setRadiusKm] = useState(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
   const [priceRangeValue, setPriceRangeValue] = useState(
     PRICE_RANGE_OPTIONS.find(
@@ -235,16 +236,28 @@ export function HomeHero({
     )?.value ?? ALL,
   );
 
+  const handleFlipNext = useCallback(() => {
+    if (flippingIndex !== null) return;
+    const current = heroImageIndex;
+
+    setFlippingIndex(current);
+    setHeroImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+
+    setTimeout(() => {
+      setFlippingIndex(null);
+    }, 650);
+  }, [flippingIndex, heroImageIndex]);
+
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (reduceMotion.matches) return;
 
     const timer = window.setInterval(() => {
-      setHeroImageIndex((current) => (current + 1) % HERO_IMAGES.length);
+      handleFlipNext();
     }, 5_500);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [handleFlipNext]);
 
   // The header can clear the search URL while this home component stays
   // mounted. Keep the hero's local controls aligned with the canonical URL so
@@ -394,7 +407,7 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-visible bg-brand-50/35 pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[560px] lg:py-14"
+      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/50 via-brand-50/30 to-surface-page pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[560px] lg:py-14"
     >
       <div className="mx-auto flex flex-col w-full max-w-7xl px-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center lg:gap-12">
         <div className="contents lg:block lg:max-w-xl">
@@ -533,25 +546,118 @@ export function HomeHero({
             </div>
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
             </form>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-6 lg:mt-6">
+              {[
+                { value: '1,200+', label: 'tin đăng' },
+                { value: '100%', label: 'kiểm duyệt' },
+                { value: '15+', label: 'quận / huyện' },
+                { value: 'Miễn phí', label: 'đăng tin' },
+              ].map((stat) => (
+                <div key={stat.label} className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-semibold tracking-tight text-brand-700 sm:text-xl">{stat.value}</span>
+                  <span className="text-xs text-zinc-500">{stat.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="relative order-2 min-h-[220px] w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-card sm:min-h-[300px] lg:h-[460px]">
-          {HERO_IMAGES.map((image, index) => (
-            <Image
-              key={image.src}
-              src={image.src}
-              alt={index === heroImageIndex ? image.alt : ''}
-              aria-hidden={index !== heroImageIndex}
-              fill
-              priority={index === 0}
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className={`object-cover transition-[opacity,transform] duration-1000 ease-in-out ${
-                index === heroImageIndex ? 'opacity-100' : 'opacity-0'
-              } ${index === heroImageIndex ? 'motion-safe:animate-hero-pan' : ''}`}
-            />
-          ))}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/20 via-transparent to-transparent" />
+        <div className="relative order-2 flex flex-col items-center justify-center lg:items-end lg:justify-center min-h-[360px] w-full sm:min-h-[460px] lg:h-[540px] p-2 sm:p-4">
+          {/* Ambient Warm Glow Accent behind Polaroid Stack */}
+          <div className="absolute inset-x-8 inset-y-6 z-0 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+
+          {/* Polaroid Vintage Stack Container (Enlarged Size) */}
+          <div
+            onClick={handleFlipNext}
+            title="Bấm để lật xem ảnh tiếp theo"
+            className="group/polaroid relative h-[330px] sm:h-[420px] lg:h-[490px] w-full max-w-[520px] cursor-pointer select-none [perspective:1500px]"
+          >
+            {/* Page 3: Deep Stack Polaroid (Bottom) */}
+            <div className="absolute inset-0 z-0 -translate-x-8 sm:-translate-x-10 translate-y-3.5 -rotate-[5deg] scale-[0.93] rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] ring-1 ring-zinc-900/10 opacity-100 transition-all duration-300 group-hover/polaroid:-translate-x-12">
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
+                <Image
+                  src={HERO_IMAGES[(heroImageIndex + 2) % HERO_IMAGES.length].src}
+                  alt=""
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Page 2: Middle Stack Polaroid (Peeking) */}
+            <div className="absolute inset-0 z-10 -translate-x-4 sm:-translate-x-5 translate-y-2 -rotate-[2.5deg] scale-[0.96] rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_25px_45px_-12px_rgba(0,0,0,0.24)] ring-1 ring-zinc-900/10 opacity-100 transition-all duration-300 group-hover/polaroid:-translate-x-7">
+              {/* Translucent Washi Tape Strip on Middle Card */}
+              <div className="absolute -top-3.5 right-12 z-50 h-7 w-26 rotate-[6deg] bg-amber-100/80 border-y border-amber-300/50 backdrop-blur-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.08)] pointer-events-none" />
+              
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
+                <Image
+                  src={HERO_IMAGES[(heroImageIndex + 1) % HERO_IMAGES.length].src}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Page 1: Primary Active Polaroid Card */}
+            <div className="absolute inset-0 z-20 rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.28)] ring-1 ring-zinc-900/10 transition-transform duration-300 group-hover/polaroid:scale-[1.01]">
+              {/* Translucent Textured Washi Tape Strip on Top Polaroid */}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-50 h-8 w-32 -rotate-[2.5deg] bg-amber-50/90 border-y border-amber-200/80 backdrop-blur-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.08)] pointer-events-none flex items-center justify-center">
+                <div className="h-full w-full bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:6px_6px] opacity-10" />
+              </div>
+
+              {/* Photo Viewport with inner photo shadow stroke */}
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900 shadow-inner">
+                <Image
+                  src={HERO_IMAGES[heroImageIndex].src}
+                  alt={HERO_IMAGES[heroImageIndex].alt}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-105"
+                />
+              </div>
+            </div>
+
+            {/* Exiting 3D Oblique Page Turn Overlay */}
+            {flippingIndex !== null && (
+              <div
+                key={`flipping-${flippingIndex}`}
+                className="absolute inset-0 z-40 rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-2xl ring-1 ring-zinc-900/10 animate-page-flip-right pointer-events-none [transform-origin:right_center]"
+              >
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-50 h-8 w-32 -rotate-[2.5deg] bg-amber-50/90 border-y border-amber-200/80 backdrop-blur-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.08)] pointer-events-none" />
+
+                <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
+                  <Image
+                    src={HERO_IMAGES[flippingIndex].src}
+                    alt=""
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    className="object-cover"
+                  />
+                  {/* Realistic Book Crease Shadow Overlay for Right Flip */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-black/20" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Minimalist Dots Bar */}
+          <div className="mt-6 flex items-center gap-2 z-30">
+            {HERO_IMAGES.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setHeroImageIndex(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === heroImageIndex ? 'w-6 bg-brand-600' : 'w-2 bg-zinc-300 hover:bg-zinc-400'
+                }`}
+                aria-label={`Xem ảnh ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
