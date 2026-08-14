@@ -122,7 +122,7 @@ export default async function HomePage({ searchParams }: Props) {
           amenities={amenities}
           provinces={provinces}
           browseTop={
-            <div className="flex flex-col gap-10 sm:gap-12">
+            <div className="flex flex-col gap-10 sm:gap-14">
               <FeaturedSection />
               <PopularLocations locations={locations} />
               <WhyChooseUs />

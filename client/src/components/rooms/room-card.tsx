@@ -41,9 +41,16 @@ export const PLACEHOLDER_IMAGE = '/room1.jpg';
 
 function freshnessLabel(date: string | undefined, now: number) {
   if (!date) return null;
-  const timestamp = new Date(date).getTime();
+  const targetDate = new Date(date);
+  const timestamp = targetDate.getTime();
   if (!Number.isFinite(timestamp)) return null;
-  const days = Math.max(0, Math.floor((now - timestamp) / (24 * 60 * 60 * 1000)));
+
+  const nowDateObj = new Date(now);
+  const targetMidnight = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).getTime();
+  const nowMidnight = new Date(nowDateObj.getFullYear(), nowDateObj.getMonth(), nowDateObj.getDate()).getTime();
+
+  const days = Math.max(0, Math.floor((nowMidnight - targetMidnight) / (24 * 60 * 60 * 1000)));
+
   if (days === 0) return 'Cập nhật hôm nay';
   if (days === 1) return 'Cập nhật hôm qua';
   if (days < 7) return `Cập nhật ${days} ngày trước`;
@@ -101,13 +108,13 @@ export function RoomCard({
       onMouseEnter={onActivate}
       onMouseLeave={onDeactivate}
       className={cn(
-        'group relative overflow-hidden rounded-lg border border-border-subtle bg-surface-card transition-[transform,box-shadow,border-color] duration-200',
+        'group relative overflow-hidden rounded-xl bg-surface-card shadow-sm ring-1 ring-border-subtle transition-[transform,box-shadow,ring-color] duration-300',
         active
-          ? 'border-brand-600 shadow-card'
-          : 'hover:-translate-y-0.5 hover:border-border-strong hover:shadow-card',
+          ? 'ring-brand-600 shadow-md'
+          : 'hover:-translate-y-1 hover:ring-border-strong hover:shadow-popover',
       )}
     >
-      <div className="relative aspect-[4/3] bg-surface-subtle">
+      <div className="relative aspect-square bg-surface-subtle sm:aspect-[4/3]">
         {!imageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-surface-subtle" aria-hidden="true" />
         )}
@@ -154,18 +161,18 @@ export function RoomCard({
 
       </div>
 
-      <div className="flex min-h-[136px] flex-col space-y-1.5 p-3">
-        <p className="text-base font-semibold tabular-nums text-brand-700">
+      <div className="flex min-h-[118px] flex-col space-y-1 p-2.5 sm:min-h-[136px] sm:space-y-1.5 sm:p-4">
+        <p className="text-sm font-semibold tabular-nums text-brand-700 sm:text-base">
           {formatPrice(room.price)}
           <span className="ml-1 text-xs font-normal text-zinc-500">/tháng</span>
         </p>
-        <h3 className="line-clamp-1 text-sm font-medium">{room.title}</h3>
-        <p className="line-clamp-2 flex items-start gap-1 text-xs text-zinc-500">
-          <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+        <h3 className="line-clamp-1 font-heading text-xs font-semibold text-zinc-900 sm:text-base">{room.title}</h3>
+        <p className="line-clamp-2 flex items-start gap-1 text-[11px] text-zinc-500 sm:text-sm">
+          <MapPin className="mt-0.5 h-3 w-3 shrink-0 sm:mt-1 sm:h-3.5 sm:w-3.5" aria-hidden />
           {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city}
         </p>
         {(room.bedrooms !== null || room.area !== null || freshness || room.viewCount != null) && (
-          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-[11px] text-zinc-500">
+          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-2 text-[11px] text-zinc-500 sm:gap-x-4 sm:pt-3 sm:text-xs">
             {room.bedrooms !== null && (
               <span className="flex items-center gap-1">
                 <BedDouble className="h-3.5 w-3.5" aria-hidden />
@@ -222,7 +229,7 @@ export function RoomGrid({
   return (
     <div
       className={cn(
-        'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3',
+        'grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3',
         className,
       )}
     >

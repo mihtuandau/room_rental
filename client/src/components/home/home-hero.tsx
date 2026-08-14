@@ -396,51 +396,55 @@ export function HomeHero({
       id="tim-phong"
       className="relative isolate scroll-mt-20 overflow-visible bg-brand-50/35 pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[560px] lg:py-14"
     >
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-12">
-        <div className="max-w-xl">
-          <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
-            Tìm phòng nhanh hơn,
-            <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
-          </h1>
-          <p className="mt-3 max-w-prose text-base leading-7 text-zinc-600">
-            Nhập khu vực hoặc chọn <span className="font-medium text-zinc-800">Gần tôi</span> để xem tin đăng phù hợp.
-          </p>
+      <div className="mx-auto flex flex-col w-full max-w-7xl px-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center lg:gap-12">
+        <div className="contents lg:block lg:max-w-xl">
+          <div className="order-1 pb-5 lg:pb-0">
+            <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
+              Tìm phòng nhanh hơn,
+              <span className="block text-brand-700">sống an tâm mỗi ngày.</span>
+            </h1>
+            <p className="mt-3 max-w-prose text-base leading-7 text-zinc-600">
+              Nhập khu vực hoặc chọn <span className="font-medium text-zinc-800">Gần tôi</span> để xem tin đăng phù hợp.
+            </p>
+          </div>
 
-          <form
-            className="mt-6 rounded-xl border border-border-strong bg-surface-card p-4 shadow-card sm:p-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit();
-            }}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-zinc-900">Bạn muốn tìm ở đâu?</p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Tìm theo khu vực hoặc trong bán kính quanh vị trí hiện tại.
-                </p>
+          <div className="order-3 z-10 -mt-8 px-1 sm:-mt-12 lg:mt-6 lg:px-0">
+            <form
+              className="rounded-xl border border-border-strong bg-surface-card p-3 shadow-card sm:p-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submit();
+              }}
+            >
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-3 sm:mb-0">
+                <div>
+                  <p className="text-sm font-medium text-zinc-900">Bạn muốn tìm ở đâu?</p>
+                  <p className="mt-1 hidden text-xs text-zinc-500 sm:block">
+                    Tìm theo khu vực hoặc trong bán kính quanh vị trí hiện tại.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant={centerMode === 'nearby' ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={useNearby}
+                  className="hidden sm:inline-flex"
+                >
+                  <LocateFixed className="h-4 w-4" aria-hidden />
+                  Gần tôi
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant={centerMode === 'nearby' ? 'primary' : 'outline'}
-                size="sm"
-                onClick={useNearby}
-              >
-                <LocateFixed className="h-4 w-4" aria-hidden />
-                Gần tôi
-              </Button>
-            </div>
 
             {centerMode === 'nearby' && userCenter ? (
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+              <div className="mb-3 mt-0 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 sm:mb-0 sm:mt-3">
                 <LocateFixed className="h-3.5 w-3.5" aria-hidden />
                 Đã ghim vị trí của bạn trên bản đồ
               </div>
             ) : null}
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_auto] lg:items-end">
-              <Field label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
-                <div className="relative mt-1">
+            <div className="mt-0 flex flex-row items-center gap-2 sm:mt-4 sm:grid sm:gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_auto] lg:items-end">
+              <Field className="flex-1 sm:flex-none" label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
+                <div className="relative">
                 <Input
                   aria-label="Từ khóa hoặc khu vực"
                   value={keyword}
@@ -452,9 +456,20 @@ export function HomeHero({
                     setCity('');
                     setLocationMessage('');
                   }}
-                  placeholder="Ví dụ: Hải Châu, Bách Khoa, đường Lê Lợi…"
-                  className="h-11"
+                  placeholder="Khu vực, tên đường..."
+                  className="h-10 pr-9 sm:h-11 sm:pr-3"
                 />
+                <button
+                  type="button"
+                  onClick={useNearby}
+                  className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:hidden ${
+                    centerMode === 'nearby' ? 'bg-brand-50 text-brand-600' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600'
+                  }`}
+                  aria-label="Tìm quanh đây"
+                  title="Tìm quanh đây"
+                >
+                  <LocateFixed className="h-4 w-4" aria-hidden />
+                </button>
                 {showLocationSuggestions && locationSuggestions.length > 0 ? (
                   <div className="absolute inset-x-0 top-[calc(100%+0.35rem)] z-30 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 text-left shadow-popover">
                     {locationSuggestions.map((province) => (
@@ -481,7 +496,7 @@ export function HomeHero({
               {centerMode === 'nearby' ? (
                 <Field label="Bán kính" icon={<CircleDotDashed className="h-4 w-4" aria-hidden />}>
                   <Select value={String(radiusKm)} onValueChange={(value) => setRadiusKm(Number(value))}>
-                    <SelectTrigger aria-label="Bán kính tìm kiếm" className="mt-1 h-11 w-full">
+                    <SelectTrigger aria-label="Bán kính tìm kiếm" className="h-10 w-[100px] whitespace-nowrap sm:h-11 sm:w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -496,7 +511,7 @@ export function HomeHero({
               ) : (
                 <Field label="Lọc giá" icon={<Banknote className="h-4 w-4" aria-hidden />}>
                   <Select value={priceRangeValue} onValueChange={setPriceRangeValue}>
-                    <SelectTrigger aria-label="Mức giá" className="mt-1 h-11 w-full">
+                    <SelectTrigger aria-label="Mức giá" className="h-10 w-[100px] whitespace-nowrap sm:h-11 sm:w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -511,17 +526,17 @@ export function HomeHero({
                 </Field>
               )}
 
-              <Button type="submit" className="h-11 w-full lg:w-auto lg:px-6">
+              <Button type="submit" aria-label="Tìm" className="h-10 w-10 shrink-0 p-0 sm:h-11 sm:w-auto sm:px-6">
                 <Search className="h-4 w-4" aria-hidden />
-                {expanded ? 'Cập nhật' : 'Tìm'}
+                <span className="hidden sm:inline sm:ml-2">{expanded ? 'Cập nhật' : 'Tìm'}</span>
               </Button>
             </div>
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
-          </form>
-
+            </form>
+          </div>
         </div>
 
-        <div className="relative min-h-[280px] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-card sm:min-h-[360px] lg:h-[460px]">
+        <div className="relative order-2 min-h-[220px] w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-card sm:min-h-[300px] lg:h-[460px]">
           {HERO_IMAGES.map((image, index) => (
             <Image
               key={image.src}
@@ -546,15 +561,17 @@ export function HomeHero({
 function Field({
   label,
   icon,
+  className,
   children,
 }: {
   label: string;
   icon: React.ReactNode;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0 text-left">
-      <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+    <div className={`min-w-0 text-left ${className ?? ''}`}>
+      <span className="mb-1.5 hidden items-center gap-1.5 text-xs font-medium text-zinc-600 sm:flex">
         {icon}
         {label}
       </span>

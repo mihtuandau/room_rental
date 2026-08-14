@@ -141,7 +141,7 @@ function CarouselGallery({
                 "group relative min-w-0 flex-[0_0_100%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-inset",
                 isLightbox 
                   ? "h-[65vh] sm:h-[70vh] lg:h-[75vh] bg-transparent" 
-                  : "aspect-[16/9] bg-zinc-100 sm:aspect-[16/8.5] lg:aspect-[16/8]"
+                : "aspect-[4/3] bg-zinc-100 sm:aspect-[16/9] lg:aspect-[16/8]"
               )}
             >
               <Image

@@ -22,8 +22,8 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      <ScrollReveal className="mb-5 lg:mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+      <ScrollReveal className="mb-6">
+        <h2 className="font-heading text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
           Cách <span className="text-brand-700">Trọ Ơi</span> hoạt động
         </h2>
         <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
@@ -31,24 +31,24 @@ export function HowItWorks() {
         </p>
       </ScrollReveal>
 
-      <div className="grid gap-6 md:grid-cols-3 md:gap-0 md:divide-x md:divide-zinc-200">
+      <div className="grid gap-6 sm:grid-cols-3">
         {STEPS.map(({ icon: Icon, title, description }, index) => (
           <ScrollReveal
             key={title}
             delay={index * 120}
-            className="flex gap-4 md:block md:px-8 md:first:pl-0 md:last:pr-0"
+            className="group relative flex flex-col items-start gap-4 rounded-xl border border-border-subtle bg-surface-card p-5 shadow-card transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-popover sm:p-6"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 md:mx-auto">
+            <span className="absolute right-5 top-5 font-heading text-4xl font-bold leading-none text-zinc-100 transition-colors duration-200 group-hover:text-brand-100 sm:text-5xl">
+              {index + 1}
+            </span>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 transition-colors duration-200 group-hover:bg-brand-100">
               <Icon className="h-6 w-6" aria-hidden />
             </div>
-            <div className="pt-1 md:pt-5">
-              <p className="text-xs font-semibold text-brand-700">
-                Bước {index + 1}
-              </p>
-              <h3 className="mt-1 text-base font-semibold text-zinc-900 sm:text-lg">
+            <div>
+              <h3 className="font-heading text-base font-semibold text-zinc-900 sm:text-lg">
                 {title}
               </h3>
-              <p className="mt-1.5 text-sm leading-6 text-zinc-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">
                 {description}
               </p>
             </div>

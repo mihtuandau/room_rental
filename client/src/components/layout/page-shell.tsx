@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const pageContainerVariants = cva(
-  'mx-auto w-full px-4 py-8 sm:px-6 lg:px-8',
+  'mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8',
   {
     variants: {
       size: {
@@ -58,7 +58,7 @@ export function PageHeader({
           <p className="mt-1 max-w-prose text-sm text-zinc-600">{description}</p>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </header>
   );
 }

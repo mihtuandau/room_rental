@@ -121,7 +121,7 @@ export function RoomContactCard({
       'relative overflow-hidden bg-surface-card',
       embedded
         ? 'rounded-xl border-0 shadow-none'
-        : 'rounded-2xl border border-border-subtle shadow-card',
+        : 'rounded-xl border border-border-subtle shadow-card lg:rounded-2xl',
     )}>
       <div className="relative flex items-center gap-3 border-b border-border-subtle p-4 pr-14 sm:p-5 sm:pr-14">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-800 text-lg font-medium text-white sm:h-14 sm:w-14">

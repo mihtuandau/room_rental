@@ -37,7 +37,7 @@ export async function FeaturedSection() {
 
         <Link
           href="/?all=true&sort=newest"
-          className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-4 py-2 text-sm font-medium text-zinc-700 shadow-xs transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          className="group self-start sm:self-auto inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-4 py-2 text-sm font-medium text-zinc-700 shadow-xs transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
           Xem tất cả
           <ArrowRight
@@ -48,9 +48,13 @@ export async function FeaturedSection() {
       </ScrollReveal>
 
       {/* 3-column grid */}
-      <div className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[1.12fr_0.94fr_0.94fr]">
+      <div className="mt-6 -mx-4 flex gap-4 snap-x snap-mandatory overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-7 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-[1.12fr_0.94fr_0.94fr] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {rooms.map((room, i) => (
-          <ScrollReveal key={room.id} delay={i * 150}>
+          <ScrollReveal 
+            key={room.id} 
+            delay={i * 150}
+            className="w-[92vw] shrink-0 snap-center sm:w-auto"
+          >
             <RoomCard room={room} priority={i === 0} />
           </ScrollReveal>
         ))}
