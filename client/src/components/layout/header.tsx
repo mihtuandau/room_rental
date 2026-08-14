@@ -15,6 +15,7 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  ShieldCheck,
   UserRound,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -313,6 +314,12 @@ export function Header() {
                   <BarChart3 className="h-4 w-4 shrink-0" aria-hidden />
                   Thống kê
                 </DropdownMenuItem>
+                {profile?.role === 'admin' && (
+                  <DropdownMenuItem onSelect={() => router.push('/admin')} className="gap-3 py-2.5 text-brand-700 focus:bg-brand-50 focus:text-brand-700">
+                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
+                    Trang quản trị (Admin)
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   disabled={logout.isPending}
                   onSelect={() => {
@@ -338,6 +345,7 @@ export function Header() {
             isSignedIn={isSignedIn}
             inManageMode={inManageMode}
             onHomeLinkClick={handleHomeLinkClick}
+            profileRole={profile?.role}
           />
         </div>
       </div>
@@ -349,10 +357,12 @@ function MobileNavigation({
   isSignedIn,
   inManageMode,
   onHomeLinkClick,
+  profileRole,
 }: {
   isSignedIn: boolean;
   inManageMode: boolean;
   onHomeLinkClick: (anchorId?: string) => (e: React.MouseEvent) => void;
+  profileRole?: 'user' | 'admin';
 }) {
 
   return (
@@ -402,14 +412,27 @@ function MobileNavigation({
               </SheetClose>
             ) : (
               isSignedIn && (
-                <SheetClose asChild>
-                  <Link
-                    href="/manage/listings"
-                    className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
-                  >
-                    Tin của tôi
-                  </Link>
-                </SheetClose>
+                <>
+                  {profileRole === 'admin' && (
+                    <SheetClose asChild>
+                      <Link
+                        href="/admin"
+                        className={cn(buttonVariants({ variant: 'outline' }), 'w-full border-brand-200 text-brand-700 hover:bg-brand-50 hover:text-brand-700')}
+                      >
+                        <ShieldCheck className="mr-2 h-4 w-4" aria-hidden />
+                        Trang quản trị (Admin)
+                      </Link>
+                    </SheetClose>
+                  )}
+                  <SheetClose asChild>
+                    <Link
+                      href="/manage/listings"
+                      className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+                    >
+                      Tin của tôi
+                    </Link>
+                  </SheetClose>
+                </>
               )
             )}
 
