@@ -1,21 +1,22 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Plus_Jakarta_Sans, Be_Vietnam_Pro } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
 import { PageTransition } from '@/components/layout/page-transition';
 
-const inter = Inter({
+const headingFont = Plus_Jakarta_Sans({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+  variable: '--font-heading',
+  weight: ['500', '600', '700', '800'],
+});
+
+const sansFont = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-sans',
-});
-
-const outfit = Outfit({
-  subsets: ['latin', 'latin-ext'],
-  display: 'swap',
-  variable: '--font-heading',
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -61,7 +62,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`${inter.variable} ${outfit.variable} h-full`}>
+    <html lang="vi" className={`${sansFont.variable} ${headingFont.variable} h-full`}>
       <body className="flex min-h-full flex-col antialiased">
         <AppProviders>
           <Suspense fallback={null}>

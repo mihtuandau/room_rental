@@ -71,7 +71,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
                   sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 25vw"
                 />
                 {/* A restrained overlay keeps text readable without making the card feel glossy. */}
-                <div className="absolute inset-0 bg-black/45 transition-colors duration-300 group-hover:bg-black/55" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent transition-opacity duration-300 group-hover:from-black/75" />
               </div>
 
               {/* Tag Badge / Real Count */}
