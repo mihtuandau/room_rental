@@ -377,7 +377,7 @@ export function HomeHero({
       id="tim-phong"
       className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-surface-page via-brand-50/20 to-surface-page pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[624px] lg:py-14"
     >
-      <div className="mobile-hero-map pointer-events-none relative -mt-8 mb-6 aspect-[1798/875] w-full overflow-hidden sm:-mt-12 sm:mb-8 lg:hidden" aria-hidden="true">
+      <div className="mobile-hero-map pointer-events-none relative -mt-8 mb-6 aspect-[1792/878] w-full overflow-hidden sm:-mt-12 sm:mb-8 lg:hidden" aria-hidden="true">
         <Image
           src="/hero-district-1-map-mobile-top-bottom-fade.png"
           alt=""
@@ -412,9 +412,9 @@ export function HomeHero({
             </p>
           </div>
 
-          <div className="order-3 z-10 -mt-8 px-1 sm:-mt-12 lg:mt-6 lg:px-0">
+          <div className="order-3 z-10 mt-4 px-1 sm:mt-6 lg:mt-6 lg:px-0">
             <form
-              className="rounded-xl border border-border-strong bg-surface-card p-3 shadow-card sm:p-5"
+              className="rounded-xl border border-border-subtle bg-surface-card p-3 shadow-card sm:p-5"
               onSubmit={(event) => {
                 event.preventDefault();
                 submit();
@@ -519,14 +519,14 @@ export function HomeHero({
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
             </form>
 
-            <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-5">
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-4">
               {REASONS.map(({ icon: Icon, title, description }) => (
                 <div key={title} className="flex items-start gap-2.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
                     <Icon className="h-4 w-4" aria-hidden />
                   </span>
                   <div>
-                    <p className="font-heading text-sm font-semibold text-zinc-900">{title}</p>
+                    <p className="font-heading text-sm font-medium text-zinc-900">{title}</p>
                     <p className="mt-1 text-xs leading-relaxed text-zinc-500">{description}</p>
                   </div>
                 </div>

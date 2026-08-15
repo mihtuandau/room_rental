@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Clock3, FileText, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import type { MyRoomItem } from '@/features/rooms/api';
 import { useMyRooms } from '@/features/rooms/hooks';
@@ -11,6 +10,7 @@ import {
   ListingsToolbar,
   MyListingsTable,
 } from './_components/my-listings-table';
+import { MyListingsSkeleton } from './_components/my-listings-skeleton';
 
 const PAGE_SIZE = 8;
 const ALL_STATUS = '__all__';
@@ -21,7 +21,7 @@ export function MyListingsView() {
   const [statusFilter, setStatusFilter] = useState(ALL_STATUS);
   const [page, setPage] = useState(1);
 
-  if (isPending) return <Skeleton className="h-96 w-full rounded-lg" />;
+  if (isPending) return <MyListingsSkeleton />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
   if (rooms.length === 0) {
     return (

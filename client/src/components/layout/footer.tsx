@@ -138,20 +138,25 @@ export async function Footer() {
               aria-label="Facebook"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 1.09.044 1.613.115v3.146c-.427-.044-.73-.044-1.224-.044-1.718 0-2.407.652-2.407 2.34v2.001h3.44l-.593 3.667h-2.847v8.07C18.62 22.919 22.5 18.036 22.5 12.201c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.439 3.613 10.036 8.601 11.49Z" />
-              </svg>
+              <Image src="/logofacebook.png" alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
             </a>
             <a
-              href="https://zalo.me/trooi"
+              href="https://instagram.com/trooi.vn"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Zalo"
+              aria-label="Instagram"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
             >
-              <svg className="h-4 w-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden>
-                <path d="M12.5 6C9.46 6 7 8.46 7 11.5v25C7 39.54 9.46 42 12.5 42h23c3.04 0 5.5-2.46 5.5-5.5v-25C41 8.46 38.54 6 35.5 6h-23Zm.32 8h22.35c.2 0 .36.1.42.28.06.18-.01.37-.17.48l-7.56 5.6h7.3c.28 0 .5.22.5.5s-.22.5-.5.5H26.5l-.08-.01c-.19-.04-.34-.2-.36-.4a.49.49 0 0 1 .18-.47l7.56-5.6H27.5v-.01H12.82a.49.49 0 0 1-.36-.56c.04-.18.18-.31.36-.31ZM16 23.5c1.38 0 2.5 1.12 2.5 2.5 0 .83-.4 1.56-1.02 2.01a6.21 6.21 0 0 1 3.02 4.73.5.5 0 0 1-.49.53h-.04a.5.5 0 0 1-.5-.46 5.22 5.22 0 0 0-3.47-4.5.5.5 0 0 1 0-.93A1.5 1.5 0 0 0 16 24.5a.5.5 0 0 1 0-1Zm8 .25a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8a.5.5 0 0 1 .5-.5Zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8a.5.5 0 0 1 .5-.5Zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8a.5.5 0 0 1 .5-.5Z" />
-              </svg>
+              <Image src="/logoinstagram.webp" alt="" width={18} height={18} className="h-[18px] w-[18px] rounded-[5px] object-contain" />
+            </a>
+            <a
+              href="https://x.com/trooi.vn"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+            >
+              <Image src="/logox.webp" alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
             </a>
           </div>
         </div>

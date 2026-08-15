@@ -1,20 +1,47 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ApiError } from '@/lib/api-client';
-import { useIsSignedIn } from '@/stores/auth-store';
+import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
 import { addFavorite, fetchFavorites, removeFavorite } from './api';
 
 export const favoriteKeys = { all: ['favorites'] as const };
 
+/**
+ * The favorites query is client-owned and can be populated as soon as the
+ * refresh-cookie bootstrap completes. Keep it disabled for the first client
+ * render so a server-rendered card cannot hydrate with a different heart state.
+ */
+function subscribeToClient() {
+  return () => undefined;
+}
+
+function useClientReady() {
+  return useSyncExternalStore(
+    subscribeToClient,
+    () => true,
+    () => false,
+  );
+}
+
 export function useFavorites() {
   const isSignedIn = useIsSignedIn();
-  return useQuery({
+  const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
+  const isClientReady = useClientReady();
+  const isReady = isClientReady && isBootstrapped && isSignedIn;
+
+  const query = useQuery({
     queryKey: favoriteKeys.all,
     queryFn: fetchFavorites,
-    enabled: isSignedIn,
+    enabled: isReady,
   });
+
+  return {
+    ...query,
+    data: isReady ? (query.data ?? []) : [],
+  };
 }
 
 /** Whether a specific room is in the signed-in user's favorites. */

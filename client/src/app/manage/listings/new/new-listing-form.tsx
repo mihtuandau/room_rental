@@ -236,7 +236,7 @@ function ListingEditor({
   );
 }
 
-function NewListingFormSkeleton() {
+export function NewListingFormSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Đang tải thông tin đăng tin">
       <div className="grid grid-cols-4 gap-3">
