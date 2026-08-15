@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
-import { Mail, Phone, MessageSquare, ChevronDown, Clock, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MessageSquare, ChevronDown, Clock, MapPin, CheckCircle2 } from 'lucide-react';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ContactInquiryForm } from './_components/contact-inquiry-form';
 
 export const metadata: Metadata = {
   title: 'Liên hệ hỗ trợ — Trọ Ơi',
@@ -124,57 +123,7 @@ export default function ContactPage() {
                   </span>
                 </div>
 
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    alert('Cảm ơn bạn! Yêu cầu của bạn đã được gửi. Đội ngũ Trọ Ơi sẽ liên hệ lại sớm nhất.');
-                  }}
-                  className="mt-6 space-y-4"
-                >
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700">Họ và tên *</label>
-                      <Input
-                        required
-                        placeholder="Nguyễn Văn A"
-                        className="mt-1.5 h-11 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-700">Số điện thoại hoặc Email *</label>
-                      <Input
-                        required
-                        placeholder="0901234567 hoặc email@domain.com"
-                        className="mt-1.5 h-11 text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700">Chủ đề cần hỗ trợ</label>
-                    <select className="mt-1.5 h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600">
-                      <option value="report">Báo cáo tin đăng sai sự thật / lừa đảo</option>
-                      <option value="landlord">Hỗ trợ chủ trọ đăng tin & xác minh</option>
-                      <option value="account">Vấn đề tài khoản & bảo mật</option>
-                      <option value="other">Thắc mắc khác</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700">Nội dung chi tiết *</label>
-                    <textarea
-                      required
-                      rows={4}
-                      placeholder="Mô tả cụ thể thắc mắc hoặc kèm theo link tin đăng cần báo cáo..."
-                      className="mt-1.5 w-full rounded-md border border-zinc-300 bg-white p-3 text-sm text-zinc-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600"
-                    />
-                  </div>
-
-                  <Button type="submit" size="lg" className="w-full sm:w-auto">
-                    <Send className="h-4 w-4" aria-hidden />
-                    Gửi yêu cầu ngay
-                  </Button>
-                </form>
+                <ContactInquiryForm />
               </div>
             </ScrollReveal>
           </div>
