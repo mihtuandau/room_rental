@@ -1,9 +1,9 @@
 'use client';
 
 import { Heart } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { RoomGrid } from '@/components/rooms/room-card';
+import { RoomGridSkeleton } from '@/components/rooms/room-card-skeleton';
 import { useIsSignedIn } from '@/stores/auth-store';
 import { useFavorites } from '@/features/favorites/hooks';
 
@@ -23,13 +23,7 @@ export function FavoritesView() {
   }
 
   if (isPending) {
-    return (
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-        {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
-        ))}
-      </div>
-    );
+    return <RoomGridSkeleton count={6} />;
   }
 
   if (isError) return <ErrorState onRetry={() => refetch()} />;

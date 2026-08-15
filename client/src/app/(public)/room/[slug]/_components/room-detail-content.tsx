@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeCheck, MapPin } from 'lucide-react';
@@ -36,6 +36,12 @@ export function RoomDetailContent({
   recommendedRooms?: RoomCardItem[];
 }) {
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
+
+  useEffect(() => {
+    // App Router can preserve the previous scroll position during a streamed
+    // navigation. A detail page should always open from its gallery.
+    window.scrollTo(0, 0);
+  }, [room.slug]);
 
   const displayAddress = Array.from(
     new Set(

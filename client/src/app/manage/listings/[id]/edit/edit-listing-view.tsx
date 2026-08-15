@@ -34,7 +34,7 @@ export function EditListingView({
   return <EditListingForm room={room} amenities={amenities} provinces={provinces} />;
 }
 
-function FormSkeleton() {
+export function FormSkeleton() {
   return (
     <div className="space-y-6">
       <Skeleton className="h-20 w-full rounded-lg" />
