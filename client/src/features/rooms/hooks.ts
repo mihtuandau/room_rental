@@ -53,7 +53,7 @@ export function useRoomsSearch(params: SearchParams) {
  */
 export function useRevealContact(roomId: number) {
   return useMutation({
-    mutationFn: (type: 'phone' | 'zalo' | 'message') =>
+    mutationFn: (type: 'phone' | 'zalo') =>
       revealContact(roomId, type),
   });
 }

@@ -162,7 +162,7 @@ function RoomRow({
               {room.title}
             </p>
             <p className="mt-1 text-xs text-zinc-500">
-              {room.district}, {room.city}
+              {[room.ward, room.district, room.city].filter(Boolean).join(', ')}
             </p>
           </div>
         </div>

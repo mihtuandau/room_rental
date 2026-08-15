@@ -16,8 +16,10 @@ export type ResultsView = 'list' | 'map';
 const CLEARED: Partial<SearchState> = {
   keyword: '',
   city: '',
+  provinceCode: null,
   district: '',
   ward: '',
+  wardCode: null,
   roomType: null,
   priceMin: null,
   priceMax: null,
@@ -62,8 +64,10 @@ export function useSearchViewState() {
   const hasActiveFilters =
     Boolean(state.keyword) ||
     Boolean(state.city) ||
+    state.provinceCode !== null ||
     Boolean(state.district) ||
     Boolean(state.ward) ||
+    state.wardCode !== null ||
     Boolean(state.roomType) ||
     state.mode === 'nearby' ||
     state.priceMin !== null ||

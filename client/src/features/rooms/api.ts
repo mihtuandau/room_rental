@@ -41,8 +41,10 @@ export interface RoomDetail {
   bathrooms: number | null;
   maxOccupants: number | null;
   city: string;
-  district: string;
+  provinceCode: number | null;
+  district: string | null;
   ward: string | null;
+  wardCode: number | null;
   address: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -59,7 +61,7 @@ export interface RoomDetail {
  * Reveals a landlord's contact info. The backend logs every call into ContactLog
  * (HARD RULE #10) — this is why the phone isn't shown until the user asks.
  */
-export function revealContact(roomId: number, type: 'phone' | 'zalo' | 'message') {
+export function revealContact(roomId: number, type: 'phone' | 'zalo') {
   return apiRequest<{ contactPhone: string | null; zaloUrl: string | null }>(
     `/rooms/${roomId}/contact`,
     { method: 'POST', body: JSON.stringify({ type }) },
@@ -70,8 +72,10 @@ export function revealContact(roomId: number, type: 'phone' | 'zalo' | 'message'
 export interface SearchParams {
   keyword?: string;
   city?: string;
+  provinceCode?: number;
   district?: string;
   ward?: string;
+  wardCode?: number;
   roomType?: RoomType;
   priceMin?: number;
   priceMax?: number;
@@ -132,8 +136,10 @@ export interface CreateRoomInput {
   bathrooms?: number;
   maxOccupants?: number;
   city: string;
-  district: string;
+  provinceCode?: number;
+  district?: string;
   ward?: string;
+  wardCode?: number;
   address?: string;
   latitude?: number;
   longitude?: number;
@@ -160,7 +166,9 @@ export interface MyRoomItem {
   roomType: RoomType;
   price: number;
   city: string;
-  district: string;
+  provinceCode: number | null;
+  district: string | null;
+  wardCode: number | null;
   createdAt: string;
   /** Set the moment admin approval flips status to 'active'; null otherwise. */
   publishedAt: string | null;
@@ -220,8 +228,10 @@ export interface MyRoomDetail {
   bathrooms: number | null;
   maxOccupants: number | null;
   city: string;
-  district: string;
+  provinceCode: number | null;
+  district: string | null;
   ward: string | null;
+  wardCode: number | null;
   address: string | null;
   latitude: number | null;
   longitude: number | null;

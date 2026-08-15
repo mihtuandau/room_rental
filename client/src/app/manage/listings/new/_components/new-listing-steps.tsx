@@ -17,7 +17,7 @@ import {
 import { Field } from '@/features/auth/components/field';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
-import { useDistricts, useWards } from '@/features/locations/hooks';
+import { useWardOptions } from '@/features/locations/hooks';
 import type {
   CreateRoomFormInput,
   CreateRoomFormOutput,
@@ -136,7 +136,6 @@ export function MainInformationStep({
 export function LocationStep({
   provinces,
   city,
-  district,
   ward,
   latitude,
   longitude,
@@ -145,14 +144,12 @@ export function LocationStep({
   register,
   errors,
   onCity,
-  onDistrict,
   onWard,
   onCoordinates,
   onLocationFieldChange,
 }: {
   provinces: ProvinceOption[];
   city?: string;
-  district?: string;
   ward?: string;
   latitude?: number;
   longitude?: number;
@@ -161,8 +158,7 @@ export function LocationStep({
   register: ListingRegister;
   errors: ListingErrors;
   onCity: (city: string) => void;
-  onDistrict: (district: string) => void;
-  onWard: (ward: string) => void;
+  onWard: (ward: string, wardCode?: number) => void;
   onCoordinates: (coordinates: {
     latitude: number;
     longitude: number;
@@ -170,15 +166,11 @@ export function LocationStep({
   onLocationFieldChange: () => void;
 }) {
   const selectedProvince = provinces.find((province) => province.value === city);
-  const districtsQuery = useDistricts(selectedProvince?.code);
-  const selectedDistrict = districtsQuery.data?.find(
-    (option) => option.value === district,
-  );
-  const wardsQuery = useWards(selectedProvince?.code, selectedDistrict?.code);
+  const wardsQuery = useWardOptions(selectedProvince?.code);
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium" htmlFor="city">
             Tỉnh, thành phố
@@ -200,44 +192,16 @@ export function LocationStep({
           ) : null}
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium" htmlFor="district">
-            Quận, huyện
-          </label>
-          <Select
-            value={district || undefined}
-            onValueChange={onDistrict}
-            disabled={!selectedProvince?.code || districtsQuery.isPending}
-          >
-            <SelectTrigger
-              id="district"
-              className="w-full"
-              aria-label="Quận, huyện"
-            >
-              <SelectValue
-                placeholder={
-                  districtsQuery.isPending
-                    ? 'Đang tải quận, huyện…'
-                    : 'Chọn quận, huyện'
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {districtsQuery.data?.map((option) => (
-                <SelectItem key={option.code ?? option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
           <label className="mb-1 block text-sm font-medium" htmlFor="ward">
             Phường, xã
           </label>
           <Select
             value={ward || undefined}
-            onValueChange={onWard}
-            disabled={!selectedDistrict?.code || wardsQuery.isPending}
+            onValueChange={(value) => {
+              const option = wardsQuery.data?.find((ward) => ward.value === value);
+              onWard(value, option?.code);
+            }}
+            disabled={!selectedProvince?.code || wardsQuery.isPending}
           >
             <SelectTrigger
               id="ward"
@@ -251,9 +215,9 @@ export function LocationStep({
               />
             </SelectTrigger>
             <SelectContent>
-              {wardsQuery.data?.map((wardName) => (
-                <SelectItem key={wardName} value={wardName}>
-                  {wardName}
+              {wardsQuery.data?.map((wardOption) => (
+                <SelectItem key={wardOption.code ?? wardOption.value} value={wardOption.value}>
+                  {wardOption.label}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -65,6 +65,7 @@ export class AuthService {
         where: {
           id: otp.id,
           usedAt: null,
+          revokedAt: null,
           expiresAt: { gt: new Date() },
           attempts: { lt: OTP_MAX_ATTEMPTS },
         },
@@ -328,6 +329,7 @@ export class AuthService {
         ? configuredDevCode
         : randomInt(100000, 1_000_000).toString();
     const codeHash = await bcrypt.hash(code, OTP_HASH_COST);
+    await this.revokePreviousOtps(identifier, purpose);
     await this.prisma.otpCode.create({
       data: {
         ...(identifier.email
@@ -379,6 +381,7 @@ export class AuthService {
       where: {
         id: otp.id,
         usedAt: null,
+        revokedAt: null,
         expiresAt: { gt: new Date() },
         attempts: { lt: OTP_MAX_ATTEMPTS },
       },
@@ -421,6 +424,7 @@ export class AuthService {
         ? configuredDevCode
         : randomInt(100000, 1_000_000).toString();
     const codeHash = await bcrypt.hash(code, OTP_HASH_COST);
+    await this.revokePreviousOtps({ phone }, OtpPurpose.change_phone);
     await this.prisma.otpCode.create({
       data: {
         phone,
@@ -459,6 +463,7 @@ export class AuthService {
           phone,
           purpose: OtpPurpose.change_phone,
           usedAt: null,
+          revokedAt: null,
           expiresAt: { gt: new Date() },
           attempts: { lt: OTP_MAX_ATTEMPTS },
         },
@@ -502,6 +507,7 @@ export class AuthService {
           : { phone: identifier.phone }),
         purpose,
         usedAt: null,
+        revokedAt: null,
         expiresAt: { gt: new Date() },
       },
       orderBy: { createdAt: 'desc' },
@@ -516,6 +522,24 @@ export class AuthService {
       throw new UnauthorizedException('Incorrect OTP code.');
     }
     return otp;
+  }
+
+  /** Only the latest code remains usable for a destination and purpose. */
+  private async revokePreviousOtps(
+    identifier: Identifier,
+    purpose: OtpPurpose,
+  ) {
+    await this.prisma.otpCode.updateMany({
+      where: {
+        ...(identifier.email
+          ? { email: identifier.email }
+          : { phone: identifier.phone }),
+        purpose,
+        usedAt: null,
+        revokedAt: null,
+      },
+      data: { revokedAt: new Date() },
+    });
   }
 
   async resetPassword(
@@ -544,6 +568,7 @@ export class AuthService {
         where: {
           id: otp.id,
           usedAt: null,
+          revokedAt: null,
           expiresAt: { gt: new Date() },
           attempts: { lt: OTP_MAX_ATTEMPTS },
         },

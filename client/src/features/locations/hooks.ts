@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchDistricts, fetchWards } from './api';
+import { fetchDistricts, fetchWardOptions, fetchWards } from './api';
 
 export function useDistricts(provinceCode: number | undefined) {
   return useQuery({
@@ -23,6 +23,15 @@ export function useWards(provinceCode: number | undefined, districtCode?: number
   return useQuery({
     queryKey: ['wards', provinceCode, districtCode],
     queryFn: () => fetchWards(provinceCode, districtCode),
+    enabled: !!provinceCode,
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function useWardOptions(provinceCode: number | undefined) {
+  return useQuery({
+    queryKey: ['ward-options', provinceCode],
+    queryFn: () => fetchWardOptions(provinceCode),
     enabled: !!provinceCode,
     staleTime: 60 * 60 * 1000,
   });

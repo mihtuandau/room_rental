@@ -69,6 +69,7 @@ export class AdminRoomsService {
           status: true,
           city: true,
           district: true,
+          ward: true,
           createdAt: true,
           isVerified: true,
           images: { where: { isCover: true }, take: 1, select: { url: true } },

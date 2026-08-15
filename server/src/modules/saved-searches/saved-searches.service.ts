@@ -42,8 +42,10 @@ export class SavedSearchesService {
         where: {
           userId,
           city: dto.city ?? null,
+          provinceCode: dto.provinceCode ?? null,
           district: dto.district ?? null,
           ward: dto.ward ?? null,
+          wardCode: dto.wardCode ?? null,
           roomType: dto.roomType ?? null,
           priceMin: dto.priceMin ?? null,
           priceMax: dto.priceMax ?? null,

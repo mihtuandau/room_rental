@@ -51,7 +51,6 @@ export type ReportReason = keyof typeof REPORT_REASON_LABELS;
 export const CONTACT_TYPE_LABELS = {
   phone: 'Gọi điện',
   zalo: 'Zalo',
-  message: 'Nhắn tin',
 } as const;
 
 export type ContactType = keyof typeof CONTACT_TYPE_LABELS;

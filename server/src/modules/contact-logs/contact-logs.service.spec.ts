@@ -32,7 +32,7 @@ describe('ContactLogsService', () => {
     });
   });
 
-  it('rejects self-contact and unsupported message contact', async () => {
+  it('rejects self-contact', async () => {
     const prisma = {
       room: {
         findFirst: jest.fn().mockResolvedValue({
@@ -54,9 +54,6 @@ describe('ContactLogsService', () => {
     await expect(
       service.logContact('owner-1', 42, ContactType.phone),
     ).rejects.toThrow('own listing');
-    await expect(
-      service.logContact('tenant-1', 42, ContactType.message),
-    ).rejects.toThrow('messaging is implemented');
   });
 
   it('reveals a listing phone to a signed-in viewer even when it is unverified', async () => {

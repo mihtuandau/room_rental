@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/features/auth/components/field';
 import type { Amenity } from '@/features/amenities/api';
 import type { ProvinceOption } from '@/features/locations/api';
+import { useWardOptions } from '@/features/locations/hooks';
 import type { CreateRoomFormInput } from '@/features/rooms/schemas';
 import {
   AMENITY_TYPE_LABELS,
@@ -29,6 +30,8 @@ type AmenityGroup = { type: AmenityType; items: Amenity[] };
 export function EditListingFields({
   roomType,
   city,
+  provinceCode,
+  ward,
   provinces,
   latitude,
   longitude,
@@ -44,6 +47,8 @@ export function EditListingFields({
 }: {
   roomType: CreateRoomFormInput['roomType'];
   city?: string;
+  provinceCode?: number;
+  ward?: string;
   provinces: ProvinceOption[];
   latitude?: number;
   longitude?: number;
@@ -67,6 +72,8 @@ export function EditListingFields({
       />
       <LocationFields
         city={city}
+        provinceCode={provinceCode}
+        ward={ward}
         provinces={provinces}
         latitude={latitude}
         longitude={longitude}
@@ -166,6 +173,8 @@ function MainFields({
 
 function LocationFields({
   city,
+  provinceCode,
+  ward,
   provinces,
   latitude,
   longitude,
@@ -178,6 +187,8 @@ function LocationFields({
 }: Pick<
   Parameters<typeof EditListingFields>[0],
   | 'city'
+  | 'provinceCode'
+  | 'ward'
   | 'provinces'
   | 'latitude'
   | 'longitude'
@@ -188,6 +199,8 @@ function LocationFields({
   | 'setValue'
   | 'onClearCoordinates'
 >) {
+  const wardsQuery = useWardOptions(provinceCode);
+
   return (
     <section className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -201,6 +214,12 @@ function LocationFields({
           value={city || undefined}
           onValueChange={(value) => {
             setValue('city', value, { shouldValidate: true });
+            const province = provinces.find((item) => item.value === value);
+            setValue('provinceCode', province?.code, {
+              shouldValidate: true,
+            });
+            setValue('ward', '', { shouldValidate: true });
+            setValue('wardCode', undefined, { shouldValidate: true });
             onClearCoordinates();
           }}
         >
@@ -221,21 +240,60 @@ function LocationFields({
           </p>
         ) : null}
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
           id="district"
-          label="Quận, huyện"
-          placeholder="Quận 7"
+          label="Khu vực cũ (không bắt buộc)"
+          placeholder="Chỉ dùng cho địa chỉ lịch sử"
           error={errors.district?.message}
           {...register('district', { onChange: onClearCoordinates })}
         />
-        <Field
-          id="ward"
-          label="Phường, xã"
-          placeholder="Không bắt buộc"
-          error={errors.ward?.message}
-          {...register('ward', { onChange: onClearCoordinates })}
-        />
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="ward">
+            Phường, xã hoặc đặc khu
+          </label>
+          <Select
+            value={ward || undefined}
+            onValueChange={(value) => {
+              setValue('ward', value, { shouldValidate: true });
+              const option = wardsQuery.data?.find(
+                (wardOption) => wardOption.value === value,
+              );
+              setValue('wardCode', option?.code, { shouldValidate: true });
+              onClearCoordinates();
+            }}
+            disabled={!provinceCode || wardsQuery.isPending}
+          >
+            <SelectTrigger id="ward" aria-label="Phường, xã hoặc đặc khu">
+              <SelectValue
+                placeholder={
+                  wardsQuery.isPending
+                    ? 'Đang tải phường, xã…'
+                    : 'Chọn phường, xã'
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {ward &&
+              !wardsQuery.data?.some((option) => option.value === ward) ? (
+                <SelectItem value={ward}>{ward}</SelectItem>
+              ) : null}
+              {wardsQuery.data?.map((option) => (
+                <SelectItem
+                  key={option.code ?? option.value}
+                  value={option.value}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.ward ? (
+            <p className="mt-1 text-sm text-danger-600">
+              {errors.ward.message}
+            </p>
+          ) : null}
+        </div>
       </div>
       <Field
         id="address"
