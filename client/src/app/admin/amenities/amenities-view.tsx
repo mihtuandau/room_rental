@@ -85,9 +85,7 @@ export function AdminAmenitiesView() {
     }
   };
 
-  if (amenities.isPending) {
-    return <Skeleton className="h-[620px] w-full rounded-lg" />;
-  }
+  if (amenities.isPending) return <AmenitiesSkeleton />;
   if (amenities.isError) {
     return <ErrorState onRetry={() => void amenities.refetch()} />;
   }
@@ -154,6 +152,44 @@ export function AdminAmenitiesView() {
           }
         }}
       />
+    </div>
+  );
+}
+
+export function AmenitiesSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Đang tải tiện ích">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Skeleton className="h-9 w-60" />
+          <Skeleton className="mt-2 h-5 w-full max-w-xl" />
+        </div>
+        <Skeleton className="h-10 w-full sm:w-36" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} className="h-32 w-full rounded-xl" />
+        ))}
+      </div>
+      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-100 p-4 sm:p-5">
+          <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_160px_150px_190px]">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className="h-10 w-full" />
+            ))}
+          </div>
+        </div>
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="grid gap-3 border-b border-zinc-100 px-5 py-4 sm:grid-cols-5 sm:items-center">
+            <Skeleton className="h-8 w-36" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-9 w-20 sm:justify-self-end" />
+          </div>
+        ))}
+      </section>
+      <Skeleton className="h-28 w-full rounded-lg" />
     </div>
   );
 }

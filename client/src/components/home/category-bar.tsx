@@ -1,12 +1,13 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { useQueryStates } from 'nuqs';
 import {
   ROOM_TYPE_OPTIONS,
   type RoomType,
 } from '@/lib/constants';
-import { searchParsers } from '@/features/rooms/search-params';
+import { isSearchExpanded, searchParsers } from '@/features/rooms/search-params';
 import { cn } from '@/lib/utils';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
@@ -19,19 +20,27 @@ const CATEGORY_IMAGES: Record<RoomType, string> = {
 };
 
 export function CategoryBar() {
+  const [isNavigating, setIsNavigating] = useState(false);
   const [state, setState] = useQueryStates(searchParsers, {
     history: 'push',
-    shallow: true,
+    // Selecting a category is a full search transition, so let the server
+    // replace the landing layout with the results layout immediately.
+    shallow: false,
   });
   const handleCategoryClick = (value: RoomType) => {
     if (state.roomType === value) {
       // Toggle off if already selected
       void setState({ roomType: null, page: 1 });
     } else {
-      // Select new category and expand search results
+      // Remove the landing section before starting the results transition so
+      // the category cards never flash above the search results.
+      setIsNavigating(true);
+      window.scrollTo({ top: 0, behavior: 'auto' });
       void setState({ roomType: value, all: true, page: 1 });
     }
   };
+
+  if (isNavigating || isSearchExpanded(state)) return null;
 
   return (
     <section

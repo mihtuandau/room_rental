@@ -176,8 +176,7 @@ export function Header() {
       pathname === '/' && !isCompact ? "border-transparent shadow-none" : "border-border-subtle shadow-sm",
     )}>
       <div className={cn(
-        "mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 transition-[height] duration-200 sm:gap-4 sm:px-6",
-        isCompact ? "h-12 sm:h-14" : "h-14 sm:h-16",
+        "mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6",
       )}>
         <Link
           href="/"
@@ -185,7 +184,7 @@ export function Header() {
           aria-label="Trọ Ơi — Trang chủ"
           className={cn(
             "flex shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
-            isCompact ? "h-12 w-12" : "h-14 w-14 sm:h-16 sm:w-16",
+            "h-14 w-14 sm:h-16 sm:w-16",
           )}
         >
           <Image
@@ -194,7 +193,10 @@ export function Header() {
             width={64}
             height={64}
             priority
-            className={cn("object-contain transition-[width,height] duration-200", isCompact ? "h-12 w-12" : "h-14 w-14 sm:h-16 sm:w-16")}
+            className={cn(
+              "h-14 w-14 object-contain transition-transform duration-200 sm:h-16 sm:w-16",
+              isCompact ? "scale-[0.86]" : "scale-100",
+            )}
           />
         </Link>
 

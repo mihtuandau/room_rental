@@ -21,7 +21,7 @@ export function RoomCardSkeleton() {
 /** Render as many as the page size so the page height doesn't collapse. */
 export function RoomGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
       {Array.from({ length: count }, (_, i) => (
         <RoomCardSkeleton key={i} />
       ))}
