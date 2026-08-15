@@ -9,7 +9,7 @@ import { formatPrice } from '@/lib/utils';
 
 export interface FeaturedLocation {
   city: string;
-  district: string;
+  district: string | null;
   count: number;
   minPrice: number | null;
   imageUrl: string | null;
@@ -21,7 +21,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
   const handleLocationClick = (location: FeaturedLocation) => {
     void setQuery({
       city: location.city,
-      district: location.district,
+      district: location.district ?? '',
       all: true,
       page: 1,
     }).then(() => {
@@ -50,12 +50,13 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
       {locations.length ? (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-7 sm:gap-6 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           {locations.map((loc, index) => {
+            const areaName = loc.district ?? loc.city;
             const summary = loc.minPrice
               ? `${loc.city} · Từ ${formatPrice(loc.minPrice)}/tháng`
               : `${loc.city} · Tin đang hoạt động`;
           return (
             <button
-              key={`${loc.city}-${loc.district}`}
+              key={`${loc.city}-${areaName}`}
               type="button"
               onClick={() => handleLocationClick(loc)}
               className="group relative h-40 w-full overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 sm:h-56"
@@ -64,7 +65,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
               <div className="absolute inset-0 z-0 transition-transform duration-500 group-hover:scale-105">
                 <Image
                   src={loc.imageUrl ?? PLACEHOLDER_IMAGE}
-                  alt={`Phòng trọ tại ${loc.district}, ${loc.city}`}
+                  alt={`Phòng trọ tại ${areaName}, ${loc.city}`}
                   fill
                   priority={index === 0}
                   className="object-cover"
@@ -84,7 +85,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
                 <div className="space-y-1 pr-6">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4 text-brand-400 shrink-0" aria-hidden />
-                    <span className="text-lg font-semibold tracking-tight">{loc.district}</span>
+                    <span className="text-lg font-semibold tracking-tight">{areaName}</span>
                   </div>
                   <p className="text-xs text-zinc-200/90 line-clamp-2 leading-relaxed font-medium">
                     {summary}

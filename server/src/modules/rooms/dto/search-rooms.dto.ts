@@ -28,8 +28,29 @@ export class SearchRoomsDto {
   @Length(1, 200)
   keyword?: string;
 
-  @ApiPropertyOptional() @IsOptional() @IsString() city?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() district?: string;
+  @ApiPropertyOptional({
+    description: 'Legacy province-name snapshot; prefer provinceCode.',
+    deprecated: true,
+  })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ description: 'Current province code.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  provinceCode?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Historical district label; not a current administrative filter.',
+    deprecated: true,
+  })
+  @IsOptional()
+  @IsString()
+  district?: string;
   @ApiPropertyOptional({
     description:
       'Ward/commune (phường/xã) — a finer-grained filter than district',
@@ -37,6 +58,15 @@ export class SearchRoomsDto {
   @IsOptional()
   @IsString()
   ward?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current ward/commune/special-zone code.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  wardCode?: number;
   @ApiPropertyOptional({ enum: RoomType })
   @IsOptional()
   @IsEnum(RoomType)

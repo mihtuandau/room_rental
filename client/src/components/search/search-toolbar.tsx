@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, MapPin, Search } from 'lucide-react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { DistrictOption, ProvinceOption } from '@/features/locations/api';
-import { useDistricts, useWards } from '@/features/locations/hooks';
+import type { ProvinceOption, WardOption } from '@/features/locations/api';
+import { useWardOptions } from '@/features/locations/hooks';
 import type { SearchState } from '@/features/rooms/search-params';
 import { RADIUS_OPTIONS } from '@/lib/constants';
 
@@ -21,7 +21,7 @@ import { RADIUS_OPTIONS } from '@/lib/constants';
 const ALL = '__all__';
 
 /**
- * The single, always-visible search surface: province → district → ward → keyword. It
+ * The single, always-visible search surface: province → ward → keyword. It
  * writes the same URL state the results read, so it's editable right where the
  * results are — no jumping back to a hero. Price/type/area/amenities are the
  * "Bộ lọc" refinements, kept separate on purpose.
@@ -36,44 +36,12 @@ export function SearchToolbar({
   onChange: (patch: Partial<SearchState>) => void;
 }) {
   const [keyword, setKeyword] = useState(state.keyword);
-  const cityCode = provinces.find((p) => p.value === state.city)?.code;
-  const districts = useDistricts(cityCode);
-  const districtCode = districts.data?.find((d) => d.value === state.district)?.code;
-  const wards = useWards(cityCode, districtCode);
-  const districtOptions = useMemo(() => districts.data ?? [], [districts.data]);
+  const provinceCode =
+    state.provinceCode ?? provinces.find((p) => p.value === state.city)?.code;
+  const wards = useWardOptions(provinceCode);
   const wardOptions = wards.data ?? [];
-  const shouldShowCurrentDistrict =
-    Boolean(state.district) &&
-    !districtOptions.some((district) => district.value === state.district);
   const shouldShowCurrentWard =
-    Boolean(state.ward) && !wardOptions.some((ward) => ward === state.ward);
-
-  // A reverse-geocoder can return a ward while omitting or mislabelling its
-  // parent district. Reconcile the URL against the authoritative district
-  // ward lists so an impossible pair (for example Linh Xuân + Quận 1) is
-  // corrected as soon as the location data finishes loading.
-  useEffect(() => {
-    if (districts.isLoading || !state.ward || districtOptions.length === 0) return;
-    const normalizedWard = state.ward
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-    // Numeric ward names are not globally unique (many districts have a
-    // "Phường 3"), so they must never be used to infer a district.
-    if (/^\d+$/u.test(normalizedWard)) return;
-    const districtForWard = districtOptions.find((district) =>
-      district.wardNames?.some(
-        (ward) =>
-          ward
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase() === normalizedWard,
-      ),
-    );
-    if (districtForWard && districtForWard.value !== state.district) {
-      onChange({ district: districtForWard.value, page: 1 });
-    }
-  }, [districtOptions, districts.isLoading, onChange, state.district, state.ward]);
+    Boolean(state.ward) && !wardOptions.some((ward) => ward.value === state.ward);
 
   const submitKeyword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,11 +57,8 @@ export function SearchToolbar({
       <LocationPicker
         state={state}
         provinces={provinces}
-        districtOptions={districtOptions}
         wardOptions={wardOptions}
-        shouldShowCurrentDistrict={shouldShowCurrentDistrict}
         shouldShowCurrentWard={shouldShowCurrentWard}
-        districtsLoading={districts.isLoading}
         wardsLoading={wards.isLoading}
         onChange={onChange}
       />
@@ -143,21 +108,15 @@ export function SearchToolbar({
 function LocationPicker({
   state,
   provinces,
-  districtOptions,
   wardOptions,
-  shouldShowCurrentDistrict,
   shouldShowCurrentWard,
-  districtsLoading,
   wardsLoading,
   onChange,
 }: {
   state: SearchState;
   provinces: ProvinceOption[];
-  districtOptions: DistrictOption[];
-  wardOptions: string[];
-  shouldShowCurrentDistrict: boolean;
+  wardOptions: WardOption[];
   shouldShowCurrentWard: boolean;
-  districtsLoading: boolean;
   wardsLoading: boolean;
   onChange: (patch: Partial<SearchState>) => void;
 }) {
@@ -189,7 +148,7 @@ function LocationPicker({
           <div className="mb-3">
             <p className="text-sm font-semibold text-zinc-900">Chọn khu vực</p>
             <p className="mt-1 text-xs text-zinc-500">
-              Chọn tỉnh, quận/huyện và phường/xã để lọc chính xác hơn.
+              Chọn tỉnh và phường/xã để lọc chính xác hơn.
             </p>
           </div>
 
@@ -199,8 +158,13 @@ function LocationPicker({
               onValueChange={(v) =>
                 onChange({
                   city: v === ALL ? '' : v,
+                  provinceCode:
+                    v === ALL
+                      ? null
+                      : provinces.find((province) => province.value === v)?.code ?? null,
                   district: '',
                   ward: '',
+                  wardCode: null,
                   mode: 'area',
                   lat: null,
                   lng: null,
@@ -222,40 +186,14 @@ function LocationPicker({
             </Select>
 
             <Select
-              value={state.district || ALL}
-              onValueChange={(v) =>
-                onChange({
-                  district: v === ALL ? '' : v,
-                  ward: '',
-                  mode: 'area',
-                  lat: null,
-                  lng: null,
-                  radiusKm: null,
-                })
-              }
-              disabled={!state.city || districtsLoading}
-            >
-              <SelectTrigger className="w-full" aria-label="Quận, huyện">
-                <SelectValue placeholder="Quận, huyện" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Tất cả quận/huyện</SelectItem>
-                {shouldShowCurrentDistrict ? (
-                  <SelectItem value={state.district}>{state.district}</SelectItem>
-                ) : null}
-                {districtOptions.map((district) => (
-                  <SelectItem key={district.value} value={district.value}>
-                    {district.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
               value={state.ward || ALL}
               onValueChange={(v) =>
                 onChange({
                   ward: v === ALL ? '' : v,
+                  wardCode:
+                    v === ALL
+                      ? null
+                      : wardOptions.find((ward) => ward.value === v)?.code ?? null,
                   mode: 'area',
                   lat: null,
                   lng: null,
@@ -273,8 +211,8 @@ function LocationPicker({
                   <SelectItem value={state.ward}>{state.ward}</SelectItem>
                 ) : null}
                 {wardOptions.map((ward) => (
-                  <SelectItem key={ward} value={ward}>
-                    {ward}
+                  <SelectItem key={ward.code ?? ward.value} value={ward.value}>
+                    {ward.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -33,7 +33,7 @@ function popupHtml(room: RoomCardItem) {
   return `<a class="rr-popup rr-popup--room" href="/room/${encodeURIComponent(room.slug)}">
     <img class="rr-popup-image" src="${escapeHtml(getRoomImageUrl(room))}" alt="" />
     <span class="rr-popup-title">${escapeHtml(room.title)}</span>
-    <span class="rr-popup-meta">${escapeHtml(ROOM_TYPE_LABELS[room.roomType])} · ${escapeHtml(room.district)}</span>
+    <span class="rr-popup-meta">${escapeHtml(ROOM_TYPE_LABELS[room.roomType])} · ${escapeHtml(room.district ?? room.city)}</span>
     <span class="rr-popup-price">${escapeHtml(formatPriceShort(room.price))}/tháng</span>
     <span class="rr-popup-action">Xem chi tiết phòng →</span>
   </a>`;

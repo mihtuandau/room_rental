@@ -43,8 +43,10 @@ export const createRoomSchema = z.object({
     z.number().int().min(1).max(50, 'Số người tối đa không hợp lệ.').optional(),
   ),
   city: z.string().min(1, 'Chọn tỉnh, thành phố.'),
-  district: z.string().min(1, 'Nhập quận, huyện.'),
+  provinceCode: numberField(z.number().int().positive().optional()),
+  district: z.string().optional().or(z.literal('')),
   ward: z.string().optional().or(z.literal('')),
+  wardCode: numberField(z.number().int().positive().optional()),
   address: z.string().optional().or(z.literal('')),
   latitude: numberField(
     z

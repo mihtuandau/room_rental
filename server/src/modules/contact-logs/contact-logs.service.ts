@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -39,12 +38,6 @@ export class ContactLogsService {
         'You cannot reveal contact details for your own listing.',
       );
     }
-    if (type === ContactType.message) {
-      throw new BadRequestException(
-        'Message contact is not available until messaging is implemented.',
-      );
-    }
-
     await this.prisma.$transaction([
       this.prisma.contactLog.create({ data: { userId, roomId, type } }),
       this.prisma.room.update({

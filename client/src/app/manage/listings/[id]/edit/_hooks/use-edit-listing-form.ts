@@ -67,8 +67,10 @@ export function useEditListingForm(
     bathrooms: room.bathrooms ?? undefined,
     maxOccupants: room.maxOccupants ?? undefined,
     city: room.city,
-    district: room.district,
+    provinceCode: room.provinceCode ?? undefined,
+    district: room.district ?? '',
     ward: room.ward ?? '',
+    wardCode: room.wardCode ?? undefined,
     address: room.address ?? '',
     latitude: room.latitude ?? undefined,
     longitude: room.longitude ?? undefined,
@@ -88,14 +90,16 @@ export function useEditListingForm(
     setValue,
     formState: { isSubmitting },
   } = form;
-  const [roomType, city, district, ward, address, latitude, longitude] =
+  const [roomType, city, provinceCode, district, ward, wardCode, address, latitude, longitude] =
     useWatch({
       control,
       name: [
         'roomType',
         'city',
+        'provinceCode',
         'district',
         'ward',
+        'wardCode',
         'address',
         'latitude',
         'longitude',
@@ -234,6 +238,10 @@ export function useEditListingForm(
     ...form,
     roomType,
     city,
+    provinceCode:
+      typeof provinceCode === 'number' ? provinceCode : undefined,
+    ward,
+    wardCode,
     latitudeValue: typeof latitude === 'number' ? latitude : undefined,
     longitudeValue: typeof longitude === 'number' ? longitude : undefined,
     addressQueries: buildLocationSearchQueries({
@@ -242,7 +250,7 @@ export function useEditListingForm(
       district,
       city,
     }),
-    canAutoSearchLocation: Boolean(city && district && (ward || address)),
+    canAutoSearchLocation: Boolean(city && (ward || address)),
     amenityGroups,
     selectedAmenityIds,
     isUploadingImage,

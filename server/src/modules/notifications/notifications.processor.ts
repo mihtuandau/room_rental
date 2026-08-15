@@ -33,8 +33,10 @@ export class NotificationsProcessor extends WorkerHost {
         title: true,
         slug: true,
         city: true,
+        provinceCode: true,
         district: true,
         ward: true,
+        wardCode: true,
         roomType: true,
         price: true,
         area: true,
@@ -57,9 +59,23 @@ export class NotificationsProcessor extends WorkerHost {
       const matches = await this.prisma.savedSearch.findMany({
         where: {
           AND: [
-            { OR: [{ city: null }, { city: room.city }] },
+            {
+              OR: [
+                { city: null, provinceCode: null },
+                { city: room.city, provinceCode: null },
+                ...(room.provinceCode != null
+                  ? [{ provinceCode: room.provinceCode }]
+                  : []),
+              ],
+            },
             { OR: [{ district: null }, { district: room.district }] },
-            { OR: [{ ward: null }, { ward: room.ward }] },
+            {
+              OR: [
+                { ward: null, wardCode: null },
+                { ward: room.ward, wardCode: null },
+                ...(room.wardCode != null ? [{ wardCode: room.wardCode }] : []),
+              ],
+            },
             { OR: [{ roomType: null }, { roomType: room.roomType }] },
             { OR: [{ priceMin: null }, { priceMin: { lte: room.price } }] },
             { OR: [{ priceMax: null }, { priceMax: { gte: room.price } }] },

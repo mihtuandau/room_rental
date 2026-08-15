@@ -133,7 +133,6 @@ function ListingEditor({
             <LocationStep
               provinces={provinces}
               city={listing.city}
-              district={listing.district}
               ward={listing.ward}
               latitude={listing.latitudeValue}
               longitude={listing.longitudeValue}
@@ -143,17 +142,18 @@ function ListingEditor({
               errors={errors}
               onCity={(value) => {
                 listing.setValue('city', value, { shouldValidate: true });
+                const province = provinces.find((option) => option.value === value);
+                listing.setValue('provinceCode', province?.code, {
+                  shouldValidate: true,
+                });
                 listing.setValue('district', '', { shouldValidate: true });
                 listing.setValue('ward', '', { shouldValidate: true });
+                listing.setValue('wardCode', undefined, { shouldValidate: true });
                 listing.clearCoordinates();
               }}
-              onDistrict={(value) => {
-                listing.setValue('district', value, { shouldValidate: true });
-                listing.setValue('ward', '', { shouldValidate: true });
-                listing.clearCoordinates();
-              }}
-              onWard={(value) => {
+              onWard={(value, code) => {
                 listing.setValue('ward', value, { shouldValidate: true });
+                listing.setValue('wardCode', code, { shouldValidate: true });
                 listing.clearCoordinates();
               }}
               onCoordinates={listing.setCoordinates}

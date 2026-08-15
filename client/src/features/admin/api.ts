@@ -14,7 +14,8 @@ export interface AdminPendingRoom {
   price: number;
   status: RoomStatus;
   city: string;
-  district: string;
+  district: string | null;
+  ward: string | null;
   roomType: 'boarding_house' | 'whole_house' | 'mini_apartment' | 'serviced_apartment' | 'shared_room';
   isVerified: boolean;
   images: { url: string }[];

@@ -79,6 +79,8 @@ export function EditListingForm({
           <EditListingFields
             roomType={listing.roomType}
             city={listing.city}
+            provinceCode={listing.provinceCode}
+            ward={listing.ward}
             provinces={provinces}
             latitude={listing.latitudeValue}
             longitude={listing.longitudeValue}

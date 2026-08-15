@@ -11,8 +11,10 @@ import { useIsSignedIn } from '@/stores/auth-store';
 function toSavedSearchInput(state: SearchState) {
   return {
     city: state.city || undefined,
+    provinceCode: state.provinceCode ?? undefined,
     district: state.district || undefined,
     ward: state.ward || undefined,
+    wardCode: state.wardCode ?? undefined,
     roomType: state.roomType ?? undefined,
     priceMin: state.priceMin ?? undefined,
     priceMax: state.priceMax ?? undefined,
@@ -24,8 +26,10 @@ function toSavedSearchInput(state: SearchState) {
 export function hasSavedSearchCriteria(state: SearchState) {
   return Boolean(
     state.city ||
+      state.provinceCode !== null ||
       state.district ||
       state.ward ||
+      state.wardCode !== null ||
       state.roomType ||
       state.priceMin !== null ||
       state.priceMax !== null ||

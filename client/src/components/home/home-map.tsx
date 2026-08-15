@@ -361,7 +361,7 @@ export function HomeMap({
         title.textContent = room.title;
         const meta = document.createElement('span');
         meta.className = 'rr-popup-meta';
-        meta.textContent = `${room.district}, ${room.city}`;
+        meta.textContent = [room.district, room.city].filter(Boolean).join(', ');
         const popupPrice = document.createElement('span');
         popupPrice.className = 'rr-popup-price';
         popupPrice.textContent = `${formatPriceShort(room.price)}/tháng`;

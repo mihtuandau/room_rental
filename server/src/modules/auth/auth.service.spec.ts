@@ -74,6 +74,7 @@ describe('AuthService registration OTP', () => {
       where: {
         id: otp.id,
         usedAt: null,
+        revokedAt: null,
         expiresAt: { gt: expect.any(Date) },
         attempts: { lt: 5 },
       },
@@ -181,7 +182,7 @@ describe('AuthService registration OTP', () => {
   it('does not create an OTP for an unknown reset email', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
-      otpCode: { create: jest.fn() },
+      otpCode: { create: jest.fn(), updateMany: jest.fn() },
     };
     const email = { send: jest.fn() };
     const service = new AuthService(
@@ -206,7 +207,10 @@ describe('AuthService registration OTP', () => {
   it('rejects email registration OTP requests', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
-      otpCode: { create: jest.fn().mockResolvedValue({}) },
+      otpCode: {
+        create: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
     };
     const email = { send: jest.fn().mockResolvedValue(undefined) };
     const service = new AuthService(
@@ -228,7 +232,10 @@ describe('AuthService registration OTP', () => {
   it('sends a phone registration OTP through the selected SMS provider', async () => {
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(null) },
-      otpCode: { create: jest.fn().mockResolvedValue({}) },
+      otpCode: {
+        create: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
     };
     const sms = {
       usesTwilioVerify: jest.fn().mockReturnValue(true),
@@ -271,7 +278,10 @@ describe('AuthService registration OTP', () => {
           deletedAt: null,
         }),
       },
-      otpCode: { create: jest.fn().mockResolvedValue({}) },
+      otpCode: {
+        create: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
     };
     const sms = {
       usesTwilioVerify: jest.fn().mockReturnValue(true),

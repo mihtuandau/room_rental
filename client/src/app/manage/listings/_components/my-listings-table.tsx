@@ -134,7 +134,7 @@ function MobileRoomCard({ room }: { room: MyRoomItem }) {
             <p className="line-clamp-2 text-sm font-semibold text-zinc-900">{room.title}</p>
           )}
           <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
-            {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city}
+            {ROOM_TYPE_LABELS[room.roomType]} · {[room.district, room.city].filter(Boolean).join(', ')}
           </p>
         </div>
       </div>
@@ -182,7 +182,7 @@ function RoomRow({ room }: { room: MyRoomItem }) {
               <p className="truncate font-medium text-zinc-900">{room.title}</p>
             )}
             <p className="truncate text-xs text-zinc-500">
-              {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city} ·{' '}
+              {ROOM_TYPE_LABELS[room.roomType]} · {[room.district, room.city].filter(Boolean).join(', ')} ·{' '}
               {formatPrice(room.price)}/tháng
             </p>
           </div>
