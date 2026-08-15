@@ -6,7 +6,6 @@ import { FeaturedSection } from '@/components/home/featured-section';
 import { HomeHero } from '@/components/home/home-hero';
 import { HowItWorks } from '@/components/home/how-it-works';
 import { LandlordCta } from '@/components/home/landlord-cta';
-import { WhyChooseUs } from '@/components/home/why-choose-us';
 import {
   PopularLocations,
   type FeaturedLocation,
@@ -115,19 +114,18 @@ export default async function HomePage({ searchParams }: Props) {
   return (
     <>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <CategoryBar />
         <HomeHero
           provinces={provinces}
         />
+        {!isSearchExpanded(parsed) ? <CategoryBar /> : null}
         <SearchView
           amenities={amenities}
           provinces={provinces}
           browseTop={
             <div className="flex flex-col gap-12 sm:gap-16">
               <FeaturedSection />
-              <HowItWorks />
               <PopularLocations locations={locations} />
-              <WhyChooseUs />
+              <HowItWorks />
             </div>
           }
           browseBottom={

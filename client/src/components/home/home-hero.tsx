@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Banknote, CircleDotDashed, LocateFixed, Search } from 'lucide-react';
+import { CircleDotDashed, LocateFixed, LoaderCircle, Search } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
+import { REASONS } from '@/components/home/why-choose-us';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,15 +20,9 @@ import {
   type ProvinceOption,
 } from '@/features/locations/api';
 import { isSearchExpanded, searchParsers } from '@/features/rooms/search-params';
-import { PRICE_RANGE_OPTIONS, RADIUS_OPTIONS } from '@/lib/constants';
+import { RADIUS_OPTIONS } from '@/lib/constants';
 
-const ALL = '__all__';
 const DEFAULT_RADIUS_KM = 3;
-const HERO_IMAGES = [
-  { src: '/banner.png', alt: 'Phòng sáng thoáng với ban công nhiều ánh sáng' },
-  { src: '/room1.jpg', alt: 'Phòng có gác và khu bếp nhỏ gọn' },
-  { src: '/room3.jpg', alt: 'Không gian phòng có gác và nội thất tiện nghi' },
-] as const;
 type SearchCenterMode = 'province' | 'nearby';
 
 interface ReverseGeocodeResponse {
@@ -225,39 +220,10 @@ export function HomeHero({
   const [userCenter, setUserCenter] = useState<[number, number] | null>(
     urlState.lng && urlState.lat ? [Number(urlState.lng), Number(urlState.lat)] : null,
   );
+  const [isLocating, setIsLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [heroImageIndex, setHeroImageIndex] = useState(0);
-  const [flippingIndex, setFlippingIndex] = useState<number | null>(null);
   const [radiusKm, setRadiusKm] = useState(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
-  const [priceRangeValue, setPriceRangeValue] = useState(
-    PRICE_RANGE_OPTIONS.find(
-      (p) => p.priceMin === urlState.priceMin && p.priceMax === urlState.priceMax,
-    )?.value ?? ALL,
-  );
-
-  const handleFlipNext = useCallback(() => {
-    if (flippingIndex !== null) return;
-    const current = heroImageIndex;
-
-    setFlippingIndex(current);
-    setHeroImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-
-    setTimeout(() => {
-      setFlippingIndex(null);
-    }, 650);
-  }, [flippingIndex, heroImageIndex]);
-
-  useEffect(() => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reduceMotion.matches) return;
-
-    const timer = window.setInterval(() => {
-      handleFlipNext();
-    }, 5_500);
-
-    return () => window.clearInterval(timer);
-  }, [handleFlipNext]);
 
   // The header can clear the search URL while this home component stays
   // mounted. Keep the hero's local controls aligned with the canonical URL so
@@ -275,11 +241,6 @@ export function HomeHero({
       setCenterMode(urlState.mode === 'nearby' && hasCoordinates ? 'nearby' : 'province');
       setUserCenter(hasCoordinates ? parsedCenter : null);
       setRadiusKm(urlState.radiusKm ?? DEFAULT_RADIUS_KM);
-      setPriceRangeValue(
-        PRICE_RANGE_OPTIONS.find(
-          (p) => p.priceMin === urlState.priceMin && p.priceMax === urlState.priceMax,
-        )?.value ?? ALL,
-      );
     });
     return () => window.cancelAnimationFrame(frame);
   }, [
@@ -333,15 +294,14 @@ export function HomeHero({
       return;
     }
 
-    const range = PRICE_RANGE_OPTIONS.find((p) => p.value === priceRangeValue);
     setUrlState({
       keyword: matchedProvince ? '' : typedLocation,
       city: matchedProvince?.value ?? override?.city ?? city,
       district: nextMode === 'nearby' ? (override?.district ?? urlState.district) : '',
       ward: nextMode === 'nearby' ? (override?.ward ?? urlState.ward) : '',
       roomType: urlState.roomType,
-      priceMin: range?.priceMin ?? null,
-      priceMax: range?.priceMax ?? null,
+      priceMin: null,
+      priceMax: null,
       mode: nextMode === 'nearby' ? 'nearby' : 'area',
       lat: nextMode === 'nearby' && nextCenter ? String(nextCenter[1]) : null,
       lng: nextMode === 'nearby' && nextCenter ? String(nextCenter[0]) : null,
@@ -352,21 +312,21 @@ export function HomeHero({
   };
 
   const useNearby = () => {
+    if (isLocating) return;
+
     if (!navigator.geolocation) {
       setLocationMessage('Trình duyệt chưa hỗ trợ lấy vị trí hiện tại.');
       return;
     }
 
-    setLocationMessage('Đang lấy vị trí của bạn...');
+    setIsLocating(true);
+    setLocationMessage('Đang lấy vị trí của bạn…');
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const nextCenter: [number, number] = [position.coords.longitude, position.coords.latitude];
         let detectedCity = '';
         let detectedDistrict = '';
         let detectedWard = '';
-        setCenterMode('nearby');
-        setUserCenter(nextCenter);
-        setRadiusKm(DEFAULT_RADIUS_KM);
 
         try {
           const place = await resolveNearbyPlace(nextCenter, provinces);
@@ -379,6 +339,12 @@ export function HomeHero({
           detectedWard = '';
         }
 
+        // Apply the nearby layout only after location lookup is complete. This
+        // avoids an intermediate render where the form reflows before the
+        // nearby search state is ready.
+        setCenterMode('nearby');
+        setUserCenter(nextCenter);
+        setRadiusKm(DEFAULT_RADIUS_KM);
         setCity(detectedCity);
         setLocationMessage(
           detectedCity
@@ -395,8 +361,10 @@ export function HomeHero({
           mode: 'nearby',
           radiusKm: DEFAULT_RADIUS_KM,
         });
+        setIsLocating(false);
       },
       () => {
+        setIsLocating(false);
         setLocationMessage('Chưa lấy được vị trí. Bạn có thể nhập khu vực để tìm.');
       },
       // Do not reuse a stale location when the user explicitly presses "Gần tôi".
@@ -407,9 +375,32 @@ export function HomeHero({
   return (
     <section
       id="tim-phong"
-      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-brand-50/50 via-brand-50/30 to-surface-page pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[560px] lg:py-14"
+      className="relative isolate scroll-mt-20 overflow-visible bg-gradient-to-b from-surface-page via-brand-50/20 to-surface-page pb-8 pt-8 sm:pb-12 sm:pt-12 lg:min-h-[624px] lg:py-14"
     >
-      <div className="mx-auto flex flex-col w-full max-w-7xl px-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center lg:gap-12">
+      <div className="mobile-hero-map pointer-events-none relative -mt-8 mb-6 aspect-[1798/875] w-full overflow-hidden sm:-mt-12 sm:mb-8 lg:hidden" aria-hidden="true">
+        <Image
+          src="/hero-district-1-map-mobile-top-bottom-fade.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="hero-map-mobile-art object-contain object-center"
+        />
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden lg:block" aria-hidden="true">
+        <div className="hero-map-background absolute -right-[20%] top-28 aspect-[3/4] w-[94%] sm:-right-[12%] sm:top-20 sm:w-[76%] lg:right-0 lg:top-0 lg:aspect-[1717/916] lg:w-[min(88%,1168px)]">
+          <Image
+            src="/hero-district-1-map.png"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1024px) 82vw, 105vw"
+            className="hero-map-art object-contain object-right"
+          />
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 sm:px-6 lg:min-h-[512px] lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center lg:gap-12">
         <div className="contents lg:block lg:max-w-xl">
           <div className="order-1 pb-5 lg:pb-0">
             <h1 className="mt-4 text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
@@ -429,23 +420,13 @@ export function HomeHero({
                 submit();
               }}
             >
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-3 sm:mb-0">
+              <div className="mb-2 sm:mb-0">
                 <div>
                   <p className="text-sm font-medium text-zinc-900">Bạn muốn tìm ở đâu?</p>
                   <p className="mt-1 hidden text-xs text-zinc-500 sm:block">
                     Tìm theo khu vực hoặc trong bán kính quanh vị trí hiện tại.
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant={centerMode === 'nearby' ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={useNearby}
-                  className="hidden sm:inline-flex"
-                >
-                  <LocateFixed className="h-4 w-4" aria-hidden />
-                  Gần tôi
-                </Button>
               </div>
 
             {centerMode === 'nearby' && userCenter ? (
@@ -455,8 +436,8 @@ export function HomeHero({
               </div>
             ) : null}
 
-            <div className="mt-0 flex flex-row items-center gap-2 sm:mt-4 sm:grid sm:gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_auto] lg:items-end">
-              <Field className="flex-1 sm:flex-none" label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
+            <div className="mt-0 flex flex-row items-end gap-2 sm:mt-4 sm:gap-3">
+              <Field className="min-w-0 flex-1" label="Từ khóa hoặc khu vực" icon={<Search className="h-4 w-4" aria-hidden />}>
                 <div className="relative">
                 <Input
                   aria-label="Từ khóa hoặc khu vực"
@@ -472,17 +453,6 @@ export function HomeHero({
                   placeholder="Khu vực, tên đường..."
                   className="h-10 pr-9 sm:h-11 sm:pr-3"
                 />
-                <button
-                  type="button"
-                  onClick={useNearby}
-                  className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 sm:hidden ${
-                    centerMode === 'nearby' ? 'bg-brand-50 text-brand-600' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600'
-                  }`}
-                  aria-label="Tìm quanh đây"
-                  title="Tìm quanh đây"
-                >
-                  <LocateFixed className="h-4 w-4" aria-hidden />
-                </button>
                 {showLocationSuggestions && locationSuggestions.length > 0 ? (
                   <div className="absolute inset-x-0 top-[calc(100%+0.35rem)] z-30 overflow-hidden rounded-lg border border-zinc-200 bg-white p-1 text-left shadow-popover">
                     {locationSuggestions.map((province) => (
@@ -506,160 +476,68 @@ export function HomeHero({
                 </div>
               </Field>
 
-              {centerMode === 'nearby' ? (
-                <Field label="Bán kính" icon={<CircleDotDashed className="h-4 w-4" aria-hidden />}>
-                  <Select value={String(radiusKm)} onValueChange={(value) => setRadiusKm(Number(value))}>
-                    <SelectTrigger aria-label="Bán kính tìm kiếm" className="h-10 w-[100px] whitespace-nowrap sm:h-11 sm:w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RADIUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={String(option.value)}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              ) : (
-                <Field label="Lọc giá" icon={<Banknote className="h-4 w-4" aria-hidden />}>
-                  <Select value={priceRangeValue} onValueChange={setPriceRangeValue}>
-                    <SelectTrigger aria-label="Mức giá" className="h-10 w-[100px] whitespace-nowrap sm:h-11 sm:w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ALL}>Mọi giá</SelectItem>
-                      {PRICE_RANGE_OPTIONS.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              )}
+              <div className="contents">
+                <Button
+                  type="button"
+                  variant={centerMode === 'nearby' ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={useNearby}
+                  disabled={isLocating}
+                  className="h-10 shrink-0 px-2 sm:h-11 sm:px-3"
+                >
+                  {isLocating ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <LocateFixed className="h-4 w-4" aria-hidden />
+                  )}
+                  <span>Gần tôi</span>
+                </Button>
 
-              <Button type="submit" aria-label="Tìm" className="h-10 w-10 shrink-0 p-0 sm:h-11 sm:w-auto sm:px-6">
-                <Search className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline sm:ml-2">{expanded ? 'Cập nhật' : 'Tìm'}</span>
-              </Button>
+                {centerMode === 'nearby' ? (
+                  <Field className="min-w-0 flex-1 sm:flex-none" label="Bán kính" icon={<CircleDotDashed className="h-4 w-4" aria-hidden />}>
+                    <Select value={String(radiusKm)} onValueChange={(value) => setRadiusKm(Number(value))}>
+                      <SelectTrigger aria-label="Bán kính tìm kiếm" className="h-10 w-full whitespace-nowrap sm:h-11 sm:w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RADIUS_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={String(option.value)}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                ) : null}
+
+                <Button type="submit" aria-label="Tìm" className="h-10 w-10 shrink-0 p-0 sm:h-11 sm:w-auto sm:px-6">
+                  <Search className="h-4 w-4" aria-hidden />
+                  <span className="hidden sm:inline sm:ml-2">{expanded ? 'Cập nhật' : 'Tìm'}</span>
+                </Button>
+              </div>
             </div>
             {locationMessage ? <p className="mt-3 text-xs text-zinc-500">{locationMessage}</p> : null}
             </form>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-6 lg:mt-6">
-              {[
-                { value: '1,200+', label: 'tin đăng' },
-                { value: '100%', label: 'kiểm duyệt' },
-                { value: '15+', label: 'quận / huyện' },
-                { value: 'Miễn phí', label: 'đăng tin' },
-              ].map((stat) => (
-                <div key={stat.label} className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-semibold tracking-tight text-brand-700 sm:text-xl">{stat.value}</span>
-                  <span className="text-xs text-zinc-500">{stat.label}</span>
+
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-5">
+              {REASONS.map(({ icon: Icon, title, description }) => (
+                <div key={title} className="flex items-start gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                  <div>
+                    <p className="font-heading text-sm font-semibold text-zinc-900">{title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{description}</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="relative order-2 flex flex-col items-center justify-center lg:items-end lg:justify-center min-h-[360px] w-full sm:min-h-[460px] lg:h-[540px] p-2 sm:p-4">
-          {/* Ambient Warm Glow Accent behind Polaroid Stack */}
-          <div className="absolute inset-x-8 inset-y-6 z-0 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
-
-          {/* Polaroid Vintage Stack Container (Enlarged Size) */}
-          <div
-            onClick={handleFlipNext}
-            title="Bấm để lật xem ảnh tiếp theo"
-            className="group/polaroid relative h-[330px] sm:h-[420px] lg:h-[490px] w-full max-w-[520px] cursor-pointer select-none [perspective:1500px]"
-          >
-            {/* Page 3: Deep Stack Polaroid (Bottom) */}
-            <div className="absolute inset-0 z-0 -translate-x-8 sm:-translate-x-10 translate-y-3.5 -rotate-[5deg] scale-[0.93] rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] ring-1 ring-zinc-900/10 opacity-100 transition-all duration-300 group-hover/polaroid:-translate-x-12">
-              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
-                <Image
-                  src={HERO_IMAGES[(heroImageIndex + 2) % HERO_IMAGES.length].src}
-                  alt=""
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Page 2: Middle Stack Polaroid (Peeking) */}
-            <div className="absolute inset-0 z-10 -translate-x-4 sm:-translate-x-5 translate-y-2 -rotate-[2.5deg] scale-[0.96] rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_25px_45px_-12px_rgba(0,0,0,0.24)] ring-1 ring-zinc-900/10 opacity-100 transition-all duration-300 group-hover/polaroid:-translate-x-7">
-              {/* Translucent Washi Tape Strip on Middle Card */}
-              <div className="absolute -top-3.5 right-12 z-50 h-7 w-26 rotate-[6deg] bg-amber-100/80 border-y border-amber-300/50 backdrop-blur-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.08)] pointer-events-none" />
-              
-              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
-                <Image
-                  src={HERO_IMAGES[(heroImageIndex + 1) % HERO_IMAGES.length].src}
-                  alt=""
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Page 1: Primary Active Polaroid Card */}
-            <div className="absolute inset-0 z-20 rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.28)] ring-1 ring-zinc-900/10 transition-transform duration-300 group-hover/polaroid:scale-[1.01]">
-              {/* Translucent Textured Washi Tape Strip on Top Polaroid */}
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-50 h-8 w-32 -rotate-[2.5deg] bg-amber-50/90 border-y border-amber-200/80 backdrop-blur-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.08)] pointer-events-none flex items-center justify-center">
-                <div className="h-full w-full bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:6px_6px] opacity-10" />
-              </div>
-
-              {/* Photo Viewport with inner photo shadow stroke */}
-              <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900 shadow-inner">
-                <Image
-                  src={HERO_IMAGES[heroImageIndex].src}
-                  alt={HERO_IMAGES[heroImageIndex].alt}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-700 hover:scale-105"
-                />
-              </div>
-            </div>
-
-            {/* Exiting 3D Oblique Page Turn Overlay */}
-            {flippingIndex !== null && (
-              <div
-                key={`flipping-${flippingIndex}`}
-                className="absolute inset-0 z-40 rounded-2xl bg-white p-2.5 pb-6 sm:p-3 sm:pb-7 shadow-2xl ring-1 ring-zinc-900/10 animate-page-flip-right pointer-events-none [transform-origin:right_center]"
-              >
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-50 h-8 w-32 -rotate-[2.5deg] bg-amber-50/90 border-y border-amber-200/80 backdrop-blur-[3px] shadow-[0_2px_6px_rgba(0,0,0,0.08)] pointer-events-none" />
-
-                <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
-                  <Image
-                    src={HERO_IMAGES[flippingIndex].src}
-                    alt=""
-                    fill
-                    priority
-                    sizes="(min-width: 1024px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                  {/* Realistic Book Crease Shadow Overlay for Right Flip */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-black/20" />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Minimalist Dots Bar */}
-          <div className="mt-6 flex items-center gap-2 z-30">
-            {HERO_IMAGES.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setHeroImageIndex(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === heroImageIndex ? 'w-6 bg-brand-600' : 'w-2 bg-zinc-300 hover:bg-zinc-400'
-                }`}
-                aria-label={`Xem ảnh ${i + 1}`}
-              />
-            ))}
-          </div>
-        </div>
+        <div className="hidden lg:block" aria-hidden="true" />
       </div>
+
     </section>
   );
 }

@@ -54,9 +54,6 @@
   /* Staggered entrance animation for grid cards */
   --animate-fade-up: fade-up 0.5s var(--ease-out-soft) both;
 
-  /* Slow, non-distracting motion for the homepage hero image */
-  --animate-hero-pan: hero-pan 14s ease-in-out infinite alternate;
-
   @keyframes fade-up {
     from {
       opacity: 0;
@@ -66,11 +63,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  @keyframes hero-pan {
-    from { transform: scale(1.02) translate3d(-0.5%, -0.25%, 0); }
-    to { transform: scale(1.08) translate3d(0.5%, 0.25%, 0); }
   }
 
   /* Infinite horizontal marquee for category strip */
@@ -94,22 +86,6 @@
     }
   }
 
-  --animate-page-flip-right: page-flip-right 0.65s cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
-
-  @keyframes page-flip-right {
-    0% {
-      transform: rotateY(0deg) rotateZ(0deg) rotateX(0deg) skewY(0deg) translateY(0);
-      opacity: 1;
-    }
-    45% {
-      transform: rotateY(70deg) rotateZ(16deg) rotateX(-12deg) skewY(8deg) translateY(-14px);
-      opacity: 0.85;
-    }
-    100% {
-      transform: rotateY(145deg) rotateZ(24deg) rotateX(-18deg) skewY(12deg) translateY(-28px);
-      opacity: 0;
-    }
-  }
 }
 
 
@@ -125,6 +101,57 @@ body {
   transition:
     background-color 150ms var(--ease-out-soft),
     color 150ms var(--ease-out-soft);
+}
+
+.hero-map-art {
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+}
+
+.hero-map-background {
+  isolation: isolate;
+}
+
+.hero-map-background::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(
+      to right,
+      var(--color-surface-page) 0%,
+      rgb(255 255 255 / 0.34) 5%,
+      transparent 15%,
+      transparent 72%,
+      rgb(255 255 255 / 0.72) 91%,
+      var(--color-surface-page) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--color-surface-page) 0%,
+      rgb(255 255 255 / 0.34) 5%,
+      transparent 18%,
+      transparent 78%,
+      rgb(255 255 255 / 0.48) 92%,
+      var(--color-surface-page) 100%
+    );
+}
+
+.hero-map-background .hero-map-art {
+  opacity: 0.58;
+}
+
+.hero-map-mobile-art {
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+}
+
+@media (min-width: 1024px) {
+  .hero-map-background .hero-map-art {
+    opacity: 0.92;
+  }
 }
 
 .pb-safe-bottom {

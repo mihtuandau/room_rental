@@ -1,27 +1,21 @@
 'use client';
 
+import Image from 'next/image';
 import { useQueryStates } from 'nuqs';
-import {
-  BedDouble,
-  Building2,
-  House,
-  Hotel,
-  UsersRound,
-  type LucideIcon,
-} from 'lucide-react';
 import {
   ROOM_TYPE_OPTIONS,
   type RoomType,
 } from '@/lib/constants';
 import { searchParsers } from '@/features/rooms/search-params';
 import { cn } from '@/lib/utils';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
-const CATEGORY_ICONS: Record<RoomType, LucideIcon> = {
-  boarding_house: BedDouble,
-  whole_house: House,
-  mini_apartment: Building2,
-  serviced_apartment: Hotel,
-  shared_room: UsersRound,
+const CATEGORY_IMAGES: Record<RoomType, string> = {
+  boarding_house: '/phong_tro.png',
+  whole_house: '/nha_nguyen_can.png',
+  mini_apartment: '/chung_cu_mini.png',
+  serviced_apartment: '/can_ho_dich_vu.png',
+  shared_room: '/o_ghep.png',
 };
 
 export function CategoryBar() {
@@ -40,40 +34,64 @@ export function CategoryBar() {
   };
 
   return (
-    <div className="relative z-20 w-full border-b border-border-subtle bg-surface-card scroll-mt-20 transition-colors">
+    <section
+      aria-labelledby="category-heading"
+      className="relative z-20 mt-6 w-full bg-surface-card py-8 scroll-mt-20 sm:mt-8 sm:py-10"
+    >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="flex items-center justify-start gap-2 overflow-x-auto py-1.5 scrollbar-none sm:gap-3">
-          {ROOM_TYPE_OPTIONS.map(({ value, label }) => {
-            const Icon = CATEGORY_ICONS[value];
+        <div className="mb-6">
+          <div>
+            <h2 id="category-heading" className="font-heading text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+              Tìm theo <span className="text-brand-700">loại phòng</span>
+            </h2>
+            <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
+              Chọn không gian phù hợp với nhu cầu của bạn.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-5">
+          {ROOM_TYPE_OPTIONS.map(({ value, label }, index) => {
             const isActive = state.roomType === value;
             return (
-              <button
+              <ScrollReveal
                 key={value}
-                type="button"
-                onClick={() => handleCategoryClick(value)}
-                aria-pressed={isActive}
-                className={cn(
-                  'group flex min-h-10 shrink-0 cursor-pointer flex-row items-center gap-1.5 rounded-md border border-transparent px-3 py-2 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2',
-                  isActive
-                    ? 'bg-brand-50 text-brand-700 font-semibold'
-                    : 'text-zinc-600 hover:bg-white/80 hover:text-zinc-900',
-                )}
+                delay={index * 70}
+                className="w-44 shrink-0 sm:w-auto"
               >
-                <Icon
+                <button
+                  type="button"
+                  onClick={() => handleCategoryClick(value)}
+                  aria-pressed={isActive}
                   className={cn(
-                    'h-4 w-4 transition-transform duration-200 group-hover:scale-105',
-                    isActive ? 'text-brand-600' : 'text-zinc-400 group-hover:text-zinc-600',
+                    'group relative h-32 w-full cursor-pointer overflow-hidden rounded-lg border border-border-subtle text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:h-36',
+                    isActive
+                      ? 'ring-2 ring-brand-600 ring-offset-2'
+                      : 'bg-surface-card',
                   )}
-                  aria-hidden
-                />
-                <span className="text-xs font-medium tracking-tight whitespace-nowrap">
-                  {label}
-                </span>
-              </button>
+                >
+                  <Image
+                    src={CATEGORY_IMAGES[value]}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 20vw, 176px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 bg-gradient-to-t from-zinc-950/75 via-zinc-950/10 to-transparent" />
+                  <span className="absolute inset-x-3 bottom-3 font-heading text-base font-semibold text-white">
+                    {label}
+                  </span>
+                  {isActive ? (
+                    <span className="absolute right-2 top-2 rounded-full bg-brand-600 px-2 py-1 text-xs font-medium text-white">
+                      Đang chọn
+                    </span>
+                  ) : null}
+                </button>
+              </ScrollReveal>
             );
           })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -5,24 +5,21 @@ import {
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
-const REASONS = [
+export const REASONS = [
   {
     icon: BadgeCheck,
     title: 'Tin đăng rõ ràng',
-    description:
-      'Thông tin và hình ảnh được kiểm tra trước khi hiển thị công khai.',
+    description: 'Thông tin được kiểm tra rõ ràng.',
   },
   {
     icon: CircleDollarSign,
     title: 'Liên hệ trực tiếp',
-    description:
-      'Kết nối trực tiếp với chủ trọ, không qua môi giới.',
+    description: 'Kết nối trực tiếp với chủ trọ.',
   },
   {
     icon: RefreshCcw,
     title: 'Cập nhật liên tục',
-    description:
-      'Biết tin còn trống để không mất thời gian với phòng đã cho thuê.',
+    description: 'Tin mới được cập nhật thường xuyên.',
   },
 ] as const;
 
