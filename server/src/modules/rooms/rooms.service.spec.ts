@@ -107,6 +107,50 @@ describe('RoomsService', () => {
       expect(cache.set).not.toHaveBeenCalled();
     });
 
+    it('prefers normalized province and ward codes while retaining legacy fallbacks', async () => {
+      const prisma = {
+        $transaction: jest.fn((queries: unknown[]) => Promise.all(queries)),
+        room: {
+          findMany: jest.fn().mockResolvedValue([]),
+          count: jest.fn().mockResolvedValue(0),
+        },
+      };
+      const service = new RoomsService(
+        prisma as unknown as PrismaService,
+        {} as CloudinaryService,
+      );
+
+      await service.search({
+        city: 'Hồ Chí Minh',
+        provinceCode: 79,
+        ward: 'Tân Hưng',
+        wardCode: 26734,
+        page: 1,
+        pageSize: 12,
+      });
+
+      expect(prisma.room.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: [
+              {
+                OR: [
+                  { provinceCode: 79 },
+                  { provinceCode: null, city: 'Hồ Chí Minh' },
+                ],
+              },
+              {
+                OR: [
+                  { wardCode: 26734 },
+                  { wardCode: null, ward: 'Tân Hưng' },
+                ],
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
     it('filters public results by radius around coordinates', async () => {
       const prisma = {
         $queryRaw: jest

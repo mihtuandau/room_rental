@@ -62,7 +62,7 @@ export function buildRoomJsonLd(room: RoomDetail) {
     address: {
       '@type': 'PostalAddress',
       streetAddress: room.address ?? undefined,
-      addressLocality: room.district,
+      addressLocality: room.district ?? room.ward ?? undefined,
       addressRegion: room.city,
       addressCountry: 'VN',
     },

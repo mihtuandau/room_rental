@@ -92,7 +92,10 @@ const PUBLIC_ROOM_LIST_SELECT = {
   area: true,
   bedrooms: true,
   city: true,
+  provinceCode: true,
   district: true,
+  ward: true,
+  wardCode: true,
   roomType: true,
   isVerified: true,
   latitude: true,
@@ -121,8 +124,10 @@ const PUBLIC_ROOM_DETAIL_SELECT = {
   bathrooms: true,
   maxOccupants: true,
   city: true,
+  provinceCode: true,
   district: true,
   ward: true,
+  wardCode: true,
   address: true,
   latitude: true,
   longitude: true,
@@ -140,7 +145,7 @@ const PUBLIC_ROOM_DETAIL_SELECT = {
 
 type FeaturedLocation = {
   city: string;
-  district: string;
+  district: string | null;
   count: number;
   minPrice: number | null;
   imageUrl: string | null;
@@ -152,6 +157,40 @@ type RoomSearchResult = {
   page: number;
   pageSize: number;
 };
+
+function locationWhere(
+  dto: Pick<
+    SearchRoomsDto,
+    'city' | 'district' | 'ward' | 'provinceCode' | 'wardCode'
+  >,
+): Prisma.RoomWhereInput {
+  const conditions: Prisma.RoomWhereInput[] = [];
+
+  if (dto.provinceCode !== undefined) {
+    conditions.push({
+      OR: [
+        { provinceCode: dto.provinceCode },
+        ...(dto.city ? [{ provinceCode: null, city: dto.city }] : []),
+      ],
+    });
+  } else if (dto.city) {
+    conditions.push({ city: dto.city });
+  }
+
+  if (dto.wardCode !== undefined) {
+    conditions.push({
+      OR: [
+        { wardCode: dto.wardCode },
+        ...(dto.ward ? [{ wardCode: null, ward: dto.ward }] : []),
+      ],
+    });
+  } else if (dto.ward) {
+    conditions.push({ ward: dto.ward });
+  }
+
+  if (dto.district) conditions.push({ district: dto.district });
+  return conditions.length ? { AND: conditions } : {};
+}
 
 @Injectable()
 export class RoomsService {
@@ -243,9 +282,15 @@ export class RoomsService {
         'Add a contact phone number to your profile before posting a listing.',
       );
     }
+    if (!dto.city?.trim()) {
+      throw new BadRequestException(
+        'A province name is required as the address snapshot.',
+      );
+    }
     const room = await this.prisma.room.create({
       data: {
         ...dto,
+        city: dto.city.trim(),
         ownerId: userId,
         slug: uniqueSlug(dto.title),
         status: 'pending',
@@ -389,14 +434,13 @@ export class RoomsService {
       return { rooms: [], total: 0, page, pageSize };
     }
 
+    const locationFilter = locationWhere(dto);
     const where = {
       status: 'active' as const,
       deletedAt: null,
       owner: { is: { deletedAt: null } },
       ...(scopedIds && { id: { in: scopedIds } }),
-      ...(dto.city && { city: dto.city }),
-      ...(dto.district && { district: dto.district }),
-      ...(dto.ward && { ward: dto.ward }),
+      ...locationFilter,
       ...(dto.roomType && { roomType: dto.roomType }),
       ...((dto.priceMin !== undefined || dto.priceMax !== undefined) && {
         price: {
@@ -413,9 +457,13 @@ export class RoomsService {
       ...(dto.verifiedOnly && { isVerified: true }),
       // listing must have EVERY selected amenity, not just any one of them
       ...(dto.amenityIds?.length && {
-        AND: dto.amenityIds.map((amenityId) => ({
-          amenities: { some: { amenityId } },
-        })),
+        AND: [
+          ...((locationFilter.AND as Prisma.RoomWhereInput[] | undefined) ??
+            []),
+          ...dto.amenityIds.map((amenityId) => ({
+            amenities: { some: { amenityId } },
+          })),
+        ],
       }),
     };
 
@@ -458,9 +506,25 @@ export class RoomsService {
       )`,
     ];
 
-    if (dto.city) predicates.push(Prisma.sql`r.city = ${dto.city}`);
+    if (dto.provinceCode !== undefined) {
+      predicates.push(
+        dto.city
+          ? Prisma.sql`(r.province_code = ${dto.provinceCode} OR (r.province_code IS NULL AND r.city = ${dto.city}))`
+          : Prisma.sql`r.province_code = ${dto.provinceCode}`,
+      );
+    } else if (dto.city) {
+      predicates.push(Prisma.sql`r.city = ${dto.city}`);
+    }
     if (dto.district) predicates.push(Prisma.sql`r.district = ${dto.district}`);
-    if (dto.ward) predicates.push(Prisma.sql`r.ward = ${dto.ward}`);
+    if (dto.wardCode !== undefined) {
+      predicates.push(
+        dto.ward
+          ? Prisma.sql`(r.ward_code = ${dto.wardCode} OR (r.ward_code IS NULL AND r.ward = ${dto.ward}))`
+          : Prisma.sql`r.ward_code = ${dto.wardCode}`,
+      );
+    } else if (dto.ward) {
+      predicates.push(Prisma.sql`r.ward = ${dto.ward}`);
+    }
     if (dto.roomType)
       predicates.push(Prisma.sql`r.room_type = ${dto.roomType}`);
     if (dto.priceMin !== undefined)

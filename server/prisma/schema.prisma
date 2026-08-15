@@ -70,7 +70,6 @@ enum OtpPurpose {
 enum ContactType {
   phone
   zalo
-  message
 }
 
 enum ModerationAction {
@@ -153,12 +152,15 @@ model OtpCode {
 
   expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
+  revokedAt DateTime? @map("revoked_at")
   attempts  Int       @default(0)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([phone, purpose])
   @@index([email, purpose])
+  @@index([phone, purpose, revokedAt])
+  @@index([email, purpose, revokedAt])
   @@index([expiresAt])
   @@map("otp_codes")
 }
@@ -187,9 +189,13 @@ model Room {
   bathrooms    Int? @map("bathrooms")
   maxOccupants Int? @map("max_occupants")
 
-  city      String
-  district  String
+  // `city` is retained as the province-name snapshot for API compatibility.
+  // New records should also carry the current province/ward codes below.
+  city         String
+  provinceCode Int?   @map("province_code")
+  district     String?
   ward      String?
+  wardCode  Int?      @map("ward_code")
   address   String?
   latitude  Float?
   longitude Float?
@@ -220,6 +226,7 @@ model Room {
 
   @@index([status])
   @@index([city, district])
+  @@index([provinceCode, wardCode])
   @@index([price])
   @@index([roomType])
   @@index([ownerId])
@@ -255,8 +262,12 @@ model Landmark {
   name String
   type String // "school" | "industrial_park" | "hospital" | "university" ...
 
-  city      String
-  district  String
+  // Keep the old district label only as historical/search text.
+  city         String
+  provinceCode Int?   @map("province_code")
+  district     String?
+  ward         String?
+  wardCode     Int?   @map("ward_code")
   latitude  Float
   longitude Float
   // geog geography(Point, 4326) — added via raw SQL in the migration, see add-prisma-model skill
@@ -264,6 +275,7 @@ model Landmark {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([city, district])
+  @@index([provinceCode, wardCode])
   @@map("landmarks")
 }
 
@@ -325,6 +337,8 @@ model SavedSearch {
   city     String?
   district String?
   ward     String?
+  provinceCode Int? @map("province_code")
+  wardCode     Int? @map("ward_code")
   roomType RoomType? @map("room_type")
 
   priceMin Int?   @map("price_min")
@@ -340,6 +354,7 @@ model SavedSearch {
 
   @@index([userId])
   @@index([city, district])
+  @@index([provinceCode, wardCode])
   @@index([roomType])
   @@map("saved_searches")
 }

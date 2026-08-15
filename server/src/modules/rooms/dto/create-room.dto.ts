@@ -72,21 +72,51 @@ export class CreateRoomDto {
   @Max(50)
   maxOccupants?: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+    description: 'Legacy province-name alias; prefer provinceCode.',
+    deprecated: true,
+  })
   @IsString()
   @Length(2, 100)
-  city!: string;
+  @IsOptional()
+  city?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+    description: 'Current province code from the administrative catalog.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  provinceCode?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Historical district label; not used as the primary filter.',
+    deprecated: true,
+  })
+  @IsOptional()
   @IsString()
   @Length(2, 100)
-  district!: string;
+  district?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   @Length(1, 100)
   ward?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Current ward/commune/special-zone code.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  wardCode?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

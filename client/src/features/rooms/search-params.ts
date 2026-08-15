@@ -26,8 +26,10 @@ export const PAGE_SIZE = 12;
 export const searchParsers = {
   keyword: parseAsString.withDefault(''),
   city: parseAsString.withDefault(''),
+  provinceCode: parseAsInteger,
   district: parseAsString.withDefault(''),
   ward: parseAsString.withDefault(''),
+  wardCode: parseAsInteger,
   roomType: parseAsStringLiteral(ROOM_TYPE_VALUES),
   priceMin: parseAsInteger,
   priceMax: parseAsInteger,
@@ -53,8 +55,10 @@ export const searchParsers = {
 export interface SearchState {
   keyword: string;
   city: string;
+  provinceCode: number | null;
   district: string;
   ward: string;
+  wardCode: number | null;
   roomType: RoomType | null;
   priceMin: number | null;
   priceMax: number | null;
@@ -82,8 +86,10 @@ export function toSearchParams(v: SearchState): SearchParams {
   return {
     keyword: v.keyword || undefined,
     city: hasRadiusSearch ? undefined : v.city || undefined,
+    provinceCode: hasRadiusSearch ? undefined : v.provinceCode ?? undefined,
     district: hasRadiusSearch ? undefined : v.district || undefined,
     ward: hasRadiusSearch ? undefined : v.ward || undefined,
+    wardCode: hasRadiusSearch ? undefined : v.wardCode ?? undefined,
     roomType: v.roomType ?? undefined,
     priceMin: v.priceMin ?? undefined,
     priceMax: v.priceMax ?? undefined,
@@ -112,8 +118,10 @@ export function isSearchExpanded(v: SearchState): boolean {
     v.all ||
     !!v.keyword ||
     !!v.city ||
+    v.provinceCode !== null ||
     !!v.district ||
     !!v.ward ||
+    v.wardCode !== null ||
     !!v.roomType ||
     v.priceMin !== null ||
     v.priceMax !== null ||

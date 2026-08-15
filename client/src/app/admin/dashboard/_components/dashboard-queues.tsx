@@ -64,7 +64,7 @@ function PendingRoomsCard({
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
                   {room.owner.fullName || 'Chủ trọ chưa cập nhật tên'} ·{' '}
-                  {room.district}, {room.city}
+                  {[room.ward, room.district, room.city].filter(Boolean).join(', ')}
                 </p>
               </div>
               <p className="text-sm font-semibold text-zinc-900">

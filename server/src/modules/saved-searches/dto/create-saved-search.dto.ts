@@ -17,6 +17,12 @@ export class CreateSavedSearchDto {
   @IsString()
   @Length(1, 100)
   city?: string;
+  @ApiPropertyOptional({ description: 'Current province code.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  provinceCode?: number;
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -27,6 +33,14 @@ export class CreateSavedSearchDto {
   @IsString()
   @Length(1, 100)
   ward?: string;
+  @ApiPropertyOptional({
+    description: 'Current ward/commune/special-zone code.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  wardCode?: number;
 
   @ApiPropertyOptional({ enum: RoomType })
   @IsOptional()

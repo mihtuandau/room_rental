@@ -4,8 +4,10 @@ import type { RoomType } from '@/lib/constants';
 /** Matches the backend's CreateSavedSearchDto — keyword/amenities aren't supported there. */
 export interface CreateSavedSearchInput {
   city?: string;
+  provinceCode?: number;
   district?: string;
   ward?: string;
+  wardCode?: number;
   roomType?: RoomType;
   priceMin?: number;
   priceMax?: number;
@@ -16,8 +18,10 @@ export interface CreateSavedSearchInput {
 export interface SavedSearch {
   id: string;
   city: string | null;
+  provinceCode: number | null;
   district: string | null;
   ward: string | null;
+  wardCode: number | null;
   roomType: RoomType | null;
   priceMin: number | null;
   priceMax: number | null;

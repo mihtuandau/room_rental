@@ -41,7 +41,7 @@ export function RoomViewTracker({ room }: { room: RoomDetail }) {
         slug: room.slug,
         price: room.price,
         image: room.images[0]?.url || '',
-        district: room.district,
+        district: room.district ?? '',
         city: room.city,
         roomType: room.roomType,
       };

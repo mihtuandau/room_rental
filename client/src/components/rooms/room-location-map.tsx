@@ -19,7 +19,7 @@ export function RoomLocationMap({
 }: {
   address: string | null;
   ward: string | null;
-  district: string;
+  district: string | null;
   city: string;
   latitude: number | null;
   longitude: number | null;

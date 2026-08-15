@@ -24,7 +24,10 @@ export interface RoomCardItem {
   area: number | null;
   bedrooms: number | null;
   city: string;
-  district: string;
+  provinceCode?: number | null;
+  district: string | null;
+  ward?: string | null;
+  wardCode?: number | null;
   roomType: RoomType;
   isVerified: boolean;
   latitude: number | null;
@@ -169,7 +172,7 @@ export function RoomCard({
         <h3 className="line-clamp-1 font-heading text-xs font-semibold text-zinc-900 sm:text-base">{room.title}</h3>
         <p className="line-clamp-2 flex items-start gap-1 text-[11px] text-zinc-500 sm:text-sm">
           <MapPin className="mt-0.5 h-3 w-3 shrink-0 sm:mt-1 sm:h-3.5 sm:w-3.5" aria-hidden />
-          {ROOM_TYPE_LABELS[room.roomType]} · {room.district}, {room.city}
+          {ROOM_TYPE_LABELS[room.roomType]} · {[room.district, room.city].filter(Boolean).join(', ')}
         </p>
         {(room.bedrooms !== null || room.area !== null || freshness || room.viewCount != null) && (
           <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-2 text-[11px] text-zinc-500 sm:gap-x-4 sm:pt-3 sm:text-xs">
