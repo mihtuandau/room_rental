@@ -17,6 +17,8 @@ jobs:
     name: External production probe
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment:
+      name: production
     steps:
       - name: Probe frontend and API
         id: probe
