@@ -69,11 +69,19 @@ PM2_APP_NAME="roomrent-client"
 if [[ "$DEPLOY_ENV" == "staging" ]]; then
   PM2_APP_NAME="roomrent-client-staging"
 fi
+FRONTEND_PORT="${ROOMRENT_FRONTEND_PORT:-5000}"
 
 echo "Installing frontend dependencies for $DEPLOY_ENV/$RELEASE_SHA..."
 cd "$CLIENT_DIR"
 pnpm install --frozen-lockfile
 pnpm run build
+
+# A previous staging process may still have been created with the old hardcoded
+# port from package.json. Remove only the staging app so production is not
+# interrupted, then start it with the environment-specific port below.
+if [[ "$DEPLOY_ENV" == "staging" ]] && pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+  pm2 delete "$PM2_APP_NAME"
+fi
 
 if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
   pm2 reload "$PM2_APP_NAME" --update-env
@@ -81,7 +89,7 @@ else
   pm2 start pnpm \
     --name "$PM2_APP_NAME" \
     --cwd "$CLIENT_DIR" \
-    -- start
+    -- exec next start -p "$FRONTEND_PORT"
 fi
 pm2 save
 
@@ -100,7 +108,6 @@ wait_for_http() {
   return 1
 }
 
-FRONTEND_PORT="${ROOMRENT_FRONTEND_PORT:-5000}"
 wait_for_http "http://127.0.0.1:${FRONTEND_PORT}"
 
 printf '%s\n' "$RELEASE_SHA" > "$REPO_ROOT/.roomrent-${DEPLOY_ENV}-frontend-release"
