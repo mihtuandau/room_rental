@@ -30,7 +30,12 @@ export const createRoomSchema = z.object({
     .max(120, 'Tiêu đề tối đa 120 ký tự.'),
   description: z.string().max(3000, 'Mô tả tối đa 3000 ký tự.').optional().or(z.literal('')),
   roomType: z.enum(ROOM_TYPE_VALUES, { message: 'Chọn loại phòng.' }),
-  price: numberField(z.number().int().positive('Giá thuê phải lớn hơn 0.')),
+  price: numberField(
+    z
+      .number({ message: 'Nhập giá thuê.' })
+      .int()
+      .positive('Giá thuê phải lớn hơn 0.'),
+  ),
   area: numberField(z.number().positive('Diện tích phải lớn hơn 0.').optional()),
   deposit: numberField(z.number().int().min(0, 'Tiền cọc không hợp lệ.').optional()),
   bedrooms: numberField(

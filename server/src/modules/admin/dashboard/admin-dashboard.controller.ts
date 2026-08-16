@@ -15,7 +15,7 @@ export class AdminDashboardController {
 
   @Get()
   @ApiOperation({
-    summary: 'Quick counts: pending listings, pending reports, new users today',
+    summary: 'Quick counts: pending listings, pending reports, new users today  ',
   })
   getSummary() {
     return this.adminDashboardService.getSummary();
