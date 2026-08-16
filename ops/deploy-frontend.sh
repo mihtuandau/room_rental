@@ -11,6 +11,7 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   set +u
   # shellcheck source=/dev/null
   source "$NVM_DIR/nvm.sh"
+  nvm use 22 --silent
   set -u
 fi
 
@@ -47,6 +48,14 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing required file: $ENV_FILE" >&2
   exit 1
 fi
+
+# Next.js does not automatically load .env.staging. Export the host-only
+# environment explicitly so server-side build fetches and NEXT_PUBLIC_* values
+# use the same staging configuration as the runtime process.
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
 
 command -v node >/dev/null || {
   echo "node is required; install Node.js 22 for the frontend site user" >&2
