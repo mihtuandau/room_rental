@@ -173,28 +173,17 @@ export function LocationPicker({
         }
         if (controller.signal.aborted) return;
 
-        const params = new URLSearchParams({
-          format: 'jsonv2',
-          countrycodes: 'vn',
-          limit: '1',
-          q: queries[index],
-        });
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?${params}`,
-          {
-            headers: {
-              Accept: 'application/json',
-              'Accept-Language': 'vi',
-            },
-            signal: controller.signal,
-          },
+          `/api/locations/geocode?q=${encodeURIComponent(queries[index])}`,
+          { signal: controller.signal },
         );
-        if (!response.ok) throw new Error('Geocoding request failed');
-
-        [result] = (await response.json()) as GeocodingResult[];
-        if (result) {
-          matchedQueryIndex = index;
-          break;
+        if (response.ok) {
+          const results = (await response.json()) as GeocodingResult[];
+          if (Array.isArray(results) && results.length > 0) {
+            [result] = results;
+            matchedQueryIndex = index;
+            break;
+          }
         }
       }
 

@@ -206,6 +206,7 @@ export function useNewListingForm(
       const room = await createRoom.mutateAsync({
         ...values,
         description: values.description || undefined,
+        district: values.district?.trim() || undefined,
         ward: values.ward || undefined,
         address: values.address || undefined,
       });
@@ -270,7 +271,11 @@ export function useNewListingForm(
         toast.error('Không thể tải ảnh lên. Kiểm tra kết nối và thử lại nhé.');
         return;
       }
-      toast.error('Không đăng tin được, thử lại nhé.');
+      if (error instanceof ApiError && error.message) {
+        toast.error(error.message);
+        return;
+      }
+      toast.error('Không đăng tin được, bạn kiểm tra lại thông tin và thử lại nhé.');
     } finally {
       setIsUploadingImages(false);
     }

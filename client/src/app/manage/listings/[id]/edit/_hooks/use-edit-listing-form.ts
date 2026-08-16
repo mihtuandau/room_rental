@@ -202,6 +202,7 @@ export function useEditListingForm(
       await updateRoom.mutateAsync({
         ...values,
         description: values.description || undefined,
+        district: values.district?.trim() || undefined,
         ward: values.ward || undefined,
         address: values.address || undefined,
       });
