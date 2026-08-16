@@ -76,21 +76,24 @@ cd "$CLIENT_DIR"
 pnpm install --frozen-lockfile
 pnpm run build
 
-# A previous staging process may still have been created with the old hardcoded
-# port from package.json. Remove only the staging app so production is not
-# interrupted, then start it with the environment-specific port below.
-if [[ "$DEPLOY_ENV" == "staging" ]] && pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+# Next.js is configured with output: standalone. Copy the static assets that
+# are not included in the standalone server bundle before starting it.
+mkdir -p "$CLIENT_DIR/.next/standalone/.next/static" \
+  "$CLIENT_DIR/.next/standalone/public"
+cp -a "$CLIENT_DIR/.next/static/." \
+  "$CLIENT_DIR/.next/standalone/.next/static/"
+cp -a "$CLIENT_DIR/public/." \
+  "$CLIENT_DIR/.next/standalone/public/"
+
+# Replace the process after a successful build so an old pnpm/next-start
+# command cannot keep using the wrong port or incompatible standalone mode.
+if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
   pm2 delete "$PM2_APP_NAME"
 fi
 
-if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-  pm2 reload "$PM2_APP_NAME" --update-env
-else
-  pm2 start pnpm \
-    --name "$PM2_APP_NAME" \
-    --cwd "$CLIENT_DIR" \
-    -- exec next start -p "$FRONTEND_PORT"
-fi
+PORT="$FRONTEND_PORT" HOSTNAME=0.0.0.0 pm2 start server.js \
+  --name "$PM2_APP_NAME" \
+  --cwd "$CLIENT_DIR/.next/standalone"
 pm2 save
 
 wait_for_http() {
