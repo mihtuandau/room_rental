@@ -17,6 +17,12 @@ const validEnv = {
 };
 
 describe('validateEnv', () => {
+  it('accepts staging as a first-class deployment environment', () => {
+    expect(validateEnv({ ...validEnv, NODE_ENV: 'staging' }).NODE_ENV).toBe(
+      'staging',
+    );
+  });
+
   it('rejects deployments that reuse one secret for both JWT types', () => {
     expect(() =>
       validateEnv({

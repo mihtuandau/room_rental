@@ -1,5 +1,3 @@
-version: "2.4"
-
 # Production stack for a single VPS behind CloudPanel's Nginx reverse proxy.
 #
 # Required secret file on the VPS:
@@ -46,12 +44,7 @@ services:
     logging: *default-logging
 
   backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-      target: runtime
-      network: host
-    image: roomrent-server:prod
+    image: roomrent-server:${ROOMRENT_RELEASE:?ROOMRENT_RELEASE must be set}
     restart: unless-stopped
     env_file:
       - ./server/.env.production
@@ -64,15 +57,10 @@ services:
         condition: service_healthy
     logging: *default-logging
 
-  # Prisma CLI is intentionally excluded from the runtime image. Run this
-  # one-off service before starting/restarting the backend after a release.
+  # This image is built from the same checked-out release as the runtime image.
+  # It contains the Prisma CLI and is used only for the migration step.
   migrate:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-      target: build
-      network: host
-    image: roomrent-migrator:prod
+    image: roomrent-migrator:${ROOMRENT_RELEASE:?ROOMRENT_RELEASE must be set}
     env_file:
       - ./server/.env.production
     command: pnpm exec prisma migrate deploy

@@ -28,7 +28,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 const REFRESH_COOKIE = 'refresh_token';
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: ['production', 'staging'].includes(process.env.NODE_ENV ?? ''),
   sameSite: 'lax' as const,
   // The cookie must reach both /auth/refresh and /auth/logout so logout can
   // revoke the tokenVersion before clearing the browser cookie.

@@ -1,0 +1,65 @@
+# Staging stack. It must run on a separate host or isolated VPS from production.
+# The deployment script supplies ROOMRENT_RELEASE and uses images built from the
+# exact commit under test.
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.staging
+    volumes:
+      - postgres-data-staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roomrent -d rental_room"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis-data-staging:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *default-logging
+
+  backend:
+    image: roomrent-server:${ROOMRENT_RELEASE:?ROOMRENT_RELEASE must be set}
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.staging
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging: *default-logging
+
+  migrate:
+    image: roomrent-migrator:${ROOMRENT_RELEASE:?ROOMRENT_RELEASE must be set}
+    env_file:
+      - ./server/.env.staging
+    command: pnpm exec prisma migrate deploy
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data-staging:
+    name: roomrent-postgres-staging-data
+  redis-data-staging:
+    name: roomrent-redis-staging-data

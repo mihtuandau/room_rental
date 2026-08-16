@@ -1,0 +1,57 @@
+name: Monitor production
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    name: External production probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe frontend and API
+        id: probe
+        env:
+          PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$PRODUCTION_FRONTEND_URL"
+          test -n "$PRODUCTION_API_URL"
+          curl --fail --silent --show-error --location \
+            --retry 2 --connect-timeout 10 --max-time 30 \
+            "$PRODUCTION_FRONTEND_URL" >/dev/null
+          curl --fail --silent --show-error --location \
+            --retry 2 --connect-timeout 10 --max-time 30 \
+            "${PRODUCTION_API_URL%/}/health" >/dev/null
+
+      - name: Send alert
+        if: failure()
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.PRODUCTION_ALERT_WEBHOOK_URL }}
+          PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$ALERT_WEBHOOK_URL" ]]; then
+            echo "Production probe failed, but PRODUCTION_ALERT_WEBHOOK_URL is not configured." >&2
+            exit 0
+          fi
+
+          payload=$(printf '{"text":"RoomRent production probe failed. Frontend: %s API: %s Run: %s"}' \
+            "$PRODUCTION_FRONTEND_URL" \
+            "$PRODUCTION_API_URL" \
+            "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}")
+          curl --fail --silent --show-error --max-time 15 \
+            -H 'Content-Type: application/json' \
+            -d "$payload" \
+            "$ALERT_WEBHOOK_URL"
