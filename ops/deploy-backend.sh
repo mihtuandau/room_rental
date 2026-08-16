@@ -1,14 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Backend site deployment. Frontend is deployed separately by deploy-frontend.sh.
+# Deploy one exact repository commit. The caller must checkout the commit before
+# invoking this script; the script deliberately never pulls the moving main ref.
 
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+
+DEPLOY_ENV="${1:-production}"
+RELEASE_SHA="${2:-${ROOMRENT_RELEASE_SHA:-}}"
+
+if [[ "$DEPLOY_ENV" != "production" && "$DEPLOY_ENV" != "staging" ]]; then
+  echo "Usage: $0 <production|staging> <40-character commit SHA>" >&2
+  exit 2
+fi
+
+if [[ ! "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "A full 40-character release commit SHA is required." >&2
+  exit 2
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-if [[ "$(git branch --show-current)" != "main" ]]; then
-  echo "Backend deployment must run from the main branch." >&2
+CURRENT_SHA="$(git rev-parse HEAD)"
+if [[ "$CURRENT_SHA" != "$RELEASE_SHA" ]]; then
+  echo "Checked out commit $CURRENT_SHA does not match release $RELEASE_SHA." >&2
   exit 1
 fi
 
@@ -18,7 +34,12 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-for required_file in server/.env.production docker-compose.prod.yml; do
+COMPOSE_FILE="docker-compose.${DEPLOY_ENV}.yml"
+ENV_FILE="server/.env.${DEPLOY_ENV}"
+STATE_FILE="${ROOMRENT_RELEASE_STATE_FILE:-$REPO_ROOT/.roomrent-${DEPLOY_ENV}-release}"
+IMAGE_TAG="roomrent-${DEPLOY_ENV}-${RELEASE_SHA}"
+
+for required_file in "$ENV_FILE" "$COMPOSE_FILE"; do
   if [[ ! -f "$required_file" ]]; then
     echo "Missing required file: $required_file" >&2
     exit 1
@@ -35,33 +56,36 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
-COMPOSE=(docker compose -f docker-compose.prod.yml)
+COMPOSE=(docker compose -f "$COMPOSE_FILE")
+export ROOMRENT_RELEASE="$IMAGE_TAG"
 
-echo "Pulling backend site..."
-git pull --ff-only origin main
+previous_release=""
+if [[ -f "$STATE_FILE" ]]; then
+  previous_release="$(tr -d '[:space:]' < "$STATE_FILE")"
+fi
 
-echo "Building migration image..."
+echo "Building migration image for $DEPLOY_ENV/$RELEASE_SHA..."
 docker build --network=host \
   --target build \
-  -t roomrent-migrator:prod \
+  -t "roomrent-migrator:$IMAGE_TAG" \
   ./server
 
-echo "Building backend image..."
+echo "Building backend image for $DEPLOY_ENV/$RELEASE_SHA..."
 docker build --network=host \
   --target runtime \
-  -t roomrent-server:prod \
+  -t "roomrent-server:$IMAGE_TAG" \
   ./server
 
 echo "Starting infrastructure..."
 "${COMPOSE[@]}" up -d postgres redis
 
-echo "Applying database migrations..."
+echo "Applying backward-compatible database migrations..."
 "${COMPOSE[@]}" run --rm --no-deps migrate
 
 echo "Replacing backend container..."
 "${COMPOSE[@]}" stop backend || true
 "${COMPOSE[@]}" rm -f backend || true
-"${COMPOSE[@]}" up -d --no-deps backend
+"${COMPOSE[@]}" up -d --no-deps --no-build backend
 
 wait_for_http() {
   local url="$1"
@@ -79,5 +103,12 @@ wait_for_http() {
   return 1
 }
 
-wait_for_http http://127.0.0.1:3000/health
-echo "Backend deployment completed successfully."
+BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3000}"
+wait_for_http "http://127.0.0.1:${BACKEND_PORT}/health"
+
+if [[ -n "$previous_release" && "$previous_release" != "$RELEASE_SHA" ]]; then
+  printf '%s\n' "$previous_release" > "$STATE_FILE.previous"
+fi
+printf '%s\n' "$RELEASE_SHA" > "$STATE_FILE"
+
+echo "Backend deployment completed successfully: $DEPLOY_ENV/$RELEASE_SHA"

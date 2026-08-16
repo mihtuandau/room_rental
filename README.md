@@ -75,11 +75,12 @@ The server image deliberately excludes the Prisma CLI, so `prisma migrate deploy
 cannot run inside it. Apply migrations as a separate release step, from CI or a
 one-off container built on the Dockerfile's `build` stage.
 
-## Not built yet
+## Delivery and operations
 
-The backend is complete (50 endpoints). The frontend has its foundation, namely
-providers, BFF proxy routes, design tokens and base components, but the product
-screens (search, listing detail, auth pages, posting flow, admin) are still to do.
+The repository includes PR CI, SHA-pinned staging/production deployment,
+staging and production smoke tests, a manual rollback workflow, and an external
+production probe. Deployment and rollback setup is documented in
+[`docs/production-delivery.md`](docs/production-delivery.md).
 
-Deployment automation (CD) is intentionally left until the app is usable and a
-hosting target has been chosen.
+Branch protection and required production reviewers must still be enabled in
+GitHub Settings; they cannot be enforced by repository files alone.
