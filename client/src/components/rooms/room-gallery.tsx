@@ -1,11 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import useEmblaCarousel from 'embla-carousel-react';
-import { ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, Expand, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogBody, DialogContent } from '@/components/ui/dialog';
 import type { RoomImage } from '@/features/rooms/api';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=Tro+Oi';
@@ -13,7 +13,6 @@ const PLACEHOLDER_IMAGE = 'https://placehold.co/800x600?text=Tro+Oi';
 export function RoomGallery({
   title,
   images,
-  isVerified = false,
 }: {
   title: string;
   images: RoomImage[];
@@ -25,70 +24,11 @@ export function RoomGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  if (ordered.length === 0) {
-    return (
-      <div className="relative mx-auto mt-6 aspect-[3/2] w-full max-w-5xl overflow-hidden rounded-xl bg-zinc-100">
-        <Image
-          src={PLACEHOLDER_IMAGE}
-          alt={title}
-          fill
-          sizes="(max-width: 1152px) 100vw, 1152px"
-          className="object-cover"
-        />
-      </div>
-    );
-  }
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [selected, setSelected] = useState(0);
 
-  return (
-    <>
-      <CarouselGallery
-        title={title}
-        images={ordered}
-        isVerified={isVerified}
-        onImageClick={(index) => {
-          setLightboxIndex(index);
-          setLightboxOpen(true);
-        }}
-      />
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent 
-          overlayClassName="backdrop-blur-xl bg-zinc-100/50"
-          className="max-w-none w-screen h-screen max-h-screen rounded-none bg-transparent border-none p-0 flex flex-col justify-center [&_button[aria-label=Đóng]]:top-6 [&_button[aria-label=Đóng]]:right-6 [&_button[aria-label=Đóng]]:h-12 [&_button[aria-label=Đóng]]:w-12 [&_button[aria-label=Đóng]]:rounded-full [&_button[aria-label=Đóng]]:bg-white/90 [&_button[aria-label=Đóng]]:shadow-lg [&_button[aria-label=Đóng]]:border [&_button[aria-label=Đóng]]:border-zinc-200/50 [&_button[aria-label=Đóng]]:flex [&_button[aria-label=Đóng]]:items-center [&_button[aria-label=Đóng]]:justify-center [&_button[aria-label=Đóng]]:text-zinc-700 [&_button[aria-label=Đóng]]:hover:bg-zinc-50 [&_button[aria-label=Đóng]]:transition-all [&_button[aria-label=Đóng]]:hover:scale-105"
-        >
-          <DialogBody className="p-0 flex-1 flex flex-col justify-center overflow-hidden">
-            <CarouselGallery
-              title={title}
-              images={ordered}
-              startIndex={lightboxIndex}
-              isVerified={isVerified}
-              isLightbox
-            />
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-function CarouselGallery({
-  title,
-  images,
-  startIndex = 0,
-  isVerified = false,
-  showTitle = false,
-  isLightbox = false,
-  onImageClick,
-}: {
-  title: string;
-  images: RoomImage[];
-  startIndex?: number;
-  isVerified?: boolean;
-  showTitle?: boolean;
-  isLightbox?: boolean;
-  onImageClick?: (index: number) => void;
-}) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, startIndex });
-  const [selected, setSelected] = useState(startIndex);
+  const thumbnailsRef = useRef<HTMLDivElement>(null);
+  const thumbButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onSelect = useCallback(() => {
     if (emblaApi) setSelected(emblaApi.selectedScrollSnap());
@@ -102,130 +42,313 @@ function CarouselGallery({
     };
   }, [emblaApi, onSelect]);
 
+  // Auto-scroll the active thumbnail into view smoothly
+  useEffect(() => {
+    const activeBtn = thumbButtonRefs.current[selected];
+    if (activeBtn && thumbnailsRef.current) {
+      activeBtn.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [selected]);
+
+  const handleOpenLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  if (ordered.length === 0) {
+    return (
+      <div className="relative mx-auto h-[260px] sm:h-[360px] lg:h-[420px] w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <Image
+          src={PLACEHOLDER_IMAGE}
+          alt={title}
+          fill
+          sizes="(max-width: 1152px) 100vw, 1152px"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={cn(
-      "relative mx-auto w-full",
-      isLightbox ? "max-w-none h-full flex flex-col justify-between" : "max-w-none rounded-xl"
-    )}>
-      {showTitle && (
-        <div className={cn(
-          "flex items-center justify-between gap-4 px-4 py-3 border-b",
-          isLightbox ? "bg-zinc-900 border-zinc-800 text-white" : "rounded-t-xl border-zinc-100 bg-white"
-        )}>
-          <h3 className={cn("min-w-0 flex-1 truncate text-sm font-semibold", isLightbox ? "text-white" : "text-zinc-900")}>{title}</h3>
-          {isVerified && (
-            <span
-              className="flex shrink-0 items-center gap-1 rounded bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white"
-              title="Tin đã được quản trị viên xác minh"
-            >
-              <ShieldCheck className="h-3 w-3" aria-hidden />
-              Tin đã xác minh
+    <>
+      <div className="relative mx-auto w-full select-none">
+        {/* Main Slider Box */}
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-900 shadow-xs">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex w-full">
+              {ordered.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="relative h-[260px] sm:h-[360px] lg:h-[420px] w-full flex-[0_0_100%] cursor-zoom-in bg-zinc-900"
+                  onClick={() => handleOpenLightbox(index)}
+                >
+                  <Image
+                    src={image.url}
+                    alt={`${title} — ảnh ${index + 1}/${ordered.length}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 1200px"
+                    quality={90}
+                    priority={index === 0}
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Counter badge & expand button */}
+          <div className="absolute bottom-3.5 right-3.5 z-10 flex items-center gap-2">
+            <span className="flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-3 py-1 text-xs font-medium text-white shadow-card backdrop-blur-md">
+              <Camera className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              <span className="tabular-nums font-semibold">{selected + 1}</span> / {ordered.length}
             </span>
+            <button
+              type="button"
+              onClick={() => handleOpenLightbox(selected)}
+              aria-label="Phóng to ảnh"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900/80 text-white shadow-card backdrop-blur-md transition-transform hover:scale-105 active:scale-95"
+            >
+              <Expand className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+
+          {/* Navigation Arrows */}
+          {ordered.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  emblaApi?.scrollPrev();
+                }}
+                aria-label="Ảnh trước"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-zinc-800 shadow-card border border-zinc-200 hover:bg-white hover:scale-105 active:scale-90 transition-all backdrop-blur-xs"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  emblaApi?.scrollNext();
+                }}
+                aria-label="Ảnh sau"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-zinc-800 shadow-card border border-zinc-200 hover:bg-white hover:scale-105 active:scale-90 transition-all backdrop-blur-xs"
+              >
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
+            </>
           )}
         </div>
-      )}
 
-      <div className={cn(
-        "mx-auto overflow-hidden",
-        isLightbox ? "w-full flex-1 flex items-center bg-transparent" : "rounded-xl border border-zinc-200 bg-zinc-100"
-      )} ref={emblaRef}>
-        <div className={cn("flex w-full", isLightbox && "h-full items-center")}>
-          {images.map((image, index) => (
-            <button
-              key={image.id}
-              type="button"
-              onClick={() => onImageClick?.(index)}
-              disabled={isLightbox}
-              aria-label={`Mở ảnh ${index + 1}/${images.length}`}
-              className={cn(
-                "group relative min-w-0 flex-[0_0_100%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-inset",
-                isLightbox 
-                  ? "h-[65vh] sm:h-[70vh] lg:h-[75vh] bg-transparent" 
-                : "aspect-[4/3] bg-zinc-100 sm:aspect-[16/9] lg:aspect-[16/8]"
-              )}
-            >
-              <Image
-                src={image.url}
-                alt={`${title} — ảnh ${index + 1}/${images.length}`}
-                fill
-                sizes={isLightbox ? "100vw" : "(max-width: 768px) 100vw, 768px"}
-                quality={95}
-                priority={index === 0}
-                className={cn(
-                  isLightbox ? "object-contain" : "object-cover",
-                  "transition-transform duration-300 group-hover:scale-[1.01]",
-                  isLightbox && "drop-shadow-2xl"
-                )}
-              />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={() => emblaApi?.scrollPrev()}
-            aria-label="Ảnh trước"
-            className={cn(
-              "absolute top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
-              isLightbox 
-                ? "left-6 h-12 w-12 bg-white/90 shadow-lg border border-zinc-200/50 hover:bg-zinc-50 text-zinc-700 hover:scale-105 active:scale-95" 
-                : "left-2 h-8 w-8 bg-white/90 shadow-md border border-zinc-200/50 hover:bg-zinc-50 text-zinc-700 active:scale-95"
-            )}
+        {/* Thumbnail Row (smooth scroll, auto-centering active thumbnail) */}
+        {ordered.length > 1 && (
+          <div
+            ref={thumbnailsRef}
+            className="mt-3 flex gap-2.5 overflow-x-auto p-1 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            <ChevronLeft className={isLightbox ? "h-6 w-6" : "h-4 w-4"} aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => emblaApi?.scrollNext()}
-            aria-label="Ảnh sau"
-            className={cn(
-              "absolute top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2",
-              isLightbox 
-                ? "right-6 h-12 w-12 bg-white/90 shadow-lg border border-zinc-200/50 hover:bg-zinc-50 text-zinc-700 hover:scale-105 active:scale-95" 
-                : "right-2 h-8 w-8 bg-white/90 shadow-md border border-zinc-200/50 hover:bg-zinc-50 text-zinc-700 active:scale-95"
-            )}
-          >
-            <ChevronRight className={isLightbox ? "h-6 w-6" : "h-4 w-4"} aria-hidden />
-          </button>
-
-          <span className={cn(
-            "absolute rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums",
-            isLightbox 
-              ? "bottom-32 left-1/2 -translate-x-1/2 bg-white/90 text-zinc-800 shadow-md border border-zinc-200/50" 
-              : "bottom-14 left-1/2 -translate-x-1/2 bg-black/75 text-white"
-          )}>
-            {selected + 1}/{images.length}
-          </span>
-
-          <div className={cn(
-            "flex justify-center gap-1.5 overflow-x-auto px-1 pb-1",
-            isLightbox 
-              ? "mx-auto mb-8 bg-white/80 backdrop-blur-md border border-zinc-200/80 p-2 rounded-2xl shadow-xl max-w-[90vw] md:max-w-xl justify-center scrollbar-none" 
-              : "mt-1"
-          )}>
-            {images.map((image, index) => (
+            {ordered.map((image, index) => (
               <button
                 key={image.id}
+                ref={(el) => {
+                  thumbButtonRefs.current[index] = el;
+                }}
                 type="button"
-                onClick={() => emblaApi?.scrollTo(index)}
+                onClick={() => {
+                  emblaApi?.scrollTo(index);
+                  setSelected(index);
+                }}
                 aria-label={`Xem ảnh ${index + 1}`}
                 aria-current={selected === index}
                 className={cn(
-                  'relative h-9 w-9 shrink-0 overflow-hidden rounded-md border-2 bg-zinc-200 transition-colors sm:h-10 sm:w-10',
-                  selected === index 
-                    ? (isLightbox ? 'border-brand-600' : 'border-zinc-700') 
-                    : 'border-transparent',
+                  'relative h-13 w-18 sm:h-15 sm:w-22 shrink-0 snap-center overflow-hidden rounded-xl border-2 transition-all duration-200 cursor-pointer',
+                  selected === index
+                    ? 'border-brand-600 ring-2 ring-brand-600/30 scale-105 opacity-100 shadow-xs z-10'
+                    : 'border-zinc-200 opacity-60 hover:opacity-100 hover:border-zinc-400',
                 )}
               >
-                <Image src={image.url} alt="" fill sizes="40px" className="object-cover" />
+                <Image src={image.url} alt="" fill sizes="90px" className="object-cover" />
               </button>
             ))}
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <Lightbox
+          images={ordered}
+          initialIndex={lightboxIndex}
+          title={title}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
-    </div>
+    </>
+  );
+}
+
+function Lightbox({
+  images,
+  initialIndex = 0,
+  title,
+  onClose,
+}: {
+  images: RoomImage[];
+  initialIndex: number;
+  title: string;
+  onClose: () => void;
+}) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const lightboxThumbsRef = useRef<HTMLDivElement>(null);
+  const lightboxThumbBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') {
+        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+      }
+      if (e.key === 'ArrowRight') {
+        setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [images.length, onClose]);
+
+  // Auto-scroll active thumbnail inside Lightbox
+  useEffect(() => {
+    const activeBtn = lightboxThumbBtnRefs.current[currentIndex];
+    if (activeBtn && lightboxThumbsRef.current) {
+      activeBtn.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [currentIndex]);
+
+  if (images.length === 0 || typeof document === 'undefined') return null;
+
+  const currentImage = images[currentIndex] || images[0];
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Xem ảnh toàn màn hình"
+      className="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-md select-none animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      {/* Top bar: Counter & Close */}
+      <div
+        className="flex items-center justify-between px-4 sm:px-6 py-4 text-white z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold tracking-wide backdrop-blur-sm">
+            {currentIndex + 1} / {images.length}
+          </span>
+          <span className="hidden sm:inline-block text-xs text-zinc-400 truncate max-w-md">
+            {title}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Đóng"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95 cursor-pointer"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Main Image Area */}
+      <div
+        className="relative flex-1 flex items-center justify-center px-4 sm:px-16 overflow-hidden min-h-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Prev button */}
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
+            aria-label="Ảnh trước"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/90 border border-white/20 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+
+        {/* Current Image */}
+        <div className="relative flex items-center justify-center max-h-[75vh] sm:max-h-[80vh] max-w-5xl w-full h-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={currentImage.url}
+            alt={`${title} - ảnh ${currentIndex + 1}`}
+            className="max-h-[75vh] sm:max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl transition-all duration-200"
+          />
+        </div>
+
+        {/* Next button */}
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))}
+            aria-label="Ảnh sau"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/90 border border-white/20 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        )}
+      </div>
+
+      {/* Bottom Thumbnail Strip */}
+      {images.length > 1 && (
+        <div
+          className="px-4 pb-5 pt-2 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            ref={lightboxThumbsRef}
+            className="mx-auto flex max-w-[92vw] sm:max-w-2xl gap-2 overflow-x-auto rounded-2xl bg-black/60 p-2.5 backdrop-blur-md border border-white/10 scroll-smooth snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          >
+            {images.map((image, index) => (
+              <button
+                key={image.id}
+                ref={(el) => {
+                  lightboxThumbBtnRefs.current[index] = el;
+                }}
+                type="button"
+                onClick={() => setCurrentIndex(index)}
+                aria-label={`Xem ảnh ${index + 1}`}
+                className={cn(
+                  'relative h-12 w-16 sm:h-14 sm:w-20 shrink-0 snap-center overflow-hidden rounded-xl border-2 transition-all cursor-pointer',
+                  currentIndex === index
+                    ? 'border-brand-500 ring-2 ring-brand-500/40 scale-105 opacity-100 z-10'
+                    : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/50',
+                )}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.url} alt="" className="h-full w-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>,
+    document.body,
   );
 }

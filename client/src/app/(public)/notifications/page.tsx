@@ -10,7 +10,9 @@ export const metadata: Metadata = {
 export default function NotificationsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
-      <h1 className="text-xl font-semibold tracking-tight">Thông báo</h1>
+      <h1 className="font-heading text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+        Thông báo
+      </h1>
       <p className="mt-1 text-sm text-zinc-600">
         Cập nhật về tin đăng và tìm kiếm đã lưu của bạn.
       </p>

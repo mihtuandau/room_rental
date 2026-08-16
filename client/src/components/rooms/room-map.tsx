@@ -58,7 +58,7 @@ export function RoomMap({
   return (
     <div
       ref={containerRef}
-      className="h-[320px] w-full rounded-2xl border border-zinc-200"
+      className="h-[320px] w-full"
     />
   );
 }

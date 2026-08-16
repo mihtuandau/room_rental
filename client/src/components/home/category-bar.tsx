@@ -73,7 +73,7 @@ export function CategoryBar() {
                   onClick={() => handleCategoryClick(value)}
                   aria-pressed={isActive}
                   className={cn(
-                    'group relative h-32 w-full cursor-pointer overflow-hidden rounded-lg border border-border-subtle text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:h-36',
+                    'group relative h-32 w-full cursor-pointer overflow-hidden rounded-xl border border-border-subtle text-left transition-[transform,box-shadow,ring] duration-200 hover:-translate-y-0.5 hover:shadow-card active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 sm:h-36',
                     isActive
                       ? 'ring-2 ring-brand-600 ring-offset-2'
                       : 'bg-surface-card',

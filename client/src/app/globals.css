@@ -204,18 +204,15 @@ body {
 
 .page-transition {
   min-height: 100%;
-  animation: page-enter 240ms var(--ease-out-soft) both;
-  will-change: opacity, transform;
+  animation: page-enter 200ms var(--ease-out-soft);
 }
 
 @keyframes page-enter {
   from {
-    opacity: 0.82;
-    transform: translate3d(0, 4px, 0);
+    opacity: 0.85;
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 

@@ -44,7 +44,7 @@ export function WhyChooseUs() {
                 delay={i * 120}
                 className="group flex items-start gap-4 py-5 first:pt-0 last:pb-0"
               >
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 ring-1 ring-brand-100 transition-colors duration-200 group-hover:bg-brand-100">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 transition-colors duration-200 group-hover:bg-brand-100">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <div>

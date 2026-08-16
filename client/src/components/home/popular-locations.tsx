@@ -6,6 +6,7 @@ import { MapPin, ArrowUpRight } from 'lucide-react';
 import { searchParsers } from '@/features/rooms/search-params';
 import { PLACEHOLDER_IMAGE } from '@/components/rooms/room-card';
 import { formatPrice } from '@/lib/utils';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 
 export interface FeaturedLocation {
   city: string;
@@ -38,14 +39,14 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
       id="kham-pha"
       className="mx-auto w-full max-w-7xl scroll-mt-28 px-4 sm:px-6"
     >
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-          Khu vực có nhiều tin
+      <ScrollReveal className="mb-6">
+        <h2 className="font-heading text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          Khu vực <span className="text-brand-700">nhiều tin đăng</span>
         </h2>
-        <p className="max-w-2xl text-sm text-zinc-500">
+        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-zinc-500">
           Chọn nhanh nơi có nhiều tin đăng đang hoạt động, kèm mức giá tham khảo để dễ bắt đầu tìm kiếm.
         </p>
-      </div>
+      </ScrollReveal>
 
       {locations.length ? (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-7 sm:gap-6 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
@@ -59,7 +60,7 @@ export function PopularLocations({ locations = [] }: { locations?: FeaturedLocat
               key={`${loc.city}-${areaName}`}
               type="button"
               onClick={() => handleLocationClick(loc)}
-              className="group relative h-40 w-full overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 sm:h-56"
+              className="group relative h-40 w-full overflow-hidden rounded-xl border border-zinc-200 text-left transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 sm:h-56"
             >
               {/* Background Image */}
               <div className="absolute inset-0 z-0 transition-transform duration-500 group-hover:scale-105">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { serverFetch } from '@/lib/server-api';
 import { fetchProvinces } from '@/features/locations/api';
 import type { Amenity } from '@/features/amenities/api';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { PageContainer, PageHeader } from '@/components/layout/page-shell';
 import { NewListingForm } from './new-listing-form';
 
@@ -19,6 +20,12 @@ export default async function NewListingPage() {
 
   return (
     <PageContainer className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Quản lý tin đăng', href: '/manage/listings' },
+          { label: 'Đăng tin mới' },
+        ]}
+      />
       <PageHeader
         title="Đăng tin cho thuê"
         description="Điền đầy đủ thông tin để tin đăng được duyệt nhanh hơn. Mọi tin đăng đều qua kiểm duyệt trước khi hiển thị công khai."

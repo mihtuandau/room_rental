@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { serverFetch } from '@/lib/server-api';
 import { fetchProvinces } from '@/features/locations/api';
 import type { Amenity } from '@/features/amenities/api';
-import { BackButton } from '@/components/ui/back-button';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { PageContainer } from '@/components/layout/page-shell';
 import { EditListingView } from './edit-listing-view';
 
@@ -24,7 +24,12 @@ export default async function EditListingPage({ params }: Props) {
 
   return (
     <PageContainer className="space-y-6">
-      <BackButton label="Tin của tôi" className="sm:hidden" />
+      <Breadcrumb
+        items={[
+          { label: 'Quản lý tin đăng', href: '/manage/listings' },
+          { label: 'Chỉnh sửa tin' },
+        ]}
+      />
       <EditListingView roomId={Number(id)} amenities={amenities} provinces={provinces} />
     </PageContainer>
   );
