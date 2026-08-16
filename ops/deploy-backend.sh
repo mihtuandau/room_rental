@@ -103,7 +103,7 @@ wait_for_http() {
   return 1
 }
 
-BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3000}"
+BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3002}"
 wait_for_http "http://127.0.0.1:${BACKEND_PORT}/health"
 
 if [[ -n "$previous_release" && "$previous_release" != "$RELEASE_SHA" ]]; then
