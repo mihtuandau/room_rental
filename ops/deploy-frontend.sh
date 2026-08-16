@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Frontend site deployment. Backend is deployed separately by deploy-backend.sh.
+# Deploy one exact repository commit. The caller must checkout the commit before
+# invoking this script; the script deliberately never pulls the moving main ref.
 
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 
-# GitHub Actions connects through a non-interactive SSH session, so .bashrc
-# does not reliably load NVM for the CloudPanel site user.
 if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   set +u
   # shellcheck source=/dev/null
@@ -15,11 +14,25 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   set -u
 fi
 
+DEPLOY_ENV="${1:-production}"
+RELEASE_SHA="${2:-${ROOMRENT_RELEASE_SHA:-}}"
+
+if [[ "$DEPLOY_ENV" != "production" && "$DEPLOY_ENV" != "staging" ]]; then
+  echo "Usage: $0 <production|staging> <40-character commit SHA>" >&2
+  exit 2
+fi
+
+if [[ ! "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "A full 40-character release commit SHA is required." >&2
+  exit 2
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-if [[ "$(git branch --show-current)" != "main" ]]; then
-  echo "Frontend deployment must run from the main branch." >&2
+CURRENT_SHA="$(git rev-parse HEAD)"
+if [[ "$CURRENT_SHA" != "$RELEASE_SHA" ]]; then
+  echo "Checked out commit $CURRENT_SHA does not match release $RELEASE_SHA." >&2
   exit 1
 fi
 
@@ -29,21 +42,26 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-if [[ ! -f client/.env.production ]]; then
-  echo "Missing required file: client/.env.production" >&2
+ENV_FILE="client/.env.${DEPLOY_ENV}"
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "Missing required file: $ENV_FILE" >&2
   exit 1
 fi
 
-command -v node >/dev/null || { echo "node is required; install Node.js 22 for the frontend site user" >&2; exit 1; }
+command -v node >/dev/null || {
+  echo "node is required; install Node.js 22 for the frontend site user" >&2
+  exit 1
+}
 command -v pnpm >/dev/null || { echo "pnpm is required" >&2; exit 1; }
 command -v pm2 >/dev/null || { echo "pm2 is required" >&2; exit 1; }
 
 CLIENT_DIR="$REPO_ROOT/client"
 PM2_APP_NAME="roomrent-client"
+if [[ "$DEPLOY_ENV" == "staging" ]]; then
+  PM2_APP_NAME="roomrent-client-staging"
+fi
 
-echo "Pulling frontend site..."
-git pull --ff-only origin main
-
+echo "Installing frontend dependencies for $DEPLOY_ENV/$RELEASE_SHA..."
 cd "$CLIENT_DIR"
 pnpm install --frozen-lockfile
 pnpm run build
@@ -73,5 +91,8 @@ wait_for_http() {
   return 1
 }
 
-wait_for_http http://127.0.0.1:5000
-echo "Frontend deployment completed successfully."
+FRONTEND_PORT="${ROOMRENT_FRONTEND_PORT:-5000}"
+wait_for_http "http://127.0.0.1:${FRONTEND_PORT}"
+
+printf '%s\n' "$RELEASE_SHA" > "$REPO_ROOT/.roomrent-${DEPLOY_ENV}-frontend-release"
+echo "Frontend deployment completed successfully: $DEPLOY_ENV/$RELEASE_SHA"

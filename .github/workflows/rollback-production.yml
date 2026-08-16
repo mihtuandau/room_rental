@@ -1,0 +1,88 @@
+name: Roll back production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full 40-character commit SHA to restore
+        required: true
+        type: string
+      reason:
+        description: Incident or reason for the rollback
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://dautuan.com
+
+    steps:
+      - name: Validate rollback request
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          REASON: ${{ inputs.reason }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test -n "$REASON"
+          echo "Rolling production back to $RELEASE_SHA"
+          echo "Reason: $REASON"
+
+      - name: Restore backend and frontend
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          BACKEND_HOST: ${{ secrets.BACKEND_VPS_HOST }}
+          BACKEND_USER: ${{ secrets.BACKEND_VPS_USER }}
+          BACKEND_PATH: ${{ secrets.BACKEND_DEPLOY_PATH }}
+          BACKEND_KEY: ${{ secrets.BACKEND_VPS_SSH_PRIVATE_KEY }}
+          BACKEND_HOST_KEY: ${{ secrets.BACKEND_VPS_HOST_KEY }}
+          FRONTEND_HOST: ${{ secrets.FRONTEND_VPS_HOST }}
+          FRONTEND_USER: ${{ secrets.FRONTEND_VPS_USER }}
+          FRONTEND_PATH: ${{ secrets.FRONTEND_DEPLOY_PATH }}
+          FRONTEND_KEY: ${{ secrets.FRONTEND_VPS_SSH_PRIVATE_KEY }}
+          FRONTEND_HOST_KEY: ${{ secrets.FRONTEND_VPS_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$BACKEND_KEY" | tr -d '\r' > "$HOME/.ssh/roomrent_rollback_backend"
+          printf '%s\n' "$FRONTEND_KEY" | tr -d '\r' > "$HOME/.ssh/roomrent_rollback_frontend"
+          chmod 600 "$HOME/.ssh/roomrent_rollback_backend" "$HOME/.ssh/roomrent_rollback_frontend"
+          {
+            printf '%s %s\n' "$BACKEND_HOST" "$BACKEND_HOST_KEY"
+            printf '%s %s\n' "$FRONTEND_HOST" "$FRONTEND_HOST_KEY"
+          } > "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+          ssh -i "$HOME/.ssh/roomrent_rollback_backend" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$BACKEND_USER@$BACKEND_HOST" \
+            "cd '$BACKEND_PATH' && git fetch --no-tags origin main && git checkout --detach '$RELEASE_SHA' && bash ops/deploy-backend.sh production '$RELEASE_SHA'"
+
+          ssh -i "$HOME/.ssh/roomrent_rollback_frontend" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$FRONTEND_USER@$FRONTEND_HOST" \
+            "cd '$FRONTEND_PATH' && git fetch --no-tags origin main && git checkout --detach '$RELEASE_SHA' && bash ../ops/deploy-frontend.sh production '$RELEASE_SHA'"
+
+      - name: Verify restored production
+        env:
+          PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+          PRODUCTION_API_URL: ${{ vars.PRODUCTION_API_URL }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 5 "$PRODUCTION_FRONTEND_URL" >/dev/null
+          curl --fail --silent --show-error --location --retry 5 "${PRODUCTION_API_URL%/}/health" >/dev/null

@@ -52,7 +52,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (['development', 'test'].includes(process.env.NODE_ENV ?? '')) {
     const config = new DocumentBuilder()
       .setTitle('Trọ Ơi API')
       .setDescription('API for the room rental platform')
@@ -69,7 +69,7 @@ async function bootstrap() {
   // Nest's own "successfully started" line says nothing about where it is
   // listening, which reads like a hang. Print the URLs explicitly.
   Logger.log(`API sẵn sàng: http://localhost:${port}`, 'Bootstrap');
-  if (process.env.NODE_ENV !== 'production') {
+  if (['development', 'test'].includes(process.env.NODE_ENV ?? '')) {
     Logger.log(`Swagger: http://localhost:${port}/docs`, 'Bootstrap');
   }
 }

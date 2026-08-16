@@ -30,7 +30,9 @@ import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         throttlers: [{ ttl: 60_000, limit: 100 }],
-        ...(config.get('NODE_ENV') === 'production' && {
+        ...(['production', 'staging'].includes(
+          config.get<string>('NODE_ENV') ?? '',
+        ) && {
           storage: new RedisThrottlerStorage(config),
         }),
       }),
