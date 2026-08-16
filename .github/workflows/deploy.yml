@@ -83,6 +83,8 @@ jobs:
     needs: deploy-staging
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: staging
     steps:
       - uses: actions/checkout@v6
         with:
