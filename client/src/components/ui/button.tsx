@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   // focus ring and disabled handling live here so no variant can forget them
-  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-[background-color,color,border-color,box-shadow,transform] duration-200 active:scale-[0.99] active:translate-y-px ' +
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-[background-color,color,border-color,box-shadow,transform] duration-200 active:scale-[0.98] active:translate-y-px ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ' +
     'disabled:pointer-events-none disabled:opacity-50',
   {

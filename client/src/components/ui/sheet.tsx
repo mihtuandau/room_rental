@@ -11,22 +11,30 @@ export const SheetClose = SheetPrimitive.Close;
 export function SheetContent({
   className,
   children,
+  side = 'right',
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content>) {
+}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: 'right' | 'bottom';
+}) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40" />
+      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity" />
       <SheetPrimitive.Content
         className={cn(
-          'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-zinc-200 bg-white shadow-popover focus:outline-none',
+          'fixed z-50 flex flex-col bg-white shadow-popover focus:outline-none',
+          side === 'right' && 'inset-y-0 right-0 w-full max-w-sm border-l border-zinc-200',
+          side === 'bottom' && 'inset-x-0 bottom-0 max-h-[85vh] rounded-t-3xl border-t border-zinc-200',
           className,
         )}
         {...props}
       >
+        {side === 'bottom' && (
+          <div className="mx-auto mt-2.5 h-1.5 w-12 shrink-0 rounded-full bg-zinc-200" aria-hidden />
+        )}
         {children}
         <SheetPrimitive.Close
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-          aria-label="Đóng menu"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+          aria-label="Đóng"
         >
           <X className="h-5 w-5" aria-hidden />
         </SheetPrimitive.Close>

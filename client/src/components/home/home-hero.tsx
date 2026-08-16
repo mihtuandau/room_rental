@@ -414,7 +414,7 @@ export function HomeHero({
 
           <div className="order-3 z-10 mt-4 px-1 sm:mt-6 lg:mt-6 lg:px-0">
             <form
-              className="rounded-xl border border-border-subtle bg-surface-card p-3 shadow-card sm:p-5"
+              className="rounded-2xl border border-border-subtle bg-surface-card p-3 shadow-card sm:p-5"
               onSubmit={(event) => {
                 event.preventDefault();
                 submit();

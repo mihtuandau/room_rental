@@ -23,7 +23,7 @@ export default async function LoginPage({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Chào mừng trở lại</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-zinc-900">Chào mừng trở lại</h1>
         <p className="mt-2 text-sm text-zinc-600">Đăng nhập để tiếp tục tìm phòng phù hợp.</p>
       </div>
 

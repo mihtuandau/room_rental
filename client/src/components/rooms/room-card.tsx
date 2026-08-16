@@ -111,7 +111,7 @@ export function RoomCard({
       onMouseEnter={onActivate}
       onMouseLeave={onDeactivate}
       className={cn(
-        'group relative overflow-hidden rounded-xl bg-surface-card shadow-sm ring-1 ring-border-subtle transition-[transform,box-shadow,ring-color] duration-300',
+        'group relative overflow-hidden rounded-xl bg-surface-card shadow-sm ring-1 ring-border-subtle transition-[transform,box-shadow,ring-color] duration-300 active:scale-[0.99]',
         active
           ? 'ring-brand-600 shadow-md'
           : 'hover:-translate-y-1 hover:ring-border-strong hover:shadow-popover',
@@ -150,7 +150,7 @@ export function RoomCard({
           disabled={toggleFavorite.isPending}
           aria-pressed={isFavorited}
           aria-label={isFavorited ? 'Bỏ lưu tin' : 'Lưu tin'}
-          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-md bg-white/90 text-zinc-600 shadow-card transition-colors hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:cursor-wait disabled:opacity-70"
+          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-lg bg-white/90 text-zinc-600 shadow-card transition-[color,transform,background-color] duration-150 hover:text-danger-600 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 disabled:cursor-wait disabled:opacity-70"
         >
           {toggleFavorite.isPending ? (
             <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -161,7 +161,6 @@ export function RoomCard({
             />
           )}
         </button>
-
       </div>
 
       <div className="flex min-h-[118px] flex-col space-y-1 p-2.5 sm:min-h-[136px] sm:space-y-1.5 sm:p-4">
@@ -174,7 +173,7 @@ export function RoomCard({
           <MapPin className="mt-0.5 h-3 w-3 shrink-0 sm:mt-1 sm:h-3.5 sm:w-3.5" aria-hidden />
           {ROOM_TYPE_LABELS[room.roomType]} · {[room.district, room.city].filter(Boolean).join(', ')}
         </p>
-        {(room.bedrooms !== null || room.area !== null || freshness || room.viewCount != null) && (
+        {(room.bedrooms !== null || room.area !== null || freshness || (room.viewCount != null && room.viewCount > 0)) && (
           <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-2 text-[11px] text-zinc-500 sm:gap-x-4 sm:pt-3 sm:text-xs">
             {room.bedrooms !== null && (
               <span className="flex items-center gap-1">

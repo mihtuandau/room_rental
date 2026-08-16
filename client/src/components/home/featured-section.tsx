@@ -27,10 +27,10 @@ export async function FeaturedSection() {
           <span className="hidden">
             ✦ Mới nhất &amp; nổi bật
           </span>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            Tin mới được <span className="text-brand-700">duyệt</span>
+          <h2 className="font-heading text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+            Tin mới được <span className="text-brand-700">kiểm duyệt</span>
           </h2>
-          <p className="mt-1.5 max-w-xl text-sm text-zinc-500">
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-zinc-500">
             Những tin đăng mới nhất đã qua kiểm duyệt, cập nhật liên tục mỗi ngày.
           </p>
         </div>

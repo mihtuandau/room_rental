@@ -1,14 +1,8 @@
 import { MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RoomMapLazy } from './room-map-lazy';
+import { RoomNearbyPlaces } from './room-nearby-places';
 
-/**
- * Location on the listing detail page — keyless MapLibre + OpenStreetMap (see
- * lib/map-style.ts), same as the search results map, no API key or billing
- * account required. "Chỉ đường" is a plain google.com/maps URL — no key
- * either, and it's what actually gets someone walking directions on their
- * phone regardless of which map renders the preview.
- */
 export function RoomLocationMap({
   address,
   ward,
@@ -32,32 +26,47 @@ export function RoomLocationMap({
   )}`;
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">Vị trí</h2>
-      <p className="flex items-start gap-2 text-sm text-zinc-600">
-        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
-        {fullAddress}
-      </p>
-
-      {hasCoordinates ? (
-        <RoomMapLazy latitude={latitude} longitude={longitude} />
-      ) : (
-        // The listing form doesn't collect a pinned location yet, so this is
-        // the honest state for most current listings — not a broken map.
-        <div className="flex h-[180px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 text-center">
-          <MapPin className="h-6 w-6 text-zinc-400" aria-hidden />
-          <p className="max-w-xs text-sm text-zinc-500">
-            Tin này chưa có toạ độ chính xác. Bấm &quot;Chỉ đường&quot; để tìm theo địa chỉ.
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight text-zinc-900">
+            Vị trí &amp; Bản đồ
+          </h2>
+          <p className="mt-1 flex items-start gap-1.5 text-xs sm:text-sm text-zinc-600">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+            <span>{fullAddress}</span>
           </p>
         </div>
-      )}
 
-      <Button variant="outline" asChild>
-        <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-          <Navigation className="h-4 w-4" aria-hidden />
-          Chỉ đường
-        </a>
-      </Button>
+        <Button variant="outline" size="sm" asChild className="shrink-0 font-medium">
+          <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+            <Navigation className="h-3.5 w-3.5 mr-1.5 text-brand-700" aria-hidden />
+            Chỉ đường Google Maps
+          </a>
+        </Button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-50 shadow-xs">
+        {hasCoordinates ? (
+          <RoomMapLazy latitude={latitude} longitude={longitude} />
+        ) : (
+          <div className="flex h-[180px] w-full flex-col items-center justify-center gap-2 p-6 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+              <MapPin className="h-5 w-5 text-zinc-400" aria-hidden />
+            </div>
+            <p className="max-w-xs text-xs text-zinc-500">
+              Tin đăng chưa ghim toạ độ trên bản đồ. Bạn có thể bấm nút &quot;Chỉ đường Google Maps&quot; để định vị theo địa chỉ.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Real-time Nearby Places & Landmarks */}
+      <RoomNearbyPlaces
+        latitude={latitude}
+        longitude={longitude}
+        address={fullAddress}
+      />
     </section>
   );
 }

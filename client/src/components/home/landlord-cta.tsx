@@ -8,23 +8,17 @@ const LANDLORD_STEPS = [
   { icon: Clock3, label: 'Chờ admin duyệt' },
 ] as const;
 
-/**
- * The reference design pairs this with a stock photo of a person — we skip
- * that deliberately (no real landlord photo to show, and a stock photo here
- * would read like a fabricated testimonial) and use the same decorative glow
- * treatment as the hero instead, so the brand language stays consistent.
- */
 export function LandlordCta() {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       <div className="group relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-brand-200/60 bg-gradient-to-br from-brand-50/70 via-brand-50/40 to-surface-card px-6 py-8 shadow-card sm:px-10 sm:py-9 md:flex-row md:items-center md:justify-between md:gap-12">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-5">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 bg-brand-50 text-brand-700 transition-colors duration-300 group-hover:bg-brand-100">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-brand-100/60 bg-brand-50 text-brand-700 transition-colors duration-300 group-hover:bg-brand-100">
             <House className="h-6 w-6" aria-hidden />
           </span>
           <div className="min-w-0 space-y-2">
             <h2 className="font-heading text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl">
-              Bạn có phòng cho thuê?
+              Bạn có phòng <span className="text-brand-700">cho thuê?</span>
             </h2>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-600">
               Đăng tin miễn phí trên Trọ Ơi và tiếp cận người thuê đang tìm phòng phù hợp.
