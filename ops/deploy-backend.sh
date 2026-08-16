@@ -34,7 +34,11 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-COMPOSE_FILE="docker-compose.${DEPLOY_ENV}.yml"
+if [[ "$DEPLOY_ENV" == "production" ]]; then
+  COMPOSE_FILE="docker-compose.prod.yml"
+else
+  COMPOSE_FILE="docker-compose.staging.yml"
+fi
 ENV_FILE="server/.env.${DEPLOY_ENV}"
 STATE_FILE="${ROOMRENT_RELEASE_STATE_FILE:-$REPO_ROOT/.roomrent-${DEPLOY_ENV}-release}"
 IMAGE_TAG="roomrent-${DEPLOY_ENV}-${RELEASE_SHA}"
@@ -103,7 +107,11 @@ wait_for_http() {
   return 1
 }
 
-BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3002}"
+if [[ "$DEPLOY_ENV" == "production" ]]; then
+  BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3000}"
+else
+  BACKEND_PORT="${ROOMRENT_BACKEND_PORT:-3002}"
+fi
 wait_for_http "http://127.0.0.1:${BACKEND_PORT}/health"
 
 if [[ -n "$previous_release" && "$previous_release" != "$RELEASE_SHA" ]]; then
