@@ -22,7 +22,7 @@ export default async function RegisterPage({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Tạo tài khoản Trọ Ơi</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-zinc-900">Tạo tài khoản Trọ Ơi</h1>
         <p className="mt-2 text-sm text-zinc-600">Lưu tin và đăng tin dễ dàng hơn.</p>
       </div>
 

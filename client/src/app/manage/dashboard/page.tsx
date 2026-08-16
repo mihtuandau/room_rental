@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { PageContainer, PageHeader } from '@/components/layout/page-shell';
 import { DashboardOverviewView } from './dashboard-overview-view';
@@ -16,7 +15,6 @@ export const metadata: Metadata = {
 export default function DashboardPage() {
   return (
     <PageContainer className="space-y-6">
-      <BackButton label="Về trang tìm phòng" className="sm:hidden" />
       <PageHeader
         title="Tổng quan tin đăng"
         description="Theo dõi hiệu quả tiếp cận người thuê trên các tin đăng của bạn."
