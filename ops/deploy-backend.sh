@@ -60,7 +60,15 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
-COMPOSE=(docker compose -f "$COMPOSE_FILE")
+COMPOSE_PROJECT="room_rental"
+if [[ "$DEPLOY_ENV" == "staging" ]]; then
+  COMPOSE_PROJECT="room_rental_staging"
+fi
+
+# Keep staging and production containers isolated even when they share one VPS
+# and repository directory. Without an explicit project name, Docker Compose
+# derives the same project from the directory and staging can replace production.
+COMPOSE=(docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE")
 export ROOMRENT_RELEASE="$IMAGE_TAG"
 
 previous_release=""
