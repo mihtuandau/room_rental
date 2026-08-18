@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/admin/admin-page';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/states';
+import { PermissionDeniedState } from '@/components/ui/states';
+import { isForbiddenError } from '@/lib/api-client';
 import type { AdminUser } from '@/features/admin/api';
 import {
   useAdminUsers,
@@ -82,7 +84,10 @@ export function AdminUsersView() {
   };
 
   if (users.isPending && !users.data) return <UsersSkeleton />;
-  if (users.isError) return <ErrorState onRetry={() => void users.refetch()} />;
+  if (users.isError) {
+    if (isForbiddenError(users.error)) return <PermissionDeniedState />;
+    return <ErrorState onRetry={() => void users.refetch()} />;
+  }
   if (!users.data) return null;
 
   const { data } = users;

@@ -94,3 +94,12 @@ export function ErrorState({
     />
   );
 }
+
+export function PermissionDeniedState() {
+  return (
+    <EmptyState
+      title="Bạn không có quyền thực hiện thao tác này"
+      description="Phiên quản trị của bạn không được cấp quyền cho khu vực này."
+    />
+  );
+}

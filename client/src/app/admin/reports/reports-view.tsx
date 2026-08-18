@@ -6,6 +6,8 @@ import { Flag } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/admin-page';
 import { Badge } from '@/components/ui/badge';
 import { ErrorState } from '@/components/ui/states';
+import { PermissionDeniedState } from '@/components/ui/states';
+import { isForbiddenError } from '@/lib/api-client';
 import type { AdminReport } from '@/features/admin/api';
 import {
   useAdminReports,
@@ -52,6 +54,7 @@ export function AdminReportsView() {
 
   if (reports.isPending && !reports.data) return <ReportsSkeleton />;
   if (reports.isError) {
+    if (isForbiddenError(reports.error)) return <PermissionDeniedState />;
     return <ErrorState onRetry={() => void reports.refetch()} />;
   }
   if (!reports.data) return null;

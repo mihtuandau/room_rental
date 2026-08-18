@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import {
   banAdminUser,
   approveAdminRoom,
+  hideAdminRoom,
   exportAdminUsers,
   getAdminPendingRooms,
   getAdminReports,
@@ -16,6 +17,7 @@ import {
   getPendingRooms,
   unbanAdminUser,
   rejectAdminRoom,
+  restoreAdminRoom,
   setAdminRoomVerified,
   resolveAdminReport,
   startAdminReportReview,
@@ -62,6 +64,9 @@ function useRoomMutation<T>(mutationFn: (value: T) => Promise<unknown>, success:
 
 export function useApproveAdminRoom() { return useRoomMutation(approveAdminRoom, 'Đã duyệt tin và chuyển sang trạng thái hoạt động.'); }
 export function useRejectAdminRoom() { return useRoomMutation(rejectAdminRoom, 'Đã từ chối tin và lưu lý do cho chủ trọ.'); }
+export function useHideAdminRoom() { return useRoomMutation(hideAdminRoom, 'Đã ẩn tin khỏi danh sách công khai.'); }
+export function useRestoreAdminRoom() { return useRoomMutation(restoreAdminRoom, 'Đã khôi phục tin và hiển thị trở lại.'); }
+
 export function useSetAdminRoomVerified() {
   const queryClient = useQueryClient();
   return useMutation({

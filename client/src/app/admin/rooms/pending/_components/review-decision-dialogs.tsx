@@ -12,52 +12,27 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { AdminPendingRoom } from '@/features/admin/api';
 
-export function ApproveRoomDialog({
-  room,
-  pending,
-  onClose,
-  onApprove,
-}: {
+export function ApproveRoomDialog({ room, pending, onClose, onApprove }: {
   room: AdminPendingRoom | null;
   pending: boolean;
   onClose: () => void;
   onApprove: () => void;
 }) {
   return (
-    <Dialog
-      open={Boolean(room)}
-      onOpenChange={(open) => !open && !pending && onClose()}
-    >
+    <Dialog open={Boolean(room)} onOpenChange={(open) => !open && !pending && onClose()}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Duyệt tin này?</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          <p className="text-sm leading-6 text-zinc-600">
-            “{room?.title}” sẽ được công khai cho người thuê tìm kiếm.
-          </p>
-        </DialogBody>
+        <DialogHeader><DialogTitle>Duyệt tin này?</DialogTitle></DialogHeader>
+        <DialogBody><p className="text-sm leading-6 text-zinc-600">“{room?.title}” sẽ được công khai cho người thuê tìm kiếm.</p></DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Hủy
-          </Button>
-          <Button onClick={onApprove} disabled={pending}>
-            {pending ? 'Đang duyệt…' : 'Duyệt tin'}
-          </Button>
+          <Button variant="outline" onClick={onClose}>Hủy</Button>
+          <Button onClick={onApprove} disabled={pending}>{pending ? 'Đang duyệt…' : 'Duyệt tin'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-export function RejectRoomDialog({
-  room,
-  note,
-  pending,
-  onNote,
-  onClose,
-  onReject,
-}: {
+export function RejectRoomDialog({ room, note, pending, onNote, onClose, onReject }: {
   room: AdminPendingRoom | null;
   note: string;
   pending: boolean;
@@ -66,36 +41,61 @@ export function RejectRoomDialog({
   onReject: () => void;
 }) {
   return (
-    <Dialog
-      open={Boolean(room)}
-      onOpenChange={(open) => !open && !pending && onClose()}
-    >
+    <Dialog open={Boolean(room)} onOpenChange={(open) => !open && !pending && onClose()}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Từ chối tin đăng</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>Từ chối tin đăng</DialogTitle></DialogHeader>
         <DialogBody>
-          <p className="text-sm text-zinc-600">
-            Nêu rõ lý do để chủ trọ có thể chỉnh sửa và gửi lại.
-          </p>
-          <Textarea
-            className="mt-4 min-h-28"
-            value={note}
-            onChange={(event) => onNote(event.target.value)}
-            placeholder="Ví dụ: Ảnh chưa thể hiện rõ phòng thực tế…"
-          />
+          <p className="text-sm text-zinc-600">Nêu rõ lý do để chủ trọ có thể chỉnh sửa và gửi lại.</p>
+          <Textarea className="mt-4 min-h-28" value={note} onChange={(event) => onNote(event.target.value)} placeholder="Ví dụ: Ảnh chưa thể hiện rõ phòng thực tế…" />
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Hủy
-          </Button>
-          <Button
-            variant="danger"
-            disabled={!note.trim() || pending}
-            onClick={onReject}
-          >
-            {pending ? 'Đang gửi…' : 'Từ chối tin'}
-          </Button>
+          <Button variant="outline" onClick={onClose}>Hủy</Button>
+          <Button variant="danger" disabled={!note.trim() || pending} onClick={onReject}>{pending ? 'Đang gửi…' : 'Từ chối tin'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function HideRoomDialog({ room, note, pending, onNote, onClose, onHide }: {
+  room: AdminPendingRoom | null;
+  note: string;
+  pending: boolean;
+  onNote: (value: string) => void;
+  onClose: () => void;
+  onHide: () => void;
+}) {
+  return (
+    <Dialog open={Boolean(room)} onOpenChange={(open) => !open && !pending && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Ẩn tin đăng?</DialogTitle></DialogHeader>
+        <DialogBody>
+          <p className="text-sm leading-6 text-zinc-600">“{room?.title}” sẽ không còn xuất hiện trong danh sách công khai.</p>
+          <Textarea className="mt-4 min-h-24" value={note} onChange={(event) => onNote(event.target.value)} placeholder="Ghi chú lý do ẩn tin (không bắt buộc)…" />
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Hủy</Button>
+          <Button variant="danger" disabled={pending} onClick={onHide}>{pending ? 'Đang ẩn…' : 'Ẩn tin'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function RestoreRoomDialog({ room, pending, onClose, onRestore }: {
+  room: AdminPendingRoom | null;
+  pending: boolean;
+  onClose: () => void;
+  onRestore: () => void;
+}) {
+  return (
+    <Dialog open={Boolean(room)} onOpenChange={(open) => !open && !pending && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Khôi phục tin đăng?</DialogTitle></DialogHeader>
+        <DialogBody><p className="text-sm leading-6 text-zinc-600">“{room?.title}” sẽ được hiển thị công khai trở lại.</p></DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Hủy</Button>
+          <Button onClick={onRestore} disabled={pending}>{pending ? 'Đang khôi phục…' : 'Khôi phục tin'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

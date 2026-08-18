@@ -7,7 +7,9 @@ import { Plus } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/admin-page';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/states';
+import { PermissionDeniedState } from '@/components/ui/states';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isForbiddenError } from '@/lib/api-client';
 import {
   useAdminAmenities,
   useCreateAdminAmenity,
@@ -87,6 +89,7 @@ export function AdminAmenitiesView() {
 
   if (amenities.isPending) return <AmenitiesSkeleton />;
   if (amenities.isError) {
+    if (isForbiddenError(amenities.error)) return <PermissionDeniedState />;
     return <ErrorState onRetry={() => void amenities.refetch()} />;
   }
 
