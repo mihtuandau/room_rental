@@ -31,9 +31,12 @@ export interface AdminPendingRoom {
 export interface AdminPendingRoomsParams {
   keyword?: string;
   verified?: string;
+  status?: AdminRoomQueueStatus;
   page: number;
   pageSize: number;
 }
+
+export type AdminRoomQueueStatus = 'pending' | 'active' | 'hidden';
 
 export interface AdminPendingRoomsPage {
   rooms: AdminPendingRoom[];
@@ -124,10 +127,11 @@ export function getPendingRooms() {
   );
 }
 
-function buildPendingRoomsQuery({ keyword, verified, page, pageSize }: AdminPendingRoomsParams) {
+function buildPendingRoomsQuery({ keyword, verified, status, page, pageSize }: AdminPendingRoomsParams) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (keyword) params.set('keyword', keyword);
   if (verified) params.set('verified', verified);
+  if (status && status !== 'pending') params.set('status', status);
   return params.toString();
 }
 
@@ -145,6 +149,17 @@ export function approveAdminRoom(roomId: number) {
 
 export function rejectAdminRoom({ roomId, note }: { roomId: number; note: string }) {
   return apiRequest<AdminPendingRoom>(`/admin/rooms/${roomId}/reject`, { method: 'PATCH', body: JSON.stringify({ note }) });
+}
+
+export function hideAdminRoom({ roomId, note }: { roomId: number; note?: string }) {
+  return apiRequest<AdminPendingRoom>(`/admin/rooms/${roomId}/hide`, {
+    method: 'PATCH',
+    body: JSON.stringify(note ? { note } : {}),
+  });
+}
+
+export function restoreAdminRoom(roomId: number) {
+  return apiRequest<AdminPendingRoom>(`/admin/rooms/${roomId}/restore`, { method: 'PATCH' });
 }
 
 export function setAdminRoomVerified({ roomId, isVerified }: { roomId: number; isVerified: boolean }) {

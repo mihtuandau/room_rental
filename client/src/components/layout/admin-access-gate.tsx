@@ -1,10 +1,10 @@
 'use client';
 
 import { ShieldAlert } from 'lucide-react';
-import { ApiError } from '@/lib/api-client';
+import { ApiError, isForbiddenError } from '@/lib/api-client';
 import { useProfile } from '@/features/users/hooks';
 import { useAuthStore, useIsSignedIn } from '@/stores/auth-store';
-import { ErrorState, EmptyState } from '@/components/ui/states';
+import { ErrorState, EmptyState, PermissionDeniedState } from '@/components/ui/states';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function AdminAccessGate({ children }: { children: React.ReactNode }) {
@@ -28,6 +28,7 @@ export function AdminAccessGate({ children }: { children: React.ReactNode }) {
   }
 
   if (isError) {
+    if (isForbiddenError(error)) return <PermissionDeniedState />;
     return <ErrorState onRetry={() => void refetch()} />;
   }
 

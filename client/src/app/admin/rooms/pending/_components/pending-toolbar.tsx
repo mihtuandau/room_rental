@@ -2,6 +2,7 @@ import type { FormEventHandler } from 'react';
 import { FilterX, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { AdminRoomQueueStatus } from '@/features/admin/api';
 import {
   Select,
   SelectContent,
@@ -12,17 +13,21 @@ import {
 
 export function PendingToolbar({
   keyword,
+  status,
   verified,
   hasFilters,
   onKeyword,
+  onStatus,
   onVerified,
   onSubmit,
   onClear,
 }: {
   keyword: string;
+  status: AdminRoomQueueStatus;
   verified: string | null;
   hasFilters: boolean;
   onKeyword: (value: string) => void;
+  onStatus: (value: AdminRoomQueueStatus) => void;
   onVerified: (value: string) => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   onClear: () => void;
@@ -47,7 +52,7 @@ export function PendingToolbar({
       </div>
       <form
         onSubmit={onSubmit}
-        className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_190px_auto]"
+        className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]"
       >
         <div className="relative">
           <Search
@@ -62,6 +67,16 @@ export function PendingToolbar({
             aria-label="Tìm kiếm tin chờ duyệt"
           />
         </div>
+        <Select value={status} onValueChange={(value) => onStatus(value as AdminRoomQueueStatus)}>
+          <SelectTrigger aria-label="Lọc theo trạng thái tin đăng">
+            <SelectValue placeholder="Trạng thái tin đăng" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Chờ duyệt</SelectItem>
+            <SelectItem value="active">Đang hiển thị</SelectItem>
+            <SelectItem value="hidden">Đã ẩn</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={verified ?? 'all'} onValueChange={onVerified}>
           <SelectTrigger aria-label="Lọc theo trạng thái xác minh">
             <SelectValue placeholder="Trạng thái xác minh" />

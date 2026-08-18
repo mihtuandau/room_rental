@@ -6,10 +6,11 @@ import { usePathname, useSearchParams } from 'next/navigation';
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const routeKey = `${pathname}?${searchParams.toString()}`;
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const routeKey = isAuthRoute ? 'auth' : `${pathname}?${searchParams.toString()}`;
 
   return (
-    <div key={routeKey} className="page-transition">
+    <div key={routeKey} className={isAuthRoute ? undefined : 'page-transition'}>
       {children}
     </div>
   );

@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { LoginForm } from '@/features/auth/components/login-form';
 import { AuthDivider } from '@/features/auth/components/auth-divider';
 import { SocialAuthButtons } from '@/features/auth/components/social-auth-buttons';
 import { getSafeAuthNext } from '@/features/auth/next-path';
+import { AuthTransitionLink } from '@/features/auth/components/auth-transition-link';
 
 export const metadata: Metadata = {
   title: 'Đăng nhập',
@@ -35,9 +35,9 @@ export default async function LoginPage({
 
       <p className="text-center text-sm text-zinc-600">
         Chưa có tài khoản?{' '}
-        <Link href="/register" className="font-medium text-brand-700 transition-colors hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
+        <AuthTransitionLink href="/register" direction="to-register" className="font-medium text-brand-700 transition-colors hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
           Đăng ký
-        </Link>
+        </AuthTransitionLink>
       </p>
     </div>
   );

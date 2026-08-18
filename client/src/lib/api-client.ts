@@ -18,6 +18,10 @@ export class ApiError extends Error {
   }
 }
 
+export function isForbiddenError(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.status === 403;
+}
+
 interface BackendError {
   statusCode?: number;
   message?: string | string[];
