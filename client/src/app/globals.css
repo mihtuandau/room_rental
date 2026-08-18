@@ -220,7 +220,7 @@ body {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
-  background: var(--color-white);
+  background: color-mix(in oklab, var(--color-white) 84%, var(--color-brand-50));
   isolation: isolate;
 }
 .auth-split-brand-panel,
@@ -239,20 +239,51 @@ body {
 .auth-split-brand-panel {
   left: 0;
   overflow: hidden;
-  background: var(--color-brand-900);
-  z-index: 20;
-  box-shadow: var(--shadow-split-right);
+  background: color-mix(in oklab, var(--color-white) 84%, var(--color-brand-50));
+  z-index: 0;
+  box-shadow: none;
+}
+.auth-brand-photo-login {
+  object-position: 38% center;
+}
+.auth-brand-photo-register {
+  object-position: 40% center;
+}
+.auth-brand-edge-fade {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 18%;
+  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--color-white) 88%, var(--color-brand-50)));
+  pointer-events: none;
+  z-index: 1;
 }
 .auth-split-form-panel {
   left: 60%;
   z-index: 1;
   overflow-y: auto;
-  background: var(--color-zinc-50);
-  border-inline-start: 1px solid var(--color-zinc-200);
+  background: color-mix(in oklab, var(--color-white) 84%, var(--color-brand-50));
+  border-inline-start: 0;
+  clip-path: polygon(7% 0, 100% 0, 100% 100%, 0 100%, 3% 89%, 1% 77%, 5% 64%, 2% 51%, 6% 38%, 3% 25%, 8% 12%);
 }
+.auth-split-register .auth-split-brand-panel,
+.auth-split-register .auth-split-form-panel { transform: none; }
 .auth-split-register .auth-split-brand-panel { transform: translateX(66.6667%); }
 .auth-split-register .auth-split-form-panel { transform: translateX(-150%); }
-.auth-split-register .auth-split-brand-panel { box-shadow: var(--shadow-split-left); }
+.auth-split-register .auth-split-form-panel {
+  clip-path: polygon(0 0, 92% 0, 97% 12%, 94% 25%, 98% 38%, 95% 51%, 99% 64%, 96% 77%, 100% 89%, 100% 100%, 0 100%);
+}
+.auth-split-motion-to-login .auth-split-form-panel {
+  clip-path: polygon(0 0, 92% 0, 97% 12%, 94% 25%, 98% 38%, 95% 51%, 99% 64%, 96% 77%, 100% 89%, 100% 100%, 0 100%);
+}
+.auth-split-motion-to-register .auth-split-brand-panel,
+.auth-split-motion-to-register .auth-split-form-panel,
+.auth-split-motion-to-login .auth-split-brand-panel,
+.auth-split-motion-to-login .auth-split-form-panel { z-index: 2; }
+.auth-split-motion-to-register .auth-split-brand-panel,
+.auth-split-motion-to-login .auth-split-brand-panel { z-index: 3; }
+.auth-split-motion-to-register .auth-split-form-panel,
+.auth-split-motion-to-login .auth-split-form-panel { clip-path: none; }
 .auth-split-motion-to-register .auth-split-brand-panel { animation: auth-brand-to-right 560ms cubic-bezier(.65, 0, .35, 1) both; }
 .auth-split-motion-to-register .auth-split-form-panel { animation: auth-form-to-left 560ms cubic-bezier(.65, 0, .35, 1) both; }
 .auth-split-motion-to-login .auth-split-brand-panel { animation: auth-brand-to-left 560ms cubic-bezier(.65, 0, .35, 1) both; }
@@ -271,7 +302,7 @@ body {
   border-radius: 1rem;
   background: var(--color-white);
   padding: 1rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-popover);
 }
 .auth-route-current { position: relative; z-index: 2; }
 .auth-route-outgoing { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
@@ -318,6 +349,14 @@ body {
     overflow: visible;
     border-inline-start: 0;
     border-block-start: 0;
+    clip-path: none;
+  }
+  .auth-split-register .auth-split-form-panel {
+    clip-path: none;
+  }
+  .auth-split-motion-to-login .auth-split-form-panel,
+  .auth-split-motion-to-register .auth-split-form-panel {
+    clip-path: none;
   }
   .auth-split-form-panel > div,
   .auth-split-brand-panel > div {
