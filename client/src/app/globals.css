@@ -220,7 +220,8 @@ body {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
-  background: var(--color-white);
+  --auth-surface: var(--color-white);
+  background: var(--auth-surface);
   isolation: isolate;
 }
 .auth-split-brand-panel,
@@ -239,20 +240,54 @@ body {
 .auth-split-brand-panel {
   left: 0;
   overflow: hidden;
-  background: var(--color-brand-900);
-  z-index: 20;
-  box-shadow: var(--shadow-split-right);
+  background: var(--auth-surface);
+  z-index: 0;
+  box-shadow: none;
+}
+.auth-brand-visual {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+}
+.auth-split-register .auth-brand-visual {
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 0%, #000 72%, transparent 100%);
+}
+.auth-brand-photo-login {
+  object-position: 38% center;
+}
+.auth-brand-photo-register {
+  object-position: 38% center;
 }
 .auth-split-form-panel {
   left: 60%;
   z-index: 1;
   overflow-y: auto;
-  background: var(--color-zinc-50);
-  border-inline-start: 1px solid var(--color-zinc-200);
+  background: var(--auth-surface);
+  border: 0;
+  clip-path: none;
 }
+.auth-split-register .auth-split-brand-panel,
+.auth-split-register .auth-split-form-panel { transform: none; }
 .auth-split-register .auth-split-brand-panel { transform: translateX(66.6667%); }
 .auth-split-register .auth-split-form-panel { transform: translateX(-150%); }
-.auth-split-register .auth-split-brand-panel { box-shadow: var(--shadow-split-left); }
+.auth-split-register .auth-split-form-panel {
+  clip-path: none;
+}
+.auth-split-motion-to-login .auth-split-form-panel {
+  clip-path: none;
+}
+.auth-split-motion-to-register .auth-split-brand-panel,
+.auth-split-motion-to-register .auth-split-form-panel,
+.auth-split-motion-to-login .auth-split-brand-panel,
+.auth-split-motion-to-login .auth-split-form-panel { z-index: 2; }
+.auth-split-motion-to-register .auth-split-brand-panel,
+.auth-split-motion-to-login .auth-split-brand-panel { z-index: 3; }
+.auth-split-motion-to-register .auth-split-form-panel,
+.auth-split-motion-to-login .auth-split-form-panel { clip-path: none; }
 .auth-split-motion-to-register .auth-split-brand-panel { animation: auth-brand-to-right 560ms cubic-bezier(.65, 0, .35, 1) both; }
 .auth-split-motion-to-register .auth-split-form-panel { animation: auth-form-to-left 560ms cubic-bezier(.65, 0, .35, 1) both; }
 .auth-split-motion-to-login .auth-split-brand-panel { animation: auth-brand-to-left 560ms cubic-bezier(.65, 0, .35, 1) both; }
@@ -261,6 +296,37 @@ body {
 @keyframes auth-form-to-left { from { transform: translateX(0); } to { transform: translateX(-150%); } }
 @keyframes auth-brand-to-left { from { transform: translateX(66.6667%); } to { transform: translateX(0); } }
 @keyframes auth-form-to-right { from { transform: translateX(-150%); } to { transform: translateX(0); } }
+
+/* Gentle entrance for the auth screen. This uses movement only so the two
+   surfaces stay visible while the page settles in. */
+.auth-entry:not(.auth-entry-register) .auth-brand-visual {
+  animation: auth-entry-brand-from-left 960ms var(--ease-out-soft) both;
+}
+.auth-entry:not(.auth-entry-register) .auth-split-form-panel > div {
+  animation: auth-entry-form-from-right 860ms var(--ease-out-soft) 120ms both;
+}
+.auth-entry.auth-entry-register .auth-brand-visual {
+  animation: auth-entry-brand-from-right 960ms var(--ease-out-soft) both;
+}
+.auth-entry.auth-entry-register .auth-split-form-panel > div {
+  animation: auth-entry-form-from-left 860ms var(--ease-out-soft) 120ms both;
+}
+@keyframes auth-entry-brand-from-left {
+  from { transform: translateX(-18px); }
+  to { transform: translateX(0); }
+}
+@keyframes auth-entry-brand-from-right {
+  from { transform: translateX(18px); }
+  to { transform: translateX(0); }
+}
+@keyframes auth-entry-form-from-right {
+  from { transform: translateX(16px); }
+  to { transform: translateX(0); }
+}
+@keyframes auth-entry-form-from-left {
+  from { transform: translateX(-16px); }
+  to { transform: translateX(0); }
+}
 
 .auth-page-transition { position: relative; width: 100%; min-width: 0; overflow: visible; background: transparent; will-change: height; }
 .auth-route-layer {
@@ -271,7 +337,7 @@ body {
   border-radius: 1rem;
   background: var(--color-white);
   padding: 1rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-popover);
 }
 .auth-route-current { position: relative; z-index: 2; }
 .auth-route-outgoing { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
@@ -318,11 +384,19 @@ body {
     overflow: visible;
     border-inline-start: 0;
     border-block-start: 0;
+    clip-path: none;
   }
-  .auth-split-form-panel > div,
-  .auth-split-brand-panel > div {
-    min-width: 0;
+  .auth-split-register .auth-split-form-panel {
+    clip-path: none;
   }
+  .auth-split-motion-to-login .auth-split-form-panel,
+  .auth-split-motion-to-register .auth-split-form-panel {
+    clip-path: none;
+  }
+.auth-split-form-panel > div,
+.auth-split-brand-panel > div {
+  min-width: 0;
+}
   .auth-split-brand-panel h2,
   .auth-split-brand-panel p {
     max-width: 100%;

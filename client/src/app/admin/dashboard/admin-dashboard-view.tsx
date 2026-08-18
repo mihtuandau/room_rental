@@ -1,7 +1,8 @@
 'use client';
 
 import { AdminPageHeader } from '@/components/admin/admin-page';
-import { ErrorState } from '@/components/ui/states';
+import { ErrorState, PermissionDeniedState } from '@/components/ui/states';
+import { isForbiddenError } from '@/lib/api-client';
 import {
   useAdminDashboardSummary,
   usePendingAdminReports,
@@ -18,6 +19,10 @@ export function AdminDashboardView() {
   const rooms = usePendingAdminRooms();
   const reports = usePendingAdminReports();
   const hasError = summary.isError || rooms.isError || reports.isError;
+
+  if (isForbiddenError(summary.error) || isForbiddenError(rooms.error) || isForbiddenError(reports.error)) {
+    return <PermissionDeniedState />;
+  }
 
   if (summary.isPending || rooms.isPending || reports.isPending) {
     return <DashboardSkeleton />;

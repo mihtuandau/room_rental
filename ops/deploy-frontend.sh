@@ -11,6 +11,7 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   set +u
   # shellcheck source=/dev/null
   source "$NVM_DIR/nvm.sh"
+  nvm use 22 --silent
   set -u
 fi
 
@@ -48,6 +49,14 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
+# Next.js does not automatically load .env.staging. Export the host-only
+# environment explicitly so server-side build fetches and NEXT_PUBLIC_* values
+# use the same staging configuration as the runtime process.
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
+
 command -v node >/dev/null || {
   echo "node is required; install Node.js 22 for the frontend site user" >&2
   exit 1
@@ -60,20 +69,31 @@ PM2_APP_NAME="roomrent-client"
 if [[ "$DEPLOY_ENV" == "staging" ]]; then
   PM2_APP_NAME="roomrent-client-staging"
 fi
+FRONTEND_PORT="${ROOMRENT_FRONTEND_PORT:-5000}"
 
 echo "Installing frontend dependencies for $DEPLOY_ENV/$RELEASE_SHA..."
 cd "$CLIENT_DIR"
 pnpm install --frozen-lockfile
 pnpm run build
 
+# Next.js is configured with output: standalone. Copy the static assets that
+# are not included in the standalone server bundle before starting it.
+mkdir -p "$CLIENT_DIR/.next/standalone/.next/static" \
+  "$CLIENT_DIR/.next/standalone/public"
+cp -a "$CLIENT_DIR/.next/static/." \
+  "$CLIENT_DIR/.next/standalone/.next/static/"
+cp -a "$CLIENT_DIR/public/." \
+  "$CLIENT_DIR/.next/standalone/public/"
+
+# Replace the process after a successful build so an old pnpm/next-start
+# command cannot keep using the wrong port or incompatible standalone mode.
 if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-  pm2 reload "$PM2_APP_NAME" --update-env
-else
-  pm2 start pnpm \
-    --name "$PM2_APP_NAME" \
-    --cwd "$CLIENT_DIR" \
-    -- start
+  pm2 delete "$PM2_APP_NAME"
 fi
+
+PORT="$FRONTEND_PORT" HOSTNAME=0.0.0.0 pm2 start server.js \
+  --name "$PM2_APP_NAME" \
+  --cwd "$CLIENT_DIR/.next/standalone"
 pm2 save
 
 wait_for_http() {
@@ -91,7 +111,6 @@ wait_for_http() {
   return 1
 }
 
-FRONTEND_PORT="${ROOMRENT_FRONTEND_PORT:-5000}"
 wait_for_http "http://127.0.0.1:${FRONTEND_PORT}"
 
 printf '%s\n' "$RELEASE_SHA" > "$REPO_ROOT/.roomrent-${DEPLOY_ENV}-frontend-release"

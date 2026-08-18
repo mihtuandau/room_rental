@@ -34,6 +34,7 @@ export class AdminRoomsController {
       query.pageSize ?? 20,
       query.keyword,
       query.verified,
+      query.status,
     );
   }
 

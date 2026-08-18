@@ -76,13 +76,15 @@ jobs:
             -o IdentitiesOnly=yes -o BatchMode=yes \
             -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             "$FRONTEND_USER@$FRONTEND_HOST" \
-            "cd '$FRONTEND_PATH' && git fetch --no-tags origin main && git checkout --detach '$RELEASE_SHA' && bash ../ops/deploy-frontend.sh staging '$RELEASE_SHA'"
+            "cd '$FRONTEND_PATH' && git fetch --no-tags origin main && git checkout --detach '$RELEASE_SHA' && ROOMRENT_FRONTEND_PORT=5001 bash ../ops/deploy-frontend.sh staging '$RELEASE_SHA'"
 
   smoke-staging:
     name: Smoke test staging
     needs: deploy-staging
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: staging
     steps:
       - uses: actions/checkout@v6
         with:

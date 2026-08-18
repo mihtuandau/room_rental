@@ -26,10 +26,11 @@ export class AdminRoomsService {
     pageSize: number,
     keyword?: string,
     verified?: 'verified' | 'unverified',
+    status: RoomStatus = RoomStatus.pending,
   ) {
     const search = keyword?.trim();
     const where: Prisma.RoomWhereInput = {
-      status: RoomStatus.pending,
+      status,
       deletedAt: null,
       ...(verified ? { isVerified: verified === 'verified' } : {}),
       ...(search

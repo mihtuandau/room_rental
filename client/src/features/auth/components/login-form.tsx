@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -13,6 +12,7 @@ import { ApiError } from '@/lib/api-client';
 import { loginSchema, type LoginInput } from '../schemas';
 import { useLogin } from '../hooks';
 import { Field } from './field';
+import { AuthTransitionLink } from './auth-transition-link';
 
 export function LoginForm({ next = '/' }: { next?: string }) {
   const router = useRouter();
@@ -66,12 +66,13 @@ export function LoginForm({ next = '/' }: { next?: string }) {
           {...register('password')}
         />
         <div className="mt-1.5 text-right">
-          <Link
+          <AuthTransitionLink
             href="/forgot-password"
+            direction="to-register"
             className="rounded-md text-sm text-brand-700 transition-colors hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
           >
             Quên mật khẩu?
-          </Link>
+          </AuthTransitionLink>
         </div>
       </div>
 

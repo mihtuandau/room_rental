@@ -1,5 +1,5 @@
 import { parseAsInteger, parseAsString } from 'nuqs/server';
-import type { AdminPendingRoom } from '@/features/admin/api';
+import type { AdminPendingRoom, AdminRoomQueueStatus } from '@/features/admin/api';
 
 export const PAGE_SIZE = 12;
 export const ROOM_TYPE_LABELS: Record<
@@ -16,7 +16,14 @@ export const ROOM_TYPE_LABELS: Record<
 export const pendingParsers = {
   keyword: parseAsString.withDefault(''),
   verified: parseAsString,
+  status: parseAsString.withDefault('pending'),
   page: parseAsInteger.withDefault(1),
+};
+
+export const ROOM_QUEUE_STATUS_LABELS: Record<AdminRoomQueueStatus, string> = {
+  pending: 'Chờ duyệt',
+  active: 'Đang hiển thị',
+  hidden: 'Đã ẩn',
 };
 
 export const formatCompactMoney = (value: number) =>
