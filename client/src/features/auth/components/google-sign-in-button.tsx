@@ -39,7 +39,13 @@ export function GoogleSignInButton({
 
   const googleLoginControl = (
     <GoogleLogin
+      type="standard"
+      size="large"
+      shape="rectangular"
+      theme="outline"
+      text="signin_with"
       width="320"
+      containerProps={{ className: 'w-full [&>div]:w-full [&>iframe]:w-full' }}
       onSuccess={handleSuccess}
       onError={() => toast.error('Đăng nhập Google thất bại.')}
     />

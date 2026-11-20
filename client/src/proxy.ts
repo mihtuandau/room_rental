@@ -7,7 +7,7 @@ function buildContentSecurityPolicy(nonce: string, isDevelopment: boolean) {
     "font-src 'self' data:",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "frame-src 'self' https://accounts.google.com",
+    "frame-src 'self' https://accounts.google.com https://www.facebook.com",
     "img-src 'self' data: blob: https:",
     "object-src 'none'",
     [
