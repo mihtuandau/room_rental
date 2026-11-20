@@ -56,7 +56,7 @@ export function GoogleSignInButton({
         <Image src="/logogoogle.webp" alt="" width={20} height={20} className="h-5 w-5 object-contain" />
         <span className="text-sm font-medium text-zinc-700">{label}</span>
       </div>
-      <div className="absolute inset-0 opacity-0 [&>div]:h-full [&>div]:w-full">
+      <div className="absolute inset-0 z-10 cursor-pointer opacity-0 [&>div]:h-full [&>div]:w-full [&_iframe]:h-full [&_iframe]:w-full">
         {googleLoginControl}
       </div>
     </div>
